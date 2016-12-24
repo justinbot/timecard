@@ -1,5 +1,5 @@
 {% block day %}
-<td id="timecard-day-{{ d }}" data-date="" class="timecard-day" onmouseleave="slotDown=false;"> <!-- onmouseup="dayUpdateHours({{ d }});" onmouseleave="dayUpdateHours({{ d }});"> -->
+<td id="timecard-day-{{ d }}" data-date="" data-totalhours=0.0 class="timecard-day" onmouseleave="slotDown=false;"> <!-- onmouseup="dayUpdateHours({{ d }});" onmouseleave="dayUpdateHours({{ d }});"> -->
     <div class="day-header-date" style="font-weight: bold;">01/01/00</div>
     <div class="day-header-weekday" style="font-weight: bold;">Monday</div>
     <div class="day-header-hours" style="font-weight: bold;">Hours: 0</div>
@@ -13,8 +13,5 @@
         </tr>
         {% endfor %}
     </table>
-    <script type="text/javascript">
-        updateDay("{{ d }}");
-    </script>
 </td>
 {% endblock %}

@@ -1,3 +1,7 @@
+var weekdays = [];
+
+var timecardTotalHours;
+
 var databaseSaveButton;
 var templatesSelect;
 var templatesButton;
@@ -20,7 +24,13 @@ var dayTimestamps = {}; // Dictionary mapping day index to slot timestamps
 var slotDown = false;
 var slotToggleTo = true;
 
+// TODO: Fix potentially broken locally selected slots when week is shifted
+// TODO: Template delete button next to cancel. Also collect edit buttons (textinput, save, cancel, delete) in div
+//       and normal buttons (select dropdown and edit button) in another div
+
 function onload() {
+    // might be called before or after script tag, though above code should be called first
+    
     //databaseSaveButton = document.getElementById("database-save-button");
     //databaseSaveButton.disabled = true;
 
@@ -57,13 +67,13 @@ function loadTimestamps(response) {
     //var result = JSON.parse(response);
 
     selectedTimestamps = new Set();
-    for (let t of response['selected']) {
-        selectedTimestamps.add(t);
+    for (var i = 0; i < response['selected'].length; i++) {
+        selectedTimestamps.add(response['selected'][i]);
         //console.log(t);
     }
 
     // TODO: Separate updating header and content for responsiveness
-    for (var i = 0; i < 7; i++) {
+    for (var i = 0; i < weekdays.length; i++) {
         updateDay(i);
     }
 }
@@ -71,6 +81,7 @@ function loadTimestamps(response) {
 // write localSelectedTimestamps to database
 function saveToDatabase() {
     databaseSaveButton.disabled = true;
+    databaseSaveButton.textContent = "Saved";
 
     var timestamps = JSON.stringify({
         selected: Array.from(localSelectedTimestamps),
@@ -91,7 +102,7 @@ function saveToDatabase() {
 
 // updates header and slot timestamps of the specified day
 function updateDay(weekday) {
-    var day = document.getElementById("timecard-day-" + weekday);
+    var day = weekdays[weekday]; //document.getElementById("timecard-day-" + weekday);
     var headerDate = day.children[0];
     var headerWeekday = day.children[1];
 
@@ -107,15 +118,15 @@ function updateDay(weekday) {
 
     dayTimestamps[weekday] = [];
     var slots = day.getElementsByTagName("td");
-    for (let s of slots) {
+    for (var i = 0; i < slots.length; i++) {
         // update timestamp of every slot by using its delta (seconds from first slot)
-        var ts = s.dataset.timestamp = day.dataset.date + s.dataset.timedelta;
+        var ts = slots[i].dataset.timestamp = day.dataset.date + slots[i].dataset.timedelta;
         dayTimestamps[weekday].push(ts);
         // time is selected if it was selected locally, or was selected in the database and not unselected locally
         if ((selectedTimestamps.has(ts) && !localUnselectedTimestamps.has(ts)) || localSelectedTimestamps.has(ts)) {
-            s.className = "timecard-slot-selected";
+            slots[i].className = "timecard-slot-selected";
         } else {
-            s.className = "timecard-slot";
+            slots[i].className = "timecard-slot";
         }
     }
 
@@ -123,18 +134,25 @@ function updateDay(weekday) {
 }
 
 function updateDayHours(weekday) {
-    var day = document.getElementById("timecard-day-" + weekday);
+    // TODO: Cache day objects?
+    var day = weekdays[weekday];
     var headerHours = day.children[2];
 
-    var totalHours = 0.0;
-    for (let ts of dayTimestamps[weekday]) {
+    var dayTotalHours = 0.0;
+    for (var i = 0; i < dayTimestamps[weekday].length; i++) {
+        var ts = dayTimestamps[weekday][i];
         // time is selected if it was selected locally, or was selected in the database and not unselected locally
         if ((selectedTimestamps.has(ts) && !localUnselectedTimestamps.has(ts)) || localSelectedTimestamps.has(ts)) {
-            totalHours += (slotIncrement / 60);
+            dayTotalHours += (slotIncrement / 60);
         }
     }
 
-    headerHours.textContent = "Hours: " + totalHours.toFixed(1);
+    // TODO: Resolve issue where 15 minute increment gets rounded to 0.3 hours
+    day.dataset.totalhours = dayTotalHours;
+    headerHours.textContent = "Hours: " + dayTotalHours.toFixed(1);
+
+    // only needs to update hours for this day
+    updateTotalHours();
 
     if (localSelectedTimestamps.size == 0 && localUnselectedTimestamps.size == 0) {
         databaseSaveButton.disabled = true;
@@ -143,6 +161,16 @@ function updateDayHours(weekday) {
         databaseSaveButton.disabled = false;
         databaseSaveButton.textContent = "Save";
     }
+}
+
+function updateTotalHours() {
+    var totalHours = 0.0;
+    for (var i = 0; i < weekdays.length; i++) {
+        totalHours += parseFloat(weekdays[i].dataset.totalhours);
+    }
+
+    // TODO: Same precision issue as day hours
+    timecardTotalHours.textContent = "Total Hours: " + totalHours.toFixed(1);
 }
 
 // move focused date back one week
