@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet">
+    <title>timecard</title>
+    <link rel="stylesheet" href="../static/stylesheets/main.css">
+    <link rel="icon" type="image/ico" href="http://www.rpi.edu/favicon.ico">
+    <!-- Leet navbar -->
+    <link rel="stylesheet" href="../static/stylesheets/custom.css">
+    <nav id="bar">
+        <ul>
+            <li><a class="nav-link red" href="/quicklogs" target="_blank">Quicklogs</a></li>
+            <li><a class="nav-link red" href="/forum" target="_blank">Forum</a></li>
+            <li><a class="nav-link red" href="http://leet.arc.rpi.edu:8000" target="_blank">Print Queue</a></li>
+            <li><a class="nav-link red" href="/printers" target="_blank">Printer Picker</a></li>
+            <li><a class="nav-link red" href="http://afsws.rpi.edu/AFS/dept/acs/consult/Schedule.html" target="_blank">Schedule</a></li>
+            <li><a class="nav-link red" href="https://apex.cct.rpi.edu/apex/f?p=187:SEARCH:34401092285::NO:::" target="_blank">Pickup</a></li>
+            <li><a class="nav-link red" href="http://hd-time.arc.rpi.edu/timecard.php?group=Helpdesk" target="_blank">Time Card</a></li>
+        </ul>
+    </nav>
+    <!-- End Leet navbar -->
+    <script src="../static/js/moment.js"></script>
+    <script src="../static/js/main.js"></script>
+</head>
+
+<body>
+
+    <header style="background: #1b5689; margin: 0;">
+        <div id="header">
+            <img src="static/logo.svg" id="logo">
+            <a id="login" href="{# url_for('logout') #}">Logout {{ session.username }}</a>
+        </div>
+    </header>
+
+    <div style="background: #eaeaea; border-bottom: #d1d1d1 solid 1px; width: 100%; margin: 0; padding: 0;">
+        <div id="templates-header">
+            <div>Template:</div>
+            <select id="templates-select" onchange="templateSelectChanged(this);">
+                <option value="" selected>None</option>
+            </select>
+            <button class="templates-button" id="templates-button" onclick="showEditTemplate();">New Template</button>
+            <input id="templates-textinput" style="display: none;" type="text" minlength="2" maxlength="18" oninput="templateNameInput(this);">
+            <button class="templates-button" id="templates-save-button" style="display: none;" onclick="saveNewTemplate();">Save</button>
+            <button class="templates-button" id="templates-delete-button" style="display: none;" onclick="hideEditTemplate();">Cancel</button>
+            <button class="templates-button" id="database-save-button" style="margin-left: auto; " onclick="saveToDatabase();">Save</button>
+        </div>
+    </div>
+
+    <div style="background: white; width: 100%; margin: 0; padding: 0;">
+        <div id="timecard-header">
+            <button id="timecard-nav-prev" onclick="prevWeek();">&#9668; Previous Week</button>
+            <div style="width: 140px; margin: 0 auto;">
+                <div id="total-hours" style="font-weight: bold;">Total Hours: </div>
+            </div>
+            <button id="timecard-nav-next" onclick="nextWeek();">Next Week &#9658;</button>
+        </div>
+    </div>
+
+    <script>
+        slotIncrement = "{{ slot_increment }}";
+        slotFirstStart = moment("{{ slot_first_start }}", "HHmm");
+        getFromDatabase();
+        
+        databaseSaveButton = document.getElementById("database-save-button");
+        databaseSaveButton.disabled = true;
+    </script>
+
+    <div ondragstart="return false;" ondrop="return false;" style="width: 100%; margin: 0;">
+        <hr style=" height: 5px; border: 0; box-shadow: inset 0 5px 5px -5px rgba(0, 0, 0, 0.5); margin: 0; margin-bottom: 5px;" />
+        <div style="width: 100%; margin: 0;
+                -moz-user-select: none; /* Firefox */
+                -ms-user-select: none; /* Internet Explorer */
+                -khtml-user-select: none; /* KHTML browsers (e.g. Konqueror) */
+                -webkit-user-select: none; /* Chrome, Safari, and Opera */
+                -webkit-touch-callout: none; /* Disable Android and iOS callouts*/">
+            <table class="timecard-day-table">
+                <tr>
+                    {% for d in days %} {% include 'day.html' %} {% endfor %}
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div id="footer">
+        <div>A VCC Helpdesk Project | <a href="https://github.com/VCC-Helpdesk/timecard" target="_blank" title="Source">Source</a></div>
+    </div>
+</body>
+
+</html>
