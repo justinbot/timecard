@@ -18,7 +18,6 @@ class User(db.Model):
     rcsid = db.Column(db.String(16), primary_key=True)
     # actual name, for convenience
     name = db.column(db.String(32))
-
     slots = db.relationship('Timeslot', backref='user', cascade="all, delete-orphan", lazy='dynamic')
 
 
@@ -27,6 +26,22 @@ class Timeslot(db.Model):
     # Uses BigInteger due to 2038 problem
     timestamp = db.Column(db.BigInteger, primary_key=True)
     parent_rcsid = db.Column(db.String(16), db.ForeignKey('user.rcsid'))
+
+
+#class Template(db.Model):
+#    __tablename__ = 'template'
+
+    # name of the template
+#    name = db.column(db.String(32), primary_key=True)
+    # associated day slots (not a full timeslot, just time of day)
+#    slots = db.relationship('Timeslot', backref='user', cascade="all, delete-orphan", lazy='dynamic')
+
+
+#class Dayslot(db.Model):
+#    __tablename__ = 'timeslot'
+    # time of day
+    #time = db.Column(db.BigInteger, primary_key=True)
+    #parent_rcsid = db.Column(db.String(16), db.ForeignKey('user.rcsid'))
 
 
 def hours_range(start_time, end_time, increment):
@@ -41,7 +56,7 @@ def hours_range(start_time, end_time, increment):
 def show_timecard():
     #if session['logged_in']:
     # session should contain info like privilege, username, name
-    session['username'] = app.config['USERNAME']
+    #session['username'] = app.config['USERNAME']
 
     # days of week 0-6
     days=range(7)
@@ -104,9 +119,8 @@ def update():
 
 
 def init_db():
-    """For use on command line for setting up
-        the database.
-    """
+    # for use with command line argument to reset database
+
     db.drop_all()
     db.create_all()
 

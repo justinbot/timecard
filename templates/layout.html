@@ -25,7 +25,7 @@
     <script src="../static/js/main.js"></script>
 </head>
 
-<body>
+<body onload="onload();">
 
     <header style="background: #1b5689; margin: 0;">
         <div id="header">
@@ -61,10 +61,11 @@
     <script>
         slotIncrement = "{{ slot_increment }}";
         slotFirstStart = moment("{{ slot_first_start }}", "HHmm");
-        getFromDatabase();
-        
+
         databaseSaveButton = document.getElementById("database-save-button");
         databaseSaveButton.disabled = true;
+        
+        getFromDatabase();
     </script>
 
     <div ondragstart="return false;" ondrop="return false;" style="width: 100%; margin: 0;">

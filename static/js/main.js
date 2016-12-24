@@ -1,9 +1,15 @@
-var databaseSaveButton
+var databaseSaveButton;
+var templatesSelect;
+var templatesButton;
+var templatesTextInput;
+var templatesSaveButton;
+var templatesDeleteButton;
 
-var slotIncrement
-var slotFirstStart
+var slotIncrement;
+var slotFirstStart;
 var currentDate = moment.utc(); // Date we are focused on, starts are current date
 //utc offset for est is -05:00. Times worked and displayed are in this zone
+var currentTemplate = ""; // store template associated with each day? or just have a template if set
 
 var localSelectedTimestamps = new Set();
 var localUnselectedTimestamps = new Set();
@@ -15,27 +21,23 @@ var slotDown = false;
 var slotToggleTo = true;
 
 function onload() {
-    //hideEditTemplate();
+    //databaseSaveButton = document.getElementById("database-save-button");
+    //databaseSaveButton.disabled = true;
+
+    templatesSelect = document.getElementById("templates-select");
+    templatesButton = document.getElementById("templates-button");
+    templatesTextInput = document.getElementById("templates-textinput");
+    templatesSaveButton = document.getElementById("templates-save-button");
+    templatesDeleteButton = document.getElementById("templates-delete-button");
+    // Get templates
+    hideEditTemplate();
 }
-
-// TODO: Restore use of Set, ignore Edge
-// Array extension method because array.includes is not well supported
-//Array.prototype.has = function Has(element) {
-//    return this.indexOf(element) > -1;
-//}
-
-// removes the first occurence of the specified element from the specified array
-//function arrayRemove(array, element) {
-//    index = array.indexOf(element);
-//    if (index > -1) {
-//        array.splice(index, 1);
-//    }
-//}
 
 // fetch selectedTimestamps from database (selected in week range)
 function getFromDatabase() {
     var xhr = new XMLHttpRequest();
     xhr.open("GET", "/update", true);
+    // TODO: Give dates in header for which to fetch timestamps
     //xhr.setRequestHeader("Content-type", "application/json; charset=UTF-8");
     xhr.responseType = "json";
     xhr.onload = function () {
@@ -111,10 +113,9 @@ function updateDay(weekday) {
         dayTimestamps[weekday].push(ts);
         // time is selected if it was selected locally, or was selected in the database and not unselected locally
         if ((selectedTimestamps.has(ts) && !localUnselectedTimestamps.has(ts)) || localSelectedTimestamps.has(ts)) {
-            //if ((selectedTimestamps.has(ts) && !localUnselectedTimestamps.has(ts)) || localSelectedTimestamps.has(ts)) {
-            s.className = "timecard-cell-selected";
+            s.className = "timecard-slot-selected";
         } else {
-            s.className = "timecard-cell";
+            s.className = "timecard-slot";
         }
     }
 
@@ -129,7 +130,6 @@ function updateDayHours(weekday) {
     for (let ts of dayTimestamps[weekday]) {
         // time is selected if it was selected locally, or was selected in the database and not unselected locally
         if ((selectedTimestamps.has(ts) && !localUnselectedTimestamps.has(ts)) || localSelectedTimestamps.has(ts)) {
-            //if ((selectedTimestamps.has(ts) && !localUnselectedTimestamps.has(ts)) || localSelectedTimestamps.has(ts)) {
             totalHours += (slotIncrement / 60);
         }
     }
@@ -160,15 +160,18 @@ function nextWeek() {
 
 // returns true if slot is selected, else false
 function slotSelected(slot) {
-    return (slot.className == "timecard-cell-selected");
+    return (slot.className == "timecard-slot-selected");
 }
 
 function slotSelect(slot) {
     if (!slotSelected(slot)) {
-        slot.className = "timecard-cell-selected";
-        localSelectedTimestamps.add(slot.dataset.timestamp);
+        slot.className = "timecard-slot-selected";
+
+        if (!selectedTimestamps.has(slot.dataset.timestamp)) {
+            localSelectedTimestamps.add(slot.dataset.timestamp);
+        }
+
         localUnselectedTimestamps.delete(slot.dataset.timestamp);
-        //arrayRemove(localUnselectedTimestamps, slot.dataset.timestamp);
 
         updateDayHours(slot.dataset.weekday);
     }
@@ -176,9 +179,10 @@ function slotSelect(slot) {
 
 function slotUnselect(slot) {
     if (slotSelected(slot)) {
-        slot.className = "timecard-cell";
+        slot.className = "timecard-slot";
+
         localSelectedTimestamps.delete(slot.dataset.timestamp);
-        // arrayRemove(localSelectedTimestamps, slot.dataset.timestamp);
+
         // if this was originally selected from the database, add it to be unselected
         if (selectedTimestamps.has(slot.dataset.timestamp)) {
             localUnselectedTimestamps.add(slot.dataset.timestamp);
@@ -193,9 +197,9 @@ function slotMouseOver(slot) {
         return;
     }
     if (slotToggleTo) {
-        slotSelect(slot); // changing cells to selected
+        slotSelect(slot); // changing slots to selected
     } else {
-        slotUnselect(slot); // changing cells to unselected
+        slotUnselect(slot); // changing slots to unselected
     }
     // Hours changed, no longer template-valid
 }
@@ -208,4 +212,75 @@ function slotMouseDown(slot) {
 
 function slotMouseUp(slot) {
     slotDown = false;
+}
+
+function showEditTemplate() {
+    templatesSelect.style.display = "none";
+    templatesButton.style.display = "none";
+    templatesTextInput.style.display = "inline";
+    templatesSaveButton.style.display = "inline";
+    templatesDeleteButton.style.display = "inline";
+
+    if (templatesSelect.selectedIndex == 0) {
+        // Making new template
+        templatesTextInput.value = "New Template";
+    } else {
+        // Renaming existing template
+        templatesTextInput.value = templatesSelect.options[templatesSelect.selectedIndex].text;
+    }
+
+    templateNameInput(templatesTextInput);
+    templatesTextInput.focus();
+}
+
+function hideEditTemplate() {
+    var select = document.getElementById("templates-select");
+    var templatesButton = document.getElementById("templates-button");
+    var templatesTextInput = document.getElementById("templates-textinput");
+    var templatesSaveButton = document.getElementById("templates-save-button");
+    var templatesDeleteButton = document.getElementById("templates-delete-button");
+
+    select.style.display = "inline";
+    templatesButton.style.display = "inline";
+    templatesTextInput.style.display = "none";
+    templatesSaveButton.style.display = "none";
+    templatesDeleteButton.style.display = "none";
+
+    templatesTextInput.value = "";
+}
+
+// When enter is pressed in text box
+function templateNameInput(e) {
+    /* if (event.keyCode == 13) {
+        saveNewTemplate();
+    }*/
+    var select = document.getElementById("templates-select");
+    var templatesSaveButton = document.getElementById("templates-save-button");
+    // Disable save button unless template name is unique
+    templatesSaveButton.disabled = false;
+    for (var i = 0; i < select.length; i++) {
+        if (e.value.trim() == select.options[i].text) {
+            // Save button disabled unless template (update) or name changed (new)
+            templatesSaveButton.disabled = true;
+            break;
+        }
+    }
+}
+
+function saveNewTemplate() {
+    var templatesTextInput = document.getElementById("templates-textinput");
+    var select = document.getElementById("templates-select");
+    templatesSelect.options[select.options.length] = new Option(templatesTextInput.value.trim(), "new-template-value");
+    hideEditTemplate();
+}
+
+function templateSelectChanged(select) {
+    if (select.selectedIndex == 0) {
+        document.getElementById("templates-button").textContent = "New Template";
+    } else {
+        document.getElementById("templates-button").textContent = "Edit Template";
+    }
+
+    // Apply template to hours
+    // set all cells to unselected, select those in the template
 }

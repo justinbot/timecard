@@ -7,7 +7,7 @@
     <table class="timecard-hour-table">
         {% for t in range(times|length) %}
         <tr>
-            <td data-weekday="{{ d }}" data-timedelta="{{ t*slot_increment*60 }}" data-timestamp="" class="timecard-cell" onmouseover="slotMouseOver(this);" onmouseup="slotMouseUp(this);" onmousedown="slotMouseDown(this);">
+            <td data-weekday="{{ d }}" data-timedelta="{{ t*slot_increment*60 }}" data-timestamp="" class="timecard-slot" onmouseover="slotMouseOver(this);" onmouseup="slotMouseUp(this);" onmousedown="slotMouseDown(this);">
                 {{ times[t].format('hh:mm a') }}
             </td>
         </tr>

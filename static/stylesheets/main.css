@@ -183,7 +183,7 @@ body {
     border-spacing: 0px;
 }
 
-.timecard-cell {
+.timecard-slot {
     font-size: 80%;
     background: #eaeaea;
     border-bottom: 1px solid #666;
@@ -193,11 +193,11 @@ body {
     cursor: cell;
 }
 
-.timecard-cell:hover {
+.timecard-slot:hover {
     background: white;
 }
 
-.timecard-cell-selected {
+.timecard-slot-selected {
     font-size: 80%;
     background: #0cc980;
     color: white;
@@ -209,6 +209,6 @@ body {
     cursor: cell;
 }
 
-.timecard-cell-selected:hover {
+.timecard-slot-selected:hover {
     background: #43efad;
 }
