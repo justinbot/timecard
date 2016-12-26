@@ -3,10 +3,10 @@
 
 <head>
     <meta charset="utf-8">
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet">
     <title>timecard</title>
-    <link rel="stylesheet" href="../static/stylesheets/main.css">
     <link rel="icon" type="image/ico" href="http://www.rpi.edu/favicon.ico">
+    <link rel="stylesheet" href="../static/stylesheets/main.css">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet">
     <!-- Leet navbar -->
     <link rel="stylesheet" href="../static/stylesheets/custom.css">
     <nav id="bar">
@@ -29,8 +29,10 @@
 
     <header style="background: #1b5689; margin: 0;">
         <div id="header">
-            <img src="static/logo.svg" id="logo">
-            <a id="login" href="{# url_for('logout') #}">Logout {{ session.username }}</a>
+            <a href="{{ url_for('show_timecard') }}">
+                <img src="static/logo.svg" id="logo" height="30">
+            </a>
+            <a id="login" href="{{ url_for('show_timecard') }}">Logout {{ session["CAS_USERNAME"] }}</a>
         </div>
     </header>
 
@@ -48,11 +50,11 @@
         </div>
     </div>
 
-    <div style="background: white; width: 100%; margin: 0; padding: 0;">
+    <div class="unselectable" style="background: white; width: 100%; margin: 0; padding: 0;">
         <div id="timecard-header">
             <button id="timecard-nav-prev" onclick="prevWeek();">&#9668; Previous Week</button>
             <div style="width: 140px; margin: 0 auto;">
-                <div id="timecard-total-hours" style="font-weight: bold;">Total Hours: </div>
+                <div id="timecard-total-hours" style="font-weight: bold;">Total Hours: 0.0</div>
             </div>
             <button id="timecard-nav-next" onclick="nextWeek();">Next Week &#9658;</button>
         </div>
@@ -60,12 +62,7 @@
 
     <div ondragstart="return false;" ondrop="return false;" style="width: 100%; margin: 0;">
         <hr style=" height: 5px; border: 0; box-shadow: inset 0 5px 5px -5px rgba(0, 0, 0, 0.5); margin: 0; margin-bottom: 5px;" />
-        <div style="width: 100%; margin: 0;
-                -moz-user-select: none; /* Firefox */
-                -ms-user-select: none; /* Internet Explorer */
-                -khtml-user-select: none; /* KHTML browsers (e.g. Konqueror) */
-                -webkit-user-select: none; /* Chrome, Safari, and Opera */
-                -webkit-touch-callout: none; /* Disable Android and iOS callouts*/">
+        <div class="unselectable" style="width: 100%; margin: 0;">
             <table class="timecard-day-table">
                 <tr>
                     {% for d in days %} {% include 'day.html' %} {% endfor %}

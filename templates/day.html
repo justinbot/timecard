@@ -2,13 +2,13 @@
 <td id="timecard-day-{{ d }}" data-date="" data-totalhours=0.0 class="timecard-day" onmouseleave="slotDown=false;"> <!-- onmouseup="dayUpdateHours({{ d }});" onmouseleave="dayUpdateHours({{ d }});"> -->
     <div class="day-header-date" style="font-weight: bold;">01/01/00</div>
     <div class="day-header-weekday" style="font-weight: bold;">Monday</div>
-    <div class="day-header-hours" style="font-weight: bold;">Hours: 0</div>
+    <div class="day-header-hours" style="font-weight: bold;">Hours: 0.0</div>
     <div style="background: #666; width: 100%; height: 1px;"></div>
     <table class="timecard-hour-table">
         {% for t in range(times|length) %}
         <tr>
             <td data-weekday="{{ d }}" data-timedelta="{{ t*slot_increment*60 }}" data-timestamp="" class="timecard-slot" onmouseover="slotMouseOver(this);" onmouseup="slotMouseUp(this);" onmousedown="slotMouseDown(this);">
-                {{ times[t].format('hh:mm a') }}
+                {{ times[t].strftime('%I:%M %p') }}
             </td>
         </tr>
         {% endfor %}
