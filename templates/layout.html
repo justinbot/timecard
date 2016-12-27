@@ -30,7 +30,7 @@
     <div id="header-container">
         <div id="header">
             <a id="logo" href="{{ url_for('show_timecard') }}">
-                <img src="static/logo.svg" height="30px">
+                <img src="static/img/logo.svg" height="30px">
             </a>
             <a id="login" href="{{ url_for('show_timecard') }}">Logout {{ session["CAS_USERNAME"] }}</a>
         </div>
@@ -53,8 +53,8 @@
     <div id="tc-nav-container">
         <div id="tc-nav">
             <button class="tc-button" id="tc-nav-today" onclick="currentWeek();">Today</button>
-            <button class="tc-button" id="tc-nav-prev" onclick="prevWeek();">&#9668; Previous Week</button>
-            <button class="tc-button" id="tc-nav-next" onclick="nextWeek();">Next Week &#9658;</button>
+            <button class="tc-button" id="tc-nav-prev" onclick="prevWeek();"></button>
+            <button class="tc-button" id="tc-nav-next" onclick="nextWeek();"></button>
             <span id="tc-nav-range">Jan 1 – 7, 2000</span>
             <span id="tc-nav-total">Total Hours: 0.0</span>
         </div>
@@ -84,7 +84,7 @@
         for (var i = 0; i < 7; i++) {
             weekdays.push(document.getElementById("tc-day-" + i));
         }
-        
+
         databaseSave = document.getElementById("database-save");
         databaseSave.disabled = true;
 

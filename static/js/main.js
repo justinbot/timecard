@@ -72,6 +72,7 @@ function loadTimestamps(response) {
     //var result = JSON.parse(response);
 
     selectedTimestamps = new Set();
+    console.log("selectedTimestamps cleared");
     for (var i = 0; i < response['selected'].length; i++) {
         selectedTimestamps.add(response['selected'][i]);
         //console.log(t);
@@ -95,11 +96,17 @@ function saveToDatabase() {
     xhr.open("POST", "/update", true);
     xhr.setRequestHeader("Content-type", "application/json; charset=UTF-8");
     xhr.send(timestamps);
-    //console.log(timestamps);
+
+    for (var elem of localSelectedTimestamps) {
+        selectedTimestamps.add(elem);
+    }
+
+    for (var elem of localUnselectedTimestamps) {
+        selectedTimestamps.delete(elem);
+    }
 
     localSelectedTimestamps = new Set();
     localUnselectedTimestamps = new Set();
-    //getFromDatabase();
 
     // TODO: Use "Last modified 01/01/00" "Saving..." and "All changes saved" "Unable to save (error xxxx)" to indicate save status
 }
@@ -213,24 +220,33 @@ function slotSelected(slot) {
 }
 
 function slotSelect(slot) {
+    // this check may not be necessary
     if (!slotSelected(slot)) {
         slot.className = "tc-slot-selected";
+        console.log(slot.dataset.timestamp + " selected");
 
         if (!selectedTimestamps.has(slot.dataset.timestamp)) {
             localSelectedTimestamps.add(slot.dataset.timestamp);
         }
 
-        localUnselectedTimestamps.delete(slot.dataset.timestamp);
+        if (localUnselectedTimestamps.has(slot.dataset.timestamp)) {
+            localUnselectedTimestamps.delete(slot.dataset.timestamp);
+        }
 
         updateDayHours(slot.dataset.weekday);
+    } else {
+        console.log("selecting already selected slot");
     }
 }
 
 function slotUnselect(slot) {
     if (slotSelected(slot)) {
         slot.className = "tc-slot";
+        console.log(slot.dataset.timestamp + " unselected");
 
-        localSelectedTimestamps.delete(slot.dataset.timestamp);
+        if (localSelectedTimestamps.has(slot.dataset.timestamp)) {
+            localSelectedTimestamps.delete(slot.dataset.timestamp);
+        }
 
         // if this was originally selected from the database, add it to be unselected
         if (selectedTimestamps.has(slot.dataset.timestamp)) {
@@ -238,6 +254,8 @@ function slotUnselect(slot) {
         }
 
         updateDayHours(slot.dataset.weekday);
+    } else {
+        console.log("unselecting already unselected slot");
     }
 }
 
