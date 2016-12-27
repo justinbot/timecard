@@ -77,7 +77,7 @@ def update():
     u = db.session.query(User).get('carlsj4')
 
     if request.method == 'GET':
-        # modify to recieve a list of dates and return timestamps for those dates
+        # modify to recieve a list of dates and return timestamps, locked status for those dates
         
         ts_dict = {}
         ts_dict['selected'] = []
@@ -89,6 +89,7 @@ def update():
     elif request.method == 'POST':
         content = request.get_json()
 
+        # can check if an item exists with session.query(q.exists())
         # Add timestamps in 'selected'
         if (len(content['selected']) > 0):
             # TODO: Ignore duplicate timestamps and those in locked timecards (prior to lock date) unless admin
@@ -97,8 +98,8 @@ def update():
         
         # Delete timestamps in 'unselected'
         if (len(content['unselected']) > 0):
-            db.session.query(Timeslot).filter(Timeslot.timestamp.in_(content['unselected']), Timeslot.parent_rcsid == u.rcsid).delete(synchronize_session='fetch')
-
+           db.session.query(Timeslot).filter(Timeslot.timestamp.in_(content['unselected']), Timeslot.parent_rcsid == u.rcsid).delete(synchronize_session='fetch')
+           
         db.session.commit()
 
         return 'POST result'

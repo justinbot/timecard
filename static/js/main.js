@@ -1,17 +1,21 @@
 var weekdays = [];
 
-var timecardTotalHours;
+var tcNavToday;
+var tcNavRange;
+var tcNavTotal;
 
-var databaseSaveButton;
 var templatesSelect;
 var templatesButton;
 var templatesTextInput;
-var templatesSaveButton;
-var templatesDeleteButton;
+var templatesSave;
+var templatesDelete;
+
+var databaseSave;
 
 var slotIncrement;
 var slotFirstStart;
-var currentDate = moment.utc(); // Date we are focused on, starts are current date
+var initialDate = moment.utc();
+var focusDate;
 //utc offset for est is -05:00. Times worked and displayed are in this zone
 var currentTemplate = ""; // store template associated with each day? or just have a template if set
 
@@ -30,15 +34,14 @@ var slotToggleTo = true;
 
 function onload() {
     // might be called before or after script tag, though above code should be called first
-    
-    //databaseSaveButton = document.getElementById("database-save-button");
-    //databaseSaveButton.disabled = true;
 
+    // maybe move these to script tag
     templatesSelect = document.getElementById("templates-select");
-    templatesButton = document.getElementById("templates-button");
+    templatesNew = document.getElementById("templates-new");
     templatesTextInput = document.getElementById("templates-textinput");
-    templatesSaveButton = document.getElementById("templates-save-button");
-    templatesDeleteButton = document.getElementById("templates-delete-button");
+    templatesSave = document.getElementById("templates-save");
+    templatesDelete = document.getElementById("templates-delete");
+
     // Get templates
     hideEditTemplate();
 }
@@ -59,7 +62,9 @@ function getFromDatabase() {
     // TODO: on error or bad status, show error
     xhr.send();
 
-    // TODO: Update day headers here, since we already know date and weekday
+    for (var i = 0; i < weekdays.length; i++) {
+        updateDayHeader(i);
+    }
 }
 
 function loadTimestamps(response) {
@@ -72,16 +77,15 @@ function loadTimestamps(response) {
         //console.log(t);
     }
 
-    // TODO: Separate updating header and content for responsiveness
     for (var i = 0; i < weekdays.length; i++) {
-        updateDay(i);
+        updateDayContent(i);
     }
 }
 
 // write localSelectedTimestamps to database
 function saveToDatabase() {
-    databaseSaveButton.disabled = true;
-    databaseSaveButton.textContent = "Saved";
+    databaseSave.disabled = true;
+    databaseSave.textContent = "Saved";
 
     var timestamps = JSON.stringify({
         selected: Array.from(localSelectedTimestamps),
@@ -100,41 +104,47 @@ function saveToDatabase() {
     // TODO: Use "Last modified 01/01/00" "Saving..." and "All changes saved" "Unable to save (error xxxx)" to indicate save status
 }
 
-// updates header and slot timestamps of the specified day
-function updateDay(weekday) {
-    var day = weekdays[weekday]; //document.getElementById("timecard-day-" + weekday);
+// update header of this day
+function updateDayHeader(weekday) {
+    var day = weekdays[weekday];
     var headerDate = day.children[0];
     var headerWeekday = day.children[1];
 
-    var dayDate = moment(currentDate).startOf("week").add(weekday, "day"); // date of this day
+    // date associated with day at time of first slot
+    var dayDate = moment(focusDate).startOf("week").add(weekday, "day");
     dayDate.set({
-            'hour': slotFirstStart.hour(),
-            'minute': slotFirstStart.minute()
-        }) // at hour and minute of first slot
+        'hour': slotFirstStart.hour(),
+        'minute': slotFirstStart.minute()
+    })
     day.dataset.date = dayDate.unix();
 
     headerDate.textContent = dayDate.format("MM[/]DD[/]YY");
     headerWeekday.textContent = dayDate.format("dddd");
+}
 
-    dayTimestamps[weekday] = [];
+// update slots of this day
+function updateDayContent(weekday) {
+    var day = weekdays[weekday];
+
     var slots = day.getElementsByTagName("td");
+    dayTimestamps[weekday] = [];
     for (var i = 0; i < slots.length; i++) {
         // update timestamp of every slot by using its delta (seconds from first slot)
         var ts = slots[i].dataset.timestamp = day.dataset.date + slots[i].dataset.timedelta;
         dayTimestamps[weekday].push(ts);
         // time is selected if it was selected locally, or was selected in the database and not unselected locally
         if ((selectedTimestamps.has(ts) && !localUnselectedTimestamps.has(ts)) || localSelectedTimestamps.has(ts)) {
-            slots[i].className = "timecard-slot-selected";
+            slots[i].className = "tc-slot-selected";
         } else {
-            slots[i].className = "timecard-slot";
+            slots[i].className = "tc-slot";
         }
     }
 
     updateDayHours(weekday);
 }
 
+// update hours label in header of this day
 function updateDayHours(weekday) {
-    // TODO: Cache day objects?
     var day = weekdays[weekday];
     var headerHours = day.children[2];
 
@@ -152,48 +162,59 @@ function updateDayHours(weekday) {
     headerHours.textContent = "Hours: " + dayTotalHours.toFixed(1);
 
     // only needs to update hours for this day
-    updateTotalHours();
+    updateNavTotal();
 
     if (localSelectedTimestamps.size == 0 && localUnselectedTimestamps.size == 0) {
-        databaseSaveButton.disabled = true;
-        databaseSaveButton.textContent = "Saved";
+        databaseSave.disabled = true;
+        databaseSave.textContent = "Saved";
     } else {
-        databaseSaveButton.disabled = false;
-        databaseSaveButton.textContent = "Save";
+        databaseSave.disabled = false;
+        databaseSave.textContent = "Save";
     }
 }
 
-function updateTotalHours() {
+function updateNavTotal() {
     var totalHours = 0.0;
     for (var i = 0; i < weekdays.length; i++) {
         totalHours += parseFloat(weekdays[i].dataset.totalhours);
     }
 
     // TODO: Same precision issue as day hours
-    timecardTotalHours.textContent = "Total Hours: " + totalHours.toFixed(1);
+    tcNavTotal.textContent = "Total Hours: " + totalHours.toFixed(1);
+}
+
+function currentWeek() {
+    focusDate = moment(initialDate);
+    tcNavToday.disabled = true;
+    tcNavRange.textContent = moment(focusDate).startOf("week").format("MMM D") + " – " + moment(focusDate).endOf("week").format("D, YYYY");
+    getFromDatabase();
 }
 
 // move focused date back one week
 function prevWeek() {
-    currentDate.subtract(1, "week");
+    focusDate.subtract(1, "week");
+    tcNavToday.disabled = focusDate.isSame(initialDate, "day");
+    tcNavRange.textContent = moment(focusDate).startOf("week").format("MMM D") + " – " + moment(focusDate).endOf("week").format("D, YYYY");
     getFromDatabase();
 }
 
 // move focused date forward one week
 function nextWeek() {
-    currentDate.add(1, "week");
+    focusDate.add(1, "week");
+    tcNavToday.disabled = focusDate.isSame(initialDate, "day");
+    tcNavRange.textContent = moment(focusDate).startOf("week").format("MMM D") + " – " + moment(focusDate).endOf("week").format("D, YYYY");
     getFromDatabase();
 
 }
 
 // returns true if slot is selected, else false
 function slotSelected(slot) {
-    return (slot.className == "timecard-slot-selected");
+    return (slot.className == "tc-slot-selected");
 }
 
 function slotSelect(slot) {
     if (!slotSelected(slot)) {
-        slot.className = "timecard-slot-selected";
+        slot.className = "tc-slot-selected";
 
         if (!selectedTimestamps.has(slot.dataset.timestamp)) {
             localSelectedTimestamps.add(slot.dataset.timestamp);
@@ -207,7 +228,7 @@ function slotSelect(slot) {
 
 function slotUnselect(slot) {
     if (slotSelected(slot)) {
-        slot.className = "timecard-slot";
+        slot.className = "tc-slot";
 
         localSelectedTimestamps.delete(slot.dataset.timestamp);
 
@@ -244,10 +265,10 @@ function slotMouseUp(slot) {
 
 function showEditTemplate() {
     templatesSelect.style.display = "none";
-    templatesButton.style.display = "none";
+    templatesNew.style.display = "none";
     templatesTextInput.style.display = "inline";
-    templatesSaveButton.style.display = "inline";
-    templatesDeleteButton.style.display = "inline";
+    templatesSave.style.display = "inline";
+    templatesDelete.style.display = "inline";
 
     if (templatesSelect.selectedIndex == 0) {
         // Making new template
@@ -262,17 +283,11 @@ function showEditTemplate() {
 }
 
 function hideEditTemplate() {
-    var select = document.getElementById("templates-select");
-    var templatesButton = document.getElementById("templates-button");
-    var templatesTextInput = document.getElementById("templates-textinput");
-    var templatesSaveButton = document.getElementById("templates-save-button");
-    var templatesDeleteButton = document.getElementById("templates-delete-button");
-
-    select.style.display = "inline";
-    templatesButton.style.display = "inline";
+    templatesSelect.style.display = "inline";
+    templatesNew.style.display = "inline";
     templatesTextInput.style.display = "none";
-    templatesSaveButton.style.display = "none";
-    templatesDeleteButton.style.display = "none";
+    templatesSave.style.display = "none";
+    templatesDelete.style.display = "none";
 
     templatesTextInput.value = "";
 }
@@ -282,31 +297,28 @@ function templateNameInput(e) {
     /* if (event.keyCode == 13) {
         saveNewTemplate();
     }*/
-    var select = document.getElementById("templates-select");
-    var templatesSaveButton = document.getElementById("templates-save-button");
     // Disable save button unless template name is unique
-    templatesSaveButton.disabled = false;
-    for (var i = 0; i < select.length; i++) {
-        if (e.value.trim() == select.options[i].text) {
+    templatesSave.disabled = false;
+    for (var i = 0; i < templatesSelect.length; i++) {
+        if (e.value.trim() == templatesSelect.options[i].text) {
             // Save button disabled unless template (update) or name changed (new)
-            templatesSaveButton.disabled = true;
+            templatesSave.disabled = true;
             break;
         }
     }
 }
 
 function saveNewTemplate() {
-    var templatesTextInput = document.getElementById("templates-textinput");
-    var select = document.getElementById("templates-select");
-    templatesSelect.options[select.options.length] = new Option(templatesTextInput.value.trim(), "new-template-value");
+    // send request to save new template
+    templatesSelect.options[templatesSelect.options.length] = new Option(templatesTextInput.value.trim(), "new-template-value");
     hideEditTemplate();
 }
 
 function templateSelectChanged(select) {
     if (select.selectedIndex == 0) {
-        document.getElementById("templates-button").textContent = "New Template";
+        templatesNew.textContent = "New Template";
     } else {
-        document.getElementById("templates-button").textContent = "Edit Template";
+        templatesNew.textContent = "Edit Template";
     }
 
     // Apply template to hours

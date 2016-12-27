@@ -27,43 +27,43 @@
 
 <body onload="onload();">
 
-    <header style="background: #1b5689; margin: 0;">
+    <div id="header-container">
         <div id="header">
-            <a href="{{ url_for('show_timecard') }}">
-                <img src="static/logo.svg" id="logo" height="30">
+            <a id="logo" href="{{ url_for('show_timecard') }}">
+                <img src="static/logo.svg" height="30px">
             </a>
             <a id="login" href="{{ url_for('show_timecard') }}">Logout {{ session["CAS_USERNAME"] }}</a>
         </div>
-    </header>
+    </div>
 
-    <div style="background: #eaeaea; border-bottom: #d1d1d1 solid 1px; width: 100%; margin: 0; padding: 0;">
-        <div id="templates-header">
-            <div>Template:</div>
+    <div id="templates-container">
+        <div id="templates">
+            <div style="display: inline-block;">Template:</div>
             <select id="templates-select" onchange="templateSelectChanged(this);">
                 <option value="" selected>None</option>
             </select>
-            <button class="templates-button" id="templates-button" onclick="showEditTemplate();">New Template</button>
+            <button class="tc-button" id="templates-new" onclick="showEditTemplate();">New Template</button>
             <input id="templates-textinput" style="display: none;" type="text" minlength="2" maxlength="18" oninput="templateNameInput(this);">
-            <button class="templates-button" id="templates-save-button" style="display: none;" onclick="saveNewTemplate();">Save</button>
-            <button class="templates-button" id="templates-delete-button" style="display: none;" onclick="hideEditTemplate();">Cancel</button>
-            <button class="templates-button" id="database-save-button" style="margin-left: auto; " onclick="saveToDatabase();">Save</button>
+            <button class="tc-button" id="templates-save" style="display: none;" onclick="saveNewTemplate();">Save</button>
+            <button class="tc-button" id="templates-delete" style="display: none;" onclick="hideEditTemplate();">Cancel</button>
+            <button class="tc-button" id="database-save" onclick="saveToDatabase();">Save</button>
         </div>
     </div>
 
-    <div class="unselectable" style="background: white; width: 100%; margin: 0; padding: 0;">
-        <div id="timecard-header">
-            <button id="timecard-nav-prev" onclick="prevWeek();">&#9668; Previous Week</button>
-            <div style="width: 140px; margin: 0 auto;">
-                <div id="timecard-total-hours" style="font-weight: bold;">Total Hours: 0.0</div>
-            </div>
-            <button id="timecard-nav-next" onclick="nextWeek();">Next Week &#9658;</button>
+    <div id="tc-nav-container">
+        <div id="tc-nav">
+            <button class="tc-button" id="tc-nav-today" onclick="currentWeek();">Today</button>
+            <button class="tc-button" id="tc-nav-prev" onclick="prevWeek();">&#9668; Previous Week</button>
+            <button class="tc-button" id="tc-nav-next" onclick="nextWeek();">Next Week &#9658;</button>
+            <span id="tc-nav-range">Jan 1 – 7, 2000</span>
+            <span id="tc-nav-total">Total Hours: 0.0</span>
         </div>
     </div>
 
-    <div ondragstart="return false;" ondrop="return false;" style="width: 100%; margin: 0;">
+    <div class="unselectable" style="width: 100%; margin: 0; display: block;" ondragstart="return false;" ondrop="return false;">
         <hr style=" height: 5px; border: 0; box-shadow: inset 0 5px 5px -5px rgba(0, 0, 0, 0.5); margin: 0; margin-bottom: 5px;" />
-        <div class="unselectable" style="width: 100%; margin: 0;">
-            <table class="timecard-day-table">
+        <div style="width: 100%; margin: 0;">
+            <table class="tc-day-table">
                 <tr>
                     {% for d in days %} {% include 'day.html' %} {% endfor %}
                 </tr>
@@ -76,17 +76,19 @@
         slotIncrement = "{{ slot_increment }}";
         slotFirstStart = moment("{{ slot_first_start }}", "HHmm");
 
-        timecardTotalHours = document.getElementById("timecard-total-hours");
+        tcNavToday = document.getElementById("tc-nav-today");
+        tcNavRange = document.getElementById("tc-nav-range");
+        tcNavTotal = document.getElementById("tc-nav-total");
 
         // find and cache each day just created
         for (var i = 0; i < 7; i++) {
-            weekdays.push(document.getElementById("timecard-day-" + i));
+            weekdays.push(document.getElementById("tc-day-" + i));
         }
+        
+        databaseSave = document.getElementById("database-save");
+        databaseSave.disabled = true;
 
-        databaseSaveButton = document.getElementById("database-save-button");
-        databaseSaveButton.disabled = true;
-
-        getFromDatabase();
+        currentWeek();
     </script>
 
     <div id="footer">
