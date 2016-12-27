@@ -39,13 +39,20 @@
     <div id="templates-container">
         <div id="templates">
             <div style="display: inline-block;">Template:</div>
-            <select id="templates-select" onchange="templateSelectChanged(this);">
-                <option value="" selected>None</option>
-            </select>
-            <button class="tc-button" id="templates-new" onclick="showEditTemplate();">New Template</button>
-            <input id="templates-textinput" style="display: none;" type="text" minlength="2" maxlength="18" oninput="templateNameInput(this);">
-            <button class="tc-button" id="templates-save" style="display: none;" onclick="saveNewTemplate();">Save</button>
-            <button class="tc-button" id="templates-delete" style="display: none;" onclick="hideEditTemplate();">Cancel</button>
+            <div id="templ-container">
+                <select id="templ-select" onchange="templSelectChanged(this);">
+                    <option value="" selected>None</option>
+                </select>
+                <button class="tc-button" id="templ-new" onclick="showTemplEdit();">New Template</button>
+            </div>
+            <div id="templ-edit-container" style="display: none;">
+                <input id="templ-textinput" type="text" minlength="2" maxlength="18" oninput="templInputName(this);">
+                <button class="tc-button" id="templ-save" onclick="templSaveOption();">Save</button>
+                <button class="tc-button" id="templ-delete" onclick="templDeleteOption()">Delete</button>
+                <button class="tc-button" id="templ-cancel" onclick="hideTemplEdit();">Cancel</button>
+            </div>
+            <span id="db-status">Last modified: …</span>
+            <!-- save button for testing purposes -->
             <button class="tc-button" id="database-save" onclick="saveToDatabase();">Save</button>
         </div>
     </div>
@@ -76,6 +83,18 @@
         slotIncrement = "{{ slot_increment }}";
         slotFirstStart = moment("{{ slot_first_start }}", "HHmm");
 
+        templContainer = document.getElementById("templ-container");
+        templEditContainer = document.getElementById("templ-edit-container");
+        templSelect = document.getElementById("templ-select");
+        templNew = document.getElementById("templ-new");
+        templTextInput = document.getElementById("templ-textinput");
+        templSave = document.getElementById("templ-save");
+        templDelete = document.getElementById("templ-delete");
+
+        dbStatus = document.getElementById("db-status");
+        dbSave = document.getElementById("database-save");
+        dbSave.disabled = true;
+
         tcNavToday = document.getElementById("tc-nav-today");
         tcNavRange = document.getElementById("tc-nav-range");
         tcNavTotal = document.getElementById("tc-nav-total");
@@ -84,9 +103,6 @@
         for (var i = 0; i < 7; i++) {
             weekdays.push(document.getElementById("tc-day-" + i));
         }
-
-        databaseSave = document.getElementById("database-save");
-        databaseSave.disabled = true;
 
         currentWeek();
     </script>

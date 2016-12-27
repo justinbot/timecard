@@ -1,4 +1,5 @@
 import datetime
+import time
 from flask import Flask, request, session, redirect, url_for, render_template, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 
@@ -17,6 +18,7 @@ class User(db.Model):
     rcsid = db.Column(db.String(16), primary_key=True)
     # actual name, for convenience
     name = db.column(db.String(32))
+    last_modified = db.Column(db.BigInteger)
     slots = db.relationship('Timeslot', backref='user', cascade="all, delete-orphan", lazy='dynamic')
 
 
@@ -80,6 +82,7 @@ def update():
         # modify to recieve a list of dates and return timestamps, locked status for those dates
         
         ts_dict = {}
+        ts_dict['modified'] = u.last_modified
         ts_dict['selected'] = []
         for ts in u.slots:
             ts_dict['selected'].append(str(ts.timestamp))
@@ -95,10 +98,12 @@ def update():
             # TODO: Ignore duplicate timestamps and those in locked timecards (prior to lock date) unless admin
             # maybe have a lock date and refuse changes to timestamps prior, maybe lock by day/week
             u.slots.extend([Timeslot(timestamp=t) for t in content['selected']])
+            u.last_modified = int(time.time())
         
         # Delete timestamps in 'unselected'
         if (len(content['unselected']) > 0):
-           db.session.query(Timeslot).filter(Timeslot.timestamp.in_(content['unselected']), Timeslot.parent_rcsid == u.rcsid).delete(synchronize_session='fetch')
+            db.session.query(Timeslot).filter(Timeslot.timestamp.in_(content['unselected']), Timeslot.parent_rcsid == u.rcsid).delete(synchronize_session='fetch')
+            u.last_modified = int(time.time())
            
         db.session.commit()
 
@@ -137,7 +142,8 @@ def init_db():
     db.drop_all()
     db.create_all()
 
-    test_user = User(rcsid='carlsj4', name='Justin Carlson')
+    # creating users should be done through admin panel
+    test_user = User(rcsid='carlsj4', name='Justin Carlson', last_modified = int(time.time()) )
     db.session.add(test_user)
 
     db.session.commit()

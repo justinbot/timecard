@@ -47,7 +47,7 @@
 
 body {
     background: white;
-    color: black;
+    color: #444;
     border: 0;
     font: normal 16px 'Open Sans', sans-serif;
     vertical-align: baseline;
@@ -94,33 +94,48 @@ body {
 #templates {
     display: flex;
     align-items: center;
+    color: #444;
     width: 90%;
     height: 46px;
     max-width: 1200px;
     margin: 0 auto;
 }
 
-#templates-select {
-    background: white;
-    border: 1px solid #666;
+#templ-container {}
+
+#templ-select {
     width: 140px;
     height: 20px;
-    margin: 0;
     margin-left: 10px;
     cursor: pointer;
 }
 
-#templates-select:hover {
-    border: 1px solid black;
+#templ-new {
+    margin-left: 5px;
 }
 
-#templates-new {
+#templ-edit-container {}
+
+#templ-textinput {
     margin-left: 10px;
 }
 
-#templates-save {}
+#templ-save {
+    margin-left: 5px;
+}
 
-#templates-delete {}
+#templ-delete {
+    margin-left: 5px;
+}
+
+#templ-cancel {
+    margin-left: 5px;
+}
+
+#db-status {
+    color: #9a9a9a;
+    margin-left: auto;
+}
 
 #database-save {
     margin-left: auto;
@@ -186,12 +201,10 @@ body {
 
 #tc-nav-range {
     margin-left: 20px;
-    font-size: 80%;
 }
 
 #tc-nav-total {
     margin-left: auto;
-    font-size: 80%;
     font-weight: bold;
 }
 
@@ -205,8 +218,8 @@ body {
 }
 
 .tc-day {
-    background: white;
     display: inline-block;
+    background: white;
     width: 20%;
     min-width: 90px;
     max-width: 140px;
@@ -230,7 +243,7 @@ body {
 }
 
 .tc-slot {
-    transition: background 0.1s ease-out;
+    transition: background 100ms ease-out;
     font-size: 12px;
     background: #eaeaea;
     border-bottom: 1px solid #666;
@@ -241,11 +254,12 @@ body {
 }
 
 .tc-slot:hover {
+    transition: none;
     background: white;
 }
 
 .tc-slot-selected {
-    //transition: background 0.1s ease-out;
+    transition: background 100ms ease-out;
     font-size: 12px;
     background: #0cc980;
     color: white;
@@ -258,6 +272,7 @@ body {
 }
 
 .tc-slot-selected:hover {
+    transition: none;
     background: #43efad;
 }
 

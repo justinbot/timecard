@@ -4,13 +4,16 @@ var tcNavToday;
 var tcNavRange;
 var tcNavTotal;
 
-var templatesSelect;
-var templatesButton;
-var templatesTextInput;
-var templatesSave;
-var templatesDelete;
+var templContainer;
+var templSelect;
+var templNew;
+var templEditContainer;
+var templTextInput;
+var templSave;
+var templDelete;
 
-var databaseSave;
+var dbStatus;
+var dbSave;
 
 var slotIncrement;
 var slotFirstStart;
@@ -23,27 +26,27 @@ var localSelectedTimestamps = new Set();
 var localUnselectedTimestamps = new Set();
 var selectedTimestamps = new Set();
 
-var dayTimestamps = {}; // Dictionary mapping day index to slot timestamps
+var initialLastModified; // = moment("2016-01-01");// = moment();
+var initialLoad = true;
+var changesMade = false;
 
+var dayTimestamps = {}; // Dictionary mapping day index to slot timestamps
 var slotDown = false;
 var slotToggleTo = true;
 
-// TODO: Fix potentially broken locally selected slots when week is shifted
 // TODO: Template delete button next to cancel. Also collect edit buttons (textinput, save, cancel, delete) in div
 //       and normal buttons (select dropdown and edit button) in another div
 
 function onload() {
     // might be called before or after script tag, though above code should be called first
-
     // maybe move these to script tag
-    templatesSelect = document.getElementById("templates-select");
-    templatesNew = document.getElementById("templates-new");
-    templatesTextInput = document.getElementById("templates-textinput");
-    templatesSave = document.getElementById("templates-save");
-    templatesDelete = document.getElementById("templates-delete");
+    //templatesSelect = document.getElementById("templates-select");
+    //templatesNew = document.getElementById("templates-new");
+    //templatesTextInput = document.getElementById("templates-textinput");
+    //templatesSave = document.getElementById("templates-save");
+    //templatesCancel = document.getElementById("templates-cancel");
 
-    // Get templates
-    hideEditTemplate();
+    hideTemplEdit();
 }
 
 // fetch selectedTimestamps from database (selected in week range)
@@ -54,12 +57,11 @@ function getFromDatabase() {
     //xhr.setRequestHeader("Content-type", "application/json; charset=UTF-8");
     xhr.responseType = "json";
     xhr.onload = function () {
+        // TODO: Deal with server errors here
         if (xhr.status == 200) {
-            loadTimestamps(xhr.response);
+            onLoadTimestamps(xhr.response);
         }
-    };
-
-    // TODO: on error or bad status, show error
+    }
     xhr.send();
 
     for (var i = 0; i < weekdays.length; i++) {
@@ -67,15 +69,16 @@ function getFromDatabase() {
     }
 }
 
-function loadTimestamps(response) {
-    //console.log(response);
-    //var result = JSON.parse(response);
+function onLoadTimestamps(response) {
+    if (initialLoad) {
+        var initialLastModified = moment.unix(response["modified"]);
+        dbStatus.textContent = "Last modified: " + moment(initialLastModified).fromNow();
+        initialLoad = false;
+    }
 
     selectedTimestamps = new Set();
-    console.log("selectedTimestamps cleared");
-    for (var i = 0; i < response['selected'].length; i++) {
-        selectedTimestamps.add(response['selected'][i]);
-        //console.log(t);
+    for (var i = 0; i < response["selected"].length; i++) {
+        selectedTimestamps.add(response["selected"][i]);
     }
 
     for (var i = 0; i < weekdays.length; i++) {
@@ -85,8 +88,10 @@ function loadTimestamps(response) {
 
 // write localSelectedTimestamps to database
 function saveToDatabase() {
-    databaseSave.disabled = true;
-    databaseSave.textContent = "Saved";
+    dbStatus.textContent = "Saving…";
+    dbSave.disabled = true;
+    dbSave.textContent = "Saved";
+    changesMade = true;
 
     var timestamps = JSON.stringify({
         selected: Array.from(localSelectedTimestamps),
@@ -95,6 +100,9 @@ function saveToDatabase() {
     var xhr = new XMLHttpRequest();
     xhr.open("POST", "/update", true);
     xhr.setRequestHeader("Content-type", "application/json; charset=UTF-8");
+    xhr.onload = function () {
+        onSaveTimestamps(xhr.response);
+    }
     xhr.send(timestamps);
 
     for (var elem of localSelectedTimestamps) {
@@ -107,8 +115,12 @@ function saveToDatabase() {
 
     localSelectedTimestamps = new Set();
     localUnselectedTimestamps = new Set();
+}
 
-    // TODO: Use "Last modified 01/01/00" "Saving..." and "All changes saved" "Unable to save (error xxxx)" to indicate save status
+function onSaveTimestamps(response) {
+    // TODO: Deal with server save errors here
+
+    dbStatus.textContent = "All changes saved";
 }
 
 // update header of this day
@@ -120,8 +132,8 @@ function updateDayHeader(weekday) {
     // date associated with day at time of first slot
     var dayDate = moment(focusDate).startOf("week").add(weekday, "day");
     dayDate.set({
-        'hour': slotFirstStart.hour(),
-        'minute': slotFirstStart.minute()
+        "hour": slotFirstStart.hour(),
+        "minute": slotFirstStart.minute()
     })
     day.dataset.date = dayDate.unix();
 
@@ -170,14 +182,11 @@ function updateDayHours(weekday) {
 
     // only needs to update hours for this day
     updateNavTotal();
+}
 
-    if (localSelectedTimestamps.size == 0 && localUnselectedTimestamps.size == 0) {
-        databaseSave.disabled = true;
-        databaseSave.textContent = "Saved";
-    } else {
-        databaseSave.disabled = false;
-        databaseSave.textContent = "Save";
-    }
+function updateNav() {
+    tcNavToday.disabled = focusDate.isSame(initialDate, "day");
+    tcNavRange.textContent = moment(focusDate).startOf("week").format("MMM D") + " – " + moment(focusDate).endOf("week").format("D, YYYY");
 }
 
 function updateNavTotal() {
@@ -192,24 +201,21 @@ function updateNavTotal() {
 
 function currentWeek() {
     focusDate = moment(initialDate);
-    tcNavToday.disabled = true;
-    tcNavRange.textContent = moment(focusDate).startOf("week").format("MMM D") + " – " + moment(focusDate).endOf("week").format("D, YYYY");
+    updateNav();
     getFromDatabase();
 }
 
 // move focused date back one week
 function prevWeek() {
     focusDate.subtract(1, "week");
-    tcNavToday.disabled = focusDate.isSame(initialDate, "day");
-    tcNavRange.textContent = moment(focusDate).startOf("week").format("MMM D") + " – " + moment(focusDate).endOf("week").format("D, YYYY");
+    updateNav();
     getFromDatabase();
 }
 
 // move focused date forward one week
 function nextWeek() {
     focusDate.add(1, "week");
-    tcNavToday.disabled = focusDate.isSame(initialDate, "day");
-    tcNavRange.textContent = moment(focusDate).startOf("week").format("MMM D") + " – " + moment(focusDate).endOf("week").format("D, YYYY");
+    updateNav();
     getFromDatabase();
 
 }
@@ -223,7 +229,6 @@ function slotSelect(slot) {
     // this check may not be necessary
     if (!slotSelected(slot)) {
         slot.className = "tc-slot-selected";
-        console.log(slot.dataset.timestamp + " selected");
 
         if (!selectedTimestamps.has(slot.dataset.timestamp)) {
             localSelectedTimestamps.add(slot.dataset.timestamp);
@@ -235,14 +240,13 @@ function slotSelect(slot) {
 
         updateDayHours(slot.dataset.weekday);
     } else {
-        console.log("selecting already selected slot");
+        console.error("selecting already selected slot");
     }
 }
 
 function slotUnselect(slot) {
     if (slotSelected(slot)) {
         slot.className = "tc-slot";
-        console.log(slot.dataset.timestamp + " unselected");
 
         if (localSelectedTimestamps.has(slot.dataset.timestamp)) {
             localSelectedTimestamps.delete(slot.dataset.timestamp);
@@ -255,7 +259,7 @@ function slotUnselect(slot) {
 
         updateDayHours(slot.dataset.weekday);
     } else {
-        console.log("unselecting already unselected slot");
+        console.error("unselecting already unselected slot");
     }
 }
 
@@ -264,9 +268,15 @@ function slotMouseOver(slot) {
         return;
     }
     if (slotToggleTo) {
-        slotSelect(slot); // changing slots to selected
+        // changing slots to selected, only if not already selected
+        if (!slotSelected(slot)) {
+            slotSelect(slot);
+        }
     } else {
-        slotUnselect(slot); // changing slots to unselected
+        // changing slots to unselected, only if already selected
+        if (slotSelected(slot)) {
+            slotUnselect(slot);
+        }
     }
     // Hours changed, no longer template-valid
 }
@@ -277,66 +287,96 @@ function slotMouseDown(slot) {
     slotMouseOver(slot);
 }
 
-function slotMouseUp(slot) {
+function slotMouseUp() {
+    //console.log("slotMouseUp()");
+    // this is called when changes are done being made
+
     slotDown = false;
+
+    // if there are no changes to be saved, display last modified and disable save button
+    if (localSelectedTimestamps.size == 0 && localUnselectedTimestamps.size == 0) {
+        if (!changesMade) {
+            dbStatus.textContent = "Last modified: " + moment(initialLastModified).fromNow();
+        }
+        dbSave.disabled = true;
+        dbSave.textContent = "Saved";
+    } else {
+        dbStatus.textContent = "Unsaved changes";
+        dbSave.disabled = false;
+        dbSave.textContent = "Save";
+        // uncomment to enable autosave
+        //saveToDatabase();
+    }
 }
 
-function showEditTemplate() {
-    templatesSelect.style.display = "none";
-    templatesNew.style.display = "none";
-    templatesTextInput.style.display = "inline";
-    templatesSave.style.display = "inline";
-    templatesDelete.style.display = "inline";
+function showTemplEdit() {
+    templContainer.style.display = "none";
+    templEditContainer.style.display = "inline-block";
 
-    if (templatesSelect.selectedIndex == 0) {
+    if (templSelect.selectedIndex == 0) {
         // Making new template
-        templatesTextInput.value = "New Template";
+        templTextInput.value = "New Template";
+        templDelete.style.display = "none";
     } else {
         // Renaming existing template
-        templatesTextInput.value = templatesSelect.options[templatesSelect.selectedIndex].text;
+        templTextInput.value = templSelect.options[templSelect.selectedIndex].text;
+        templDelete.style.display = "inline-block";
     }
 
-    templateNameInput(templatesTextInput);
-    templatesTextInput.focus();
+    templInputName(templTextInput);
+    templTextInput.focus();
 }
 
-function hideEditTemplate() {
-    templatesSelect.style.display = "inline";
-    templatesNew.style.display = "inline";
-    templatesTextInput.style.display = "none";
-    templatesSave.style.display = "none";
-    templatesDelete.style.display = "none";
-
-    templatesTextInput.value = "";
+function hideTemplEdit() {
+    //templatesTextInput.value = "";
+    templContainer.style.display = "inline-block";
+    templEditContainer.style.display = "none";
 }
 
-// When enter is pressed in text box
-function templateNameInput(e) {
+// called when contents of template name input change
+function templInputName(e) {
     /* if (event.keyCode == 13) {
         saveNewTemplate();
     }*/
     // Disable save button unless template name is unique
-    templatesSave.disabled = false;
-    for (var i = 0; i < templatesSelect.length; i++) {
-        if (e.value.trim() == templatesSelect.options[i].text) {
-            // Save button disabled unless template (update) or name changed (new)
-            templatesSave.disabled = true;
+    templSave.disabled = false;
+    for (var i = 0; i < templSelect.length; i++) {
+        if (e.value.trim() == templSelect.options[i].text) {
+            // Disable save unless template timestamps or name changed
+            templSave.disabled = true;
             break;
         }
     }
 }
 
-function saveNewTemplate() {
-    // send request to save new template
-    templatesSelect.options[templatesSelect.options.length] = new Option(templatesTextInput.value.trim(), "new-template-value");
-    hideEditTemplate();
+// save changes to the selected template
+function templSaveOption() {
+    if (templSelect.selectedIndex == 0) {
+        // creating new template
+        templSelect.options[templSelect.options.length] = new Option(templTextInput.value.trim(), "new-template-value");
+    } else {
+        // TODO: modifying existing template
+        templSelect.options[templSelect.selectedIndex] = new Option(templTextInput.value.trim(), "new-template-value");
+    }
+    templSelectChanged();
+    hideTemplEdit();
 }
 
-function templateSelectChanged(select) {
-    if (select.selectedIndex == 0) {
-        templatesNew.textContent = "New Template";
+// delete the selected template
+function templDeleteOption() {
+    // can't delete None template
+    if (templSelect.selectedIndex != 0) {
+        templSelect.removeChild(templSelect.options[templSelect.selectedIndex]);
+    }
+    templSelectChanged();
+    hideTemplEdit();
+}
+
+function templSelectChanged() {
+    if (templSelect.selectedIndex == 0) {
+        templNew.textContent = "New Template";
     } else {
-        templatesNew.textContent = "Edit Template";
+        templNew.textContent = "Edit Template";
     }
 
     // Apply template to hours
