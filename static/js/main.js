@@ -1,10 +1,11 @@
+// TODO: Encapsulate with Immediately-invoked function expressions
 var weekdays = [];
 
 var tcNavToday;
 var tcNavRange;
 var tcNavTotal;
 
-var templContainer;
+var templSelectContainer;
 var templSelect;
 var templNew;
 var templEditContainer;
@@ -27,7 +28,7 @@ var localSelectedTimestamps = new Set();
 var localUnselectedTimestamps = new Set();
 var selectedTimestamps = new Set();
 
-var initialLastModified; // = moment("2016-01-01");// = moment();
+var initialLastModified;
 var initialLoad = true;
 var changesMade = false;
 
@@ -64,7 +65,7 @@ function getFromDatabase() {
 
 function onLoadTimestamps(response) {
     if (initialLoad) {
-        var initialLastModified = moment.unix(response["modified"]);
+        initialLastModified = moment.unix(response["modified"]);
         dbStatus.textContent = "Last modified: " + moment(initialLastModified).fromNow();
         dbSave.disabled = true;
         dbSave.textContent = "Saved";
@@ -100,11 +101,11 @@ function saveToDatabase() {
     }
     xhr.send(timestamps);
 
-    for (var elem of localSelectedTimestamps) {
+    for (let elem of localSelectedTimestamps) {
         selectedTimestamps.add(elem);
     }
 
-    for (var elem of localUnselectedTimestamps) {
+    for (let elem of localUnselectedTimestamps) {
         selectedTimestamps.delete(elem);
     }
 
@@ -305,7 +306,7 @@ function slotMouseUp() {
 }
 
 function showTemplEdit() {
-    templContainer.style.display = "none";
+    templSelectContainer.style.display = "none";
     templEditContainer.style.display = "inline-block";
 
     if (templSelect.selectedIndex == 0) {
@@ -324,7 +325,7 @@ function showTemplEdit() {
 
 function hideTemplEdit() {
     //templatesTextInput.value = "";
-    templContainer.style.display = "inline-block";
+    templSelectContainer.style.display = "inline-block";
     templEditContainer.style.display = "none";
 }
 
@@ -374,6 +375,5 @@ function templSelectChanged() {
         templNew.textContent = "Edit Template";
     }
 
-    // Apply template to hours
-    // set all cells to unselected, select those in the template
+    // Apply template to hours if not None
 }

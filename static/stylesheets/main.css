@@ -48,9 +48,10 @@ body {
     background: white;
     color: #444;
     border: 0;
-    font: normal 16px 'Open Sans', sans-serif;
+    font-family: 'Roboto', arial, sans-serif;
+    font-size: 14px;
     vertical-align: baseline;
-    min-width: 660px;
+    min-width: 720px;
     margin: 0;
     padding: 0;
 }
@@ -85,8 +86,8 @@ body {
 }
 
 #templates-container {
-    background: #ededed;
-    border-bottom: #e2e2e2 solid 1px;
+    background: #eaeaea;
+    border-bottom: #b8b8b8 solid 1px;
     width: 100%;
 }
 
@@ -100,13 +101,20 @@ body {
     margin: 0 auto;
 }
 
-#templ-container {}
+#templ-select-container {}
 
 #templ-select {
-    width: 140px;
-    height: 20px;
+    border: 1px solid #9a9a9a;
+    border-radius: 2px;
+    width: 150px;
+    height: 22px;
     margin-left: 10px;
     cursor: pointer;
+}
+
+#templ-select:focus {
+    border: 1px solid #0c78d6;
+    outline: 0;
 }
 
 #templ-new {
@@ -116,7 +124,18 @@ body {
 #templ-edit-container {}
 
 #templ-textinput {
+    border: 1px solid #9a9a9a;
+    border-radius: 2px;
+    outline: 0;
+    width: 140px;
+    height: 18px;
+    padding: 1px 4px;
     margin-left: 10px;
+}
+
+#templ-textinput:focus {
+    border: 1px solid #0c78d6;
+    outline: 0;
 }
 
 #templ-save {
@@ -138,17 +157,6 @@ body {
 
 #database-save {
     margin-left: auto;
-}
-
-#templates-textinput {
-    background: white;
-    border: 1px solid #666;
-    display: none;
-    width: 132px;
-    height: 20px;
-    margin: 0;
-    margin-left: 10px;
-    padding: 0 4px;
 }
 
 #tc-nav-container {
@@ -222,7 +230,7 @@ body {
     width: 20%;
     min-width: 90px;
     max-width: 140px;
-    border: 1px solid #666;
+    border: 1px solid #444;
     border-radius: 1px;
     text-align: center;
     margin: 10px;
@@ -245,7 +253,7 @@ body {
     transition: background 100ms ease-out;
     font-size: 12px;
     background: #eaeaea;
-    border-bottom: 1px solid #666;
+    border-bottom: 1px solid #444;
     width: 100%;
     height: 24px;
     padding: 0;
@@ -262,7 +270,7 @@ body {
     font-size: 12px;
     background: #0cc980;
     color: white;
-    border-bottom: 1px solid #666;
+    border-bottom: 1px solid #444;
     width: 100%;
     height: 24px;
     margin: 0;

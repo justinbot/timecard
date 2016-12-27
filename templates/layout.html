@@ -6,7 +6,8 @@
     <title>timecard</title>
     <link rel="icon" type="image/ico" href="http://www.rpi.edu/favicon.ico">
     <link rel="stylesheet" href="../static/stylesheets/main.css">
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet">
+    <!--<link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet">-->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
     <!-- Leet navbar -->
     <link rel="stylesheet" href="../static/stylesheets/custom.css">
     <nav id="bar">
@@ -39,7 +40,7 @@
     <div id="templates-container">
         <div id="templates">
             <div style="display: inline-block;">Template:</div>
-            <div id="templ-container">
+            <div id="templ-select-container">
                 <select id="templ-select" onchange="templSelectChanged(this);">
                     <option value="" selected>None</option>
                 </select>
@@ -83,7 +84,7 @@
         slotIncrement = "{{ slot_increment }}";
         slotFirstStart = moment("{{ slot_first_start }}", "HHmm");
 
-        templContainer = document.getElementById("templ-container");
+        templSelectContainer = document.getElementById("templ-select-container");
         templEditContainer = document.getElementById("templ-edit-container");
         templSelect = document.getElementById("templ-select");
         templNew = document.getElementById("templ-new");
@@ -108,7 +109,7 @@
     </script>
 
     <div id="footer">
-        <div>A VCC Helpdesk Project | <a href="https://github.com/VCC-Helpdesk/timecard" target="_blank" title="Source">Source</a></div>
+        <div>A VCC Helpdesk Project | <a href="https://github.com/justinbot/timecard" target="_blank" title="Source">Source</a></div>
     </div>
 </body>
 
