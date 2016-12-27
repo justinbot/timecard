@@ -19,6 +19,7 @@ var slotIncrement;
 var slotFirstStart;
 var initialDate = moment.utc();
 var focusDate;
+// TODO: Add spec for timezone in cfg, store and manipulate all as utc/timestamp, display in timezone
 //utc offset for est is -05:00. Times worked and displayed are in this zone
 var currentTemplate = ""; // store template associated with each day? or just have a template if set
 
@@ -38,14 +39,6 @@ var slotToggleTo = true;
 //       and normal buttons (select dropdown and edit button) in another div
 
 function onload() {
-    // might be called before or after script tag, though above code should be called first
-    // maybe move these to script tag
-    //templatesSelect = document.getElementById("templates-select");
-    //templatesNew = document.getElementById("templates-new");
-    //templatesTextInput = document.getElementById("templates-textinput");
-    //templatesSave = document.getElementById("templates-save");
-    //templatesCancel = document.getElementById("templates-cancel");
-
     hideTemplEdit();
 }
 
@@ -73,6 +66,8 @@ function onLoadTimestamps(response) {
     if (initialLoad) {
         var initialLastModified = moment.unix(response["modified"]);
         dbStatus.textContent = "Last modified: " + moment(initialLastModified).fromNow();
+        dbSave.disabled = true;
+        dbSave.textContent = "Saved";
         initialLoad = false;
     }
 
@@ -123,7 +118,7 @@ function onSaveTimestamps(response) {
     dbStatus.textContent = "All changes saved";
 }
 
-// update header of this day
+// update date info for this day
 function updateDayHeader(weekday) {
     var day = weekdays[weekday];
     var headerDate = day.children[0];
@@ -149,7 +144,8 @@ function updateDayContent(weekday) {
     dayTimestamps[weekday] = [];
     for (var i = 0; i < slots.length; i++) {
         // update timestamp of every slot by using its delta (seconds from first slot)
-        var ts = slots[i].dataset.timestamp = day.dataset.date + slots[i].dataset.timedelta;
+        // dataset values are stored as strings and must be parsed
+        var ts = slots[i].dataset.timestamp = (parseInt(day.dataset.date) + parseInt(slots[i].dataset.timedelta)).toString();
         dayTimestamps[weekday].push(ts);
         // time is selected if it was selected locally, or was selected in the database and not unselected locally
         if ((selectedTimestamps.has(ts) && !localUnselectedTimestamps.has(ts)) || localSelectedTimestamps.has(ts)) {
@@ -288,15 +284,14 @@ function slotMouseDown(slot) {
 }
 
 function slotMouseUp() {
-    //console.log("slotMouseUp()");
-    // this is called when changes are done being made
-
     slotDown = false;
 
     // if there are no changes to be saved, display last modified and disable save button
     if (localSelectedTimestamps.size == 0 && localUnselectedTimestamps.size == 0) {
         if (!changesMade) {
             dbStatus.textContent = "Last modified: " + moment(initialLastModified).fromNow();
+        } else {
+            dbStatus.textContent = "All changes saved";
         }
         dbSave.disabled = true;
         dbSave.textContent = "Saved";

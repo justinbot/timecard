@@ -16,7 +16,6 @@
     color: #444;
     border: 1px solid #9a9a9a;
     border-radius: 2px;
-    //font-size: 16px;
     min-width: 22px;
     min-height: 22px;
     padding: 2px 8px;
@@ -87,7 +86,7 @@ body {
 
 #templates-container {
     background: #ededed;
-    //border-bottom: #d1d1d1 solid 1px;
+    border-bottom: #e2e2e2 solid 1px;
     width: 100%;
 }
 
@@ -177,7 +176,7 @@ body {
     background-image: url(../img/nav_left.svg);
     background-repeat: no-repeat;
     background-position: center;
-    background-size: 10px;
+    background-size: 8px;
     border-bottom-right-radius: 0;
     border-top-right-radius: 0;
     width: 40px;
@@ -191,7 +190,7 @@ body {
     background-image: url(../img/nav_right.svg);
     background-repeat: no-repeat;
     background-position: center;
-    background-size: 10px;
+    background-size: 8px;
     border-bottom-left-radius: 0;
     border-top-left-radius: 0;
     width: 40px;

@@ -69,7 +69,7 @@ def show_timecard():
     # times representing start of each cell eg. 8:30
     times = [slot for slot in hours_range(slot_first_start, slot_last_start, slot_increment)]
 
-    return render_template('layout.html', slot_increment=slot_increment, slot_first_start=times[0].strftime("%H%m"), days=days, times=times)
+    return render_template('layout.html', slot_increment=slot_increment, slot_first_start=times[0].strftime("%H%M"), days=days, times=times)
     #else:
     #return redirect(url_for('login'))
 
