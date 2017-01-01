@@ -27,17 +27,16 @@ var currentTemplate = ""; // store template associated with each day? or just ha
 var localSelectedTimestamps = new Set();
 var localUnselectedTimestamps = new Set();
 var selectedTimestamps = new Set();
+//var dayTimestamps = [];
+var dayHours = [];
+var totalHours = 0.0;
+
+var slotDown = false;
+var slotToggleTo = true;
 
 var initialLastModified;
 var initialLoad = true;
 var changesMade = false;
-
-var dayTimestamps = {}; // Dictionary mapping day index to slot timestamps
-var slotDown = false;
-var slotToggleTo = true;
-
-// TODO: Template delete button next to cancel. Also collect edit buttons (textinput, save, cancel, delete) in div
-//       and normal buttons (select dropdown and edit button) in another div
 
 function onload() {
     hideTemplEdit();
@@ -59,7 +58,7 @@ function getFromDatabase() {
     xhr.send();
 
     for (var i = 0; i < weekdays.length; i++) {
-        updateDayHeader(i);
+        dayUpdateHeader(i);
     }
 }
 
@@ -77,9 +76,11 @@ function onLoadTimestamps(response) {
         selectedTimestamps.add(response["selected"][i]);
     }
 
+    totalHours = 0.0;
     for (var i = 0; i < weekdays.length; i++) {
-        updateDayContent(i);
+        dayUpdateContent(i);
     }
+    navUpdateTotal();
 }
 
 // write localSelectedTimestamps to database
@@ -120,10 +121,8 @@ function onSaveTimestamps(response) {
 }
 
 // update date info for this day
-function updateDayHeader(weekday) {
+function dayUpdateHeader(weekday) {
     var day = weekdays[weekday];
-    var headerDate = day.children[0];
-    var headerWeekday = day.children[1];
 
     // date associated with day at time of first slot
     var dayDate = moment(focusDate).startOf("week").add(weekday, "day");
@@ -133,86 +132,79 @@ function updateDayHeader(weekday) {
     })
     day.dataset.date = dayDate.unix();
 
-    headerDate.textContent = dayDate.format("MM[/]DD[/]YY");
-    headerWeekday.textContent = dayDate.format("dddd");
+    day.children[0].textContent = dayDate.format("MM[/]DD[/]YY");
+    day.children[1].textContent = dayDate.format("dddd");
 }
 
 // update slots of this day
-function updateDayContent(weekday) {
+function dayUpdateContent(weekday) {
     var day = weekdays[weekday];
 
     var slots = day.getElementsByTagName("td");
-    dayTimestamps[weekday] = [];
+    //dayTimestamps[weekday] = [];
+    dayHours[weekday] = 0.0;
     for (var i = 0; i < slots.length; i++) {
         // update timestamp of every slot by using its delta (seconds from first slot)
         // dataset values are stored as strings and must be parsed
         var ts = slots[i].dataset.timestamp = (parseInt(day.dataset.date) + parseInt(slots[i].dataset.timedelta)).toString();
-        dayTimestamps[weekday].push(ts);
+        //dayTimestamps[weekday].push(ts);
         // time is selected if it was selected locally, or was selected in the database and not unselected locally
         if ((selectedTimestamps.has(ts) && !localUnselectedTimestamps.has(ts)) || localSelectedTimestamps.has(ts)) {
             slots[i].className = "tc-slot-selected";
+            dayHours[weekday] += slotIncrement;
         } else {
             slots[i].className = "tc-slot";
         }
     }
 
-    updateDayHours(weekday);
+    totalHours += dayHours[weekday];
+    day.children[2].textContent = "Hours: " + dayHours[weekday].toFixed(1);
 }
 
-// update hours label in header of this day
-function updateDayHours(weekday) {
-    var day = weekdays[weekday];
-    var headerHours = day.children[2];
+function daySelectSlot(weekday) {
+    dayHours[weekday] += slotIncrement;
+    weekdays[weekday].children[2].textContent = "Hours: " + dayHours[weekday].toFixed(1);
 
-    var dayTotalHours = 0.0;
-    for (var i = 0; i < dayTimestamps[weekday].length; i++) {
-        var ts = dayTimestamps[weekday][i];
-        // time is selected if it was selected locally, or was selected in the database and not unselected locally
-        if ((selectedTimestamps.has(ts) && !localUnselectedTimestamps.has(ts)) || localSelectedTimestamps.has(ts)) {
-            dayTotalHours += (slotIncrement / 60);
-        }
-    }
-
-    // TODO: Resolve issue where 15 minute increment gets rounded to 0.3 hours
-    day.dataset.totalhours = dayTotalHours;
-    headerHours.textContent = "Hours: " + dayTotalHours.toFixed(1);
-
-    // only needs to update hours for this day
-    updateNavTotal();
+    totalHours += slotIncrement;
+    navUpdateTotal();
 }
 
-function updateNav() {
+function dayUnselectSlot(weekday) {
+    dayHours[weekday] -= slotIncrement;
+    weekdays[weekday].children[2].textContent = "Hours: " + dayHours[weekday].toFixed(1);
+
+    totalHours -= slotIncrement;
+    navUpdateTotal();
+}
+
+function navUpdate() {
     tcNavToday.disabled = focusDate.isSame(initialDate, "day");
     tcNavRange.textContent = moment(focusDate).startOf("week").format("MMM D") + " – " + moment(focusDate).endOf("week").format("D, YYYY");
 }
 
-function updateNavTotal() {
-    var totalHours = 0.0;
-    for (var i = 0; i < weekdays.length; i++) {
-        totalHours += parseFloat(weekdays[i].dataset.totalhours);
-    }
-
+function navUpdateTotal() {
     // TODO: Same precision issue as day hours
     tcNavTotal.textContent = "Total Hours: " + totalHours.toFixed(1);
 }
 
+// set focused date to current week
 function currentWeek() {
     focusDate = moment(initialDate);
-    updateNav();
+    navUpdate();
     getFromDatabase();
 }
 
 // move focused date back one week
 function prevWeek() {
     focusDate.subtract(1, "week");
-    updateNav();
+    navUpdate();
     getFromDatabase();
 }
 
 // move focused date forward one week
 function nextWeek() {
     focusDate.add(1, "week");
-    updateNav();
+    navUpdate();
     getFromDatabase();
 
 }
@@ -235,7 +227,7 @@ function slotSelect(slot) {
             localUnselectedTimestamps.delete(slot.dataset.timestamp);
         }
 
-        updateDayHours(slot.dataset.weekday);
+        daySelectSlot(slot.dataset.weekday);
     } else {
         console.error("selecting already selected slot");
     }
@@ -254,7 +246,7 @@ function slotUnselect(slot) {
             localUnselectedTimestamps.add(slot.dataset.timestamp);
         }
 
-        updateDayHours(slot.dataset.weekday);
+        dayUnselectSlot(slot.dataset.weekday);
     } else {
         console.error("unselecting already unselected slot");
     }

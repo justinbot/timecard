@@ -232,25 +232,20 @@ body {
     max-width: 140px;
     border: 1px solid #444;
     border-radius: 1px;
-    text-align: center;
     margin: 10px;
-    padding: 0;
+    padding: 5px 0 0 0;
     /* box-shadow: 0 2px 5px 0px rgba(0, 0, 0, 0.5); */
-}
-
-.tc-day-header {
-    background: white;
-    padding: 5px;
 }
 
 .tc-hour-table {
     width: 100%;
-    margin: 0;
+    margin: 5px 0 0 0;
+    border-top: 1px solid #444;
     border-spacing: 0px;
 }
 
 .tc-slot {
-    transition: background 100ms ease-out;
+    //transition: background 100ms ease-out;
     font-size: 12px;
     background: #eaeaea;
     border-bottom: 1px solid #444;
@@ -266,7 +261,7 @@ body {
 }
 
 .tc-slot-selected {
-    transition: background 100ms ease-out;
+    //transition: background 100ms ease-out;
     font-size: 12px;
     background: #0cc980;
     color: white;
