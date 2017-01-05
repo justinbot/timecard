@@ -232,6 +232,7 @@ body {
     max-width: 140px;
     border: 1px solid #444;
     border-radius: 1px;
+    //outline: 0 solid #1b5689;
     margin: 10px;
     padding: 5px 0 0 0;
     /* box-shadow: 0 2px 5px 0px rgba(0, 0, 0, 0.5); */
@@ -247,6 +248,7 @@ body {
 .tc-slot {
     //transition: background 100ms ease-out;
     font-size: 12px;
+    //vertical-align: top;
     background: #eaeaea;
     border-bottom: 1px solid #444;
     width: 100%;
@@ -263,6 +265,7 @@ body {
 .tc-slot-selected {
     //transition: background 100ms ease-out;
     font-size: 12px;
+    //vertical-align: top;
     background: #0cc980;
     color: white;
     border-bottom: 1px solid #444;

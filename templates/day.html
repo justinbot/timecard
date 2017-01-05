@@ -1,8 +1,7 @@
 {% block day %}
 <td id="tc-day-{{ d }}" data-date="" class="tc-day" onmouseleave="slotMouseUp();" onmouseup="slotMouseUp();">
-    <div class="day-header-date" style="font-weight: bold;">01/01/00</div>
-    <div class="day-header-weekday" style="font-weight: bold;">Monday</div>
-    <div class="day-header-hours" style="font-weight: bold;">Hours: 0.0</div>
+    <div style="font-weight: bold; margin-bottom: 5px;">Monday</div>
+    <div style="font-weight: bold;">Hours: 0.0</div>
     <table class="tc-hour-table">
         {% for t in range(times|length) %}
         <tr>

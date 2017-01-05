@@ -18,10 +18,8 @@ var dbSave;
 
 var slotIncrement;
 var slotFirstStart;
-var initialDate = moment.utc();
+var initialDate; // set using time provided by server
 var focusDate;
-// TODO: Add spec for timezone in cfg, store and manipulate all as utc/timestamp, display in timezone
-//utc offset for est is -05:00. Times worked and displayed are in this zone
 var currentTemplate = ""; // store template associated with each day? or just have a template if set
 
 var localSelectedTimestamps = new Set();
@@ -64,8 +62,8 @@ function getFromDatabase() {
 
 function onLoadTimestamps(response) {
     if (initialLoad) {
-        initialLastModified = moment.unix(response["modified"]);
-        dbStatus.textContent = "Last modified: " + moment(initialLastModified).fromNow();
+        initialLastModified = moment(response["modified"]);
+        dbStatus.textContent = "Last modified: " + moment(initialLastModified).from(initialDate);
         dbSave.disabled = true;
         dbSave.textContent = "Saved";
         initialLoad = false;
@@ -132,8 +130,14 @@ function dayUpdateHeader(weekday) {
     })
     day.dataset.date = dayDate.unix();
 
-    day.children[0].textContent = dayDate.format("MM[/]DD[/]YY");
-    day.children[1].textContent = dayDate.format("dddd");
+    // highlight header of current day
+    if (dayDate.isSame(initialDate, "day")) {
+        day.style.background = "#f5f5f5";
+    } else {
+        day.style.background = "";
+    }
+
+    day.children[0].textContent = dayDate.format("dddd, MMM D");
 }
 
 // update slots of this day
@@ -158,12 +162,12 @@ function dayUpdateContent(weekday) {
     }
 
     totalHours += dayHours[weekday];
-    day.children[2].textContent = "Hours: " + dayHours[weekday].toFixed(1);
+    day.children[1].textContent = "Hours: " + dayHours[weekday].toFixed(1);
 }
 
 function daySelectSlot(weekday) {
     dayHours[weekday] += slotIncrement;
-    weekdays[weekday].children[2].textContent = "Hours: " + dayHours[weekday].toFixed(1);
+    weekdays[weekday].children[1].textContent = "Hours: " + dayHours[weekday].toFixed(1);
 
     totalHours += slotIncrement;
     navUpdateTotal();
@@ -171,7 +175,7 @@ function daySelectSlot(weekday) {
 
 function dayUnselectSlot(weekday) {
     dayHours[weekday] -= slotIncrement;
-    weekdays[weekday].children[2].textContent = "Hours: " + dayHours[weekday].toFixed(1);
+    weekdays[weekday].children[1].textContent = "Hours: " + dayHours[weekday].toFixed(1);
 
     totalHours -= slotIncrement;
     navUpdateTotal();

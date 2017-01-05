@@ -18,7 +18,8 @@ class User(db.Model):
     rcsid = db.Column(db.String(16), primary_key=True)
     # actual name, for convenience
     name = db.column(db.String(32))
-    last_modified = db.Column(db.BigInteger)
+    #last_modified = db.Column(db.BigInteger)
+    last_modified = db.Column(db.String(19))
     slots = db.relationship('Timeslot', backref='user', cascade="all, delete-orphan", lazy='dynamic')
 
 
@@ -69,7 +70,7 @@ def show_timecard():
     # times representing start of each cell eg. 8:30
     times = [slot for slot in hours_range(slot_first_start, slot_last_start, slot_increment)]
 
-    return render_template('layout.html', slot_increment=slot_increment, slot_first_start=times[0].strftime("%H%M"), days=days, times=times)
+    return render_template('layout.html', initial_date=str(datetime.datetime.now()), slot_increment=slot_increment, slot_first_start=times[0].strftime("%H%M"), days=days, times=times)
     #else:
     #return redirect(url_for('login'))
 
@@ -98,12 +99,12 @@ def update():
             # TODO: Ignore duplicate timestamps and those in locked timecards (prior to lock date) unless admin
             # maybe have a lock date and refuse changes to timestamps prior, maybe lock by day/week
             u.slots.extend([Timeslot(timestamp=t) for t in content['selected']])
-            u.last_modified = int(time.time())
+            u.last_modified = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")#int(time.time())
         
         # Delete timestamps in 'unselected'
         if (len(content['unselected']) > 0):
             db.session.query(Timeslot).filter(Timeslot.timestamp.in_(content['unselected']), Timeslot.parent_rcsid == u.rcsid).delete(synchronize_session='fetch')
-            u.last_modified = int(time.time())
+            u.last_modified = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")#int(time.time())
            
         db.session.commit()
 
@@ -143,7 +144,8 @@ def init_db():
     db.create_all()
 
     # creating users should be done through admin panel
-    test_user = User(rcsid='carlsj4', name='Justin Carlson', last_modified = int(time.time()) )
+    test_user = User(rcsid='carlsj4', name='Justin Carlson', last_modified = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") )
+    print test_user.last_modified
     db.session.add(test_user)
 
     db.session.commit()

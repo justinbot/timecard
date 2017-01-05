@@ -83,6 +83,7 @@
         // maybe just separate or use main.js here?
         slotIncrement = {{ slot_increment }} / 60;
         slotFirstStart = moment("{{ slot_first_start }}", "HHmm");
+        initialDate = moment("{{ initial_date }}");
 
         templSelectContainer = document.getElementById("templ-select-container");
         templEditContainer = document.getElementById("templ-edit-container");
