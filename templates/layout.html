@@ -23,10 +23,9 @@
     </nav>
     <!-- End Leet navbar -->
     <script src="../static/js/moment.js"></script>
-    <script src="../static/js/main.js"></script>
 </head>
 
-<body onload="onload();">
+<body>
 
     <div id="header-container">
         <div id="header">
@@ -41,28 +40,28 @@
         <div id="templates">
             <div style="display: inline-block;">Template:</div>
             <div id="templ-select-container">
-                <select id="templ-select" onchange="templSelectChanged(this);">
+                <select id="templ-select" onchange="Timecard.templSelectChanged(this);">
                     <option value="" selected>None</option>
                 </select>
-                <button class="tc-button" id="templ-new" onclick="showTemplEdit();">New Template</button>
+                <button class="tc-button" id="templ-new" onclick="Timecard.showTemplEdit();">New Template</button>
             </div>
             <div id="templ-edit-container" style="display: none;">
-                <input id="templ-textinput" type="text" minlength="2" maxlength="18" oninput="templInputName(this);">
-                <button class="tc-button" id="templ-save" onclick="templSaveOption();">Save</button>
-                <button class="tc-button" id="templ-delete" onclick="templDeleteOption()">Delete</button>
-                <button class="tc-button" id="templ-cancel" onclick="hideTemplEdit();">Cancel</button>
+                <input id="templ-textinput" type="text" minlength="2" maxlength="18" oninput="Timecard.templInputName(this);">
+                <button class="tc-button" id="templ-save" onclick="Timecard.templSaveOption();">Save</button>
+                <button class="tc-button" id="templ-delete" onclick="Timecard.templDeleteOption()">Delete</button>
+                <button class="tc-button" id="templ-cancel" onclick="Timecard.hideTemplEdit();">Cancel</button>
             </div>
             <span id="db-status">Last modified: …</span>
             <!-- save button for testing purposes -->
-            <button class="tc-button" id="database-save" onclick="saveToDatabase();">Save</button>
+            <button class="tc-button" id="database-save" onclick="Timecard.saveToDatabase();">Save</button>
         </div>
     </div>
 
     <div id="tc-nav-container">
         <div id="tc-nav">
-            <button class="tc-button" id="tc-nav-today" onclick="currentWeek();">Today</button>
-            <button class="tc-button" id="tc-nav-prev" onclick="prevWeek();"></button>
-            <button class="tc-button" id="tc-nav-next" onclick="nextWeek();"></button>
+            <button class="tc-button" id="tc-nav-today" onclick="Timecard.currentWeek();">Today</button>
+            <button class="tc-button" id="tc-nav-prev" onclick="Timecard.prevWeek();"></button>
+            <button class="tc-button" id="tc-nav-next" onclick="Timecard.nextWeek();"></button>
             <span id="tc-nav-range">Jan 1 – 7, 2000</span>
             <span id="tc-nav-total">Total Hours: 0.0</span>
         </div>
@@ -79,34 +78,12 @@
         </div>
     </div>
 
+    <script src="../static/js/main.js"></script>
     <script>
-        // maybe just separate or use main.js here?
-        slotIncrement = {{ slot_increment }} / 60;
-        slotFirstStart = moment("{{ slot_first_start }}", "HHmm");
-        initialDate = moment("{{ initial_date }}");
-
-        templSelectContainer = document.getElementById("templ-select-container");
-        templEditContainer = document.getElementById("templ-edit-container");
-        templSelect = document.getElementById("templ-select");
-        templNew = document.getElementById("templ-new");
-        templTextInput = document.getElementById("templ-textinput");
-        templSave = document.getElementById("templ-save");
-        templDelete = document.getElementById("templ-delete");
-
-        dbStatus = document.getElementById("db-status");
-        dbSave = document.getElementById("database-save");
-        //dbSave.disabled = true;
-
-        tcNavToday = document.getElementById("tc-nav-today");
-        tcNavRange = document.getElementById("tc-nav-range");
-        tcNavTotal = document.getElementById("tc-nav-total");
-
-        // find and cache each day just created
-        for (var i = 0; i < 7; i++) {
-            weekdays.push(document.getElementById("tc-day-" + i));
-        }
-
-        currentWeek();
+        Timecard.slotIncrement = {{ slot_increment }} / 60;
+        Timecard.slotFirstStart = moment("{{ slot_first_start }}", "HHmm");
+        Timecard.initialDate = moment("{{ initial_date }}");
+        Timecard.setup();
     </script>
 
     <div id="footer">
