@@ -180,7 +180,8 @@ def init_db():
     db.drop_all()
     db.create_all()
 
-    # creating users should be done through admin panel
+    # creating users should only be done through admin panel
+    # TODO: Initial lock date should be 00:00 on date first admin account is created?
     test_user = User(id='carlsj4', name='Justin Carlson')
 
     test_user_2 = User(id='testoa4', name='Test User')

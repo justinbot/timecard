@@ -1,2 +1,4 @@
 SQLAlchemy==1.1.4
 Flask==0.12
+
+# TODO: Generate requirements with pip freeze

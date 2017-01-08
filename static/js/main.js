@@ -31,6 +31,7 @@ var Timecard = (function () {
     var lastModified;
 
     var changesMade = false;
+    var locked = false;
     var dayHours = [];
     var totalHours = 0.0;
 
@@ -38,12 +39,14 @@ var Timecard = (function () {
     var slotToggleTo = true;
 
     /* public variables */
+    // all values provided by server
     tc.slotIncrement;
     tc.slotFirstStart;
-    tc.initialDate; // set using time provided by server
+    tc.initialDate;
+    tc.lockDate = 1483228800; // TODO: provided by server
 
 
-    tc.setup = function () {
+    tc.init = function () {
         templSelectContainer = document.getElementById("templ-select-container");
         templEditContainer = document.getElementById("templ-edit-container");
         templSelect = document.getElementById("templ-select");
@@ -80,7 +83,7 @@ var Timecard = (function () {
         var xhr = new XMLHttpRequest();
         xhr.open("POST", "/update", true);
         xhr.setRequestHeader("Content-Type", "application/json");
-        // TODO: also set xhr.timeout and xhr.ontimeout
+        // TODO: also set xhr.timeout and xhr.ontimeout?
         xhr.responseType = "json";
         xhr.onload = function () {
             getOnload(xhr.status, xhr.response);
@@ -95,6 +98,9 @@ var Timecard = (function () {
 
     function getOnload(status, response) {
         if (status == 200) {
+            // week considered locked
+            locked = weekdays[weekdays.length - 1].dataset.date <= tc.lockDate;
+
             lastModified = moment(response["lastmodified"]);
 
             navUpdateSave();
@@ -187,9 +193,10 @@ var Timecard = (function () {
     // update slots of this day
     function dayUpdateContent(weekday) {
         var day = weekdays[weekday];
-
         var slots = day.getElementsByTagName("td");
-        //dayTimestamps[weekday] = [];
+
+        //var dayLocked = day.dataset.date <= tc.lockDate;//focusDate.isSameOrBefore(tc.lockDate);
+
         dayHours[weekday] = 0.0;
         for (var i = 0; i < slots.length; i++) {
             // update timestamp of every slot by using its delta (seconds from first slot)
@@ -197,10 +204,18 @@ var Timecard = (function () {
             var ts = slots[i].dataset.timestamp = (parseInt(day.dataset.date) + parseInt(slots[i].dataset.timedelta)).toString();
             // time is selected if it was selected locally, or was selected in the database and not unselected locally
             if (localSelectedTimestamps.has(ts) || (selectedTimestamps.has(ts) && !localUnselectedTimestamps.has(ts))) {
-                slots[i].className = "tc-slot-selected";
+                if (locked) {
+                    slots[i].className = "tc-slot-selected-locked";
+                } else {
+                    slots[i].className = "tc-slot-selected";
+                }
                 dayHours[weekday] += tc.slotIncrement;
             } else {
-                slots[i].className = "tc-slot";
+                if (locked) {
+                    slots[i].className = "tc-slot-locked";
+                } else {
+                    slots[i].className = "tc-slot";
+                }
             }
         }
 
@@ -231,7 +246,11 @@ var Timecard = (function () {
 
     function navUpdateTotal() {
         // TODO: Same precision issue as day hours
-        tcNavTotal.textContent = "Total Hours: " + totalHours.toFixed(1);
+        if (locked) {
+            tcNavTotal.textContent = "Locked | Total Hours: " + totalHours.toFixed(1);
+        } else {
+            tcNavTotal.textContent = "Total Hours: " + totalHours.toFixed(1);
+        }
     }
 
     function navUpdateSave() {
@@ -281,14 +300,9 @@ var Timecard = (function () {
 
     }
 
-    // returns true if slot is selected, else false
-    function slotSelected(slot) {
-        return (slot.className == "tc-slot-selected");
-    }
-
     function slotSelect(slot) {
         // this check may not be necessary
-        if (!slotSelected(slot)) {
+        if (slot.className == "tc-slot") {
             slot.className = "tc-slot-selected";
 
             if (!selectedTimestamps.has(slot.dataset.timestamp)) {
@@ -308,7 +322,7 @@ var Timecard = (function () {
     }
 
     function slotUnselect(slot) {
-        if (slotSelected(slot)) {
+        if (slot.className == "tc-slot-selected") {
             slot.className = "tc-slot";
 
             if (localSelectedTimestamps.has(slot.dataset.timestamp)) {
@@ -334,12 +348,12 @@ var Timecard = (function () {
         }
         if (slotToggleTo) {
             // changing slots to selected, only if not already selected
-            if (!slotSelected(slot)) {
+            if (slot.className == "tc-slot") {
                 slotSelect(slot);
             }
         } else {
             // changing slots to unselected, only if already selected
-            if (slotSelected(slot)) {
+            if (slot.className == "tc-slot-selected") {
                 slotUnselect(slot);
             }
         }
@@ -347,7 +361,7 @@ var Timecard = (function () {
 
     tc.slotMouseDown = function (slot) {
         slotDown = true;
-        slotToggleTo = !slotSelected(slot);
+        slotToggleTo = slot.className == "tc-slot";
         tc.slotMouseOver(slot);
     }
 
