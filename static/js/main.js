@@ -1,6 +1,4 @@
 var Timecard = (function () {
-    console.log("iife");
-
     var tc = {};
 
     /* DOM elements */
@@ -117,7 +115,7 @@ var Timecard = (function () {
 
             navUpdateTotal();
         } else {
-            dbStatus.textContent = "Failed to load data";
+            dbStatus.textContent = "Failed to load data (Error " + status + ")";
         }
     }
 
@@ -164,7 +162,7 @@ var Timecard = (function () {
         if (status == 200) {
             dbStatus.textContent = "All changes saved";
         } else {
-            dbStatus.textContent = "Failed to save changes";
+            dbStatus.textContent = "Failed to save changes (Error " + status + ")";
         }
     }
 
@@ -385,7 +383,7 @@ var Timecard = (function () {
             templDelete.style.display = "inline-block";
         }
 
-        templInputName(templTextInput);
+        tc.templInputName(templTextInput);
         templTextInput.focus();
     }
 
@@ -396,7 +394,7 @@ var Timecard = (function () {
     }
 
     // called when contents of template name input change
-    function templInputName(e) {
+    tc.templInputName = function (e) {
         /* if (event.keyCode == 13) {
             saveNewTemplate();
         }*/

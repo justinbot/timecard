@@ -1,11 +1,11 @@
 {% block day %}
-<td id="tc-day-{{ d }}" data-date="" class="tc-day" onmouseleave="Timecard.slotMouseUp();" onmouseup="Timecard.slotMouseUp();">
+<td id="tc-day-{{ d }}" class="tc-day" data-date="" onmouseleave="Timecard.slotMouseUp();" onmouseup="Timecard.slotMouseUp();">
     <div style="font-weight: bold; margin-bottom: 5px;">Monday</div>
     <div style="font-weight: bold;">Hours: 0.0</div>
     <table class="tc-hour-table">
         {% for t in range(times|length) %}
         <tr>
-            <td data-weekday="{{ d }}" data-timedelta="{{ t*slot_increment*60 }}" data-timestamp="" class="tc-slot" onmouseover="Timecard.slotMouseOver(this);" onmouseup="Timecard.slotMouseUp();" onmousedown="Timecard.slotMouseDown(this);">
+            <td class="tc-slot" data-weekday="{{ d }}" data-timedelta="{{ t*slot_increment*60 }}" data-timestamp="" onmouseover="Timecard.slotMouseOver(this);" onmousedown="Timecard.slotMouseDown(this);">
                 {{ times[t].strftime('%I:%M %p') }}
             </td>
         </tr>
