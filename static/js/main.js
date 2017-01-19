@@ -26,6 +26,7 @@ var Timecard = (function () {
     var localUnselectedTimestamps = new Set();
     var selectedTimestamps = new Set();
     var focusDate;
+    var weekStart;
     var lastModified;
 
     var changesMade = false;
@@ -116,6 +117,8 @@ var Timecard = (function () {
             navUpdateTotal();
         } else {
             dbStatus.textContent = "Failed to load data (Error " + status + ")";
+            // TODO: Potentially store a persistent message for errors, last modified, etc.
+            // so message doesn't disappear on cell mouse over
         }
     }
 
@@ -171,7 +174,7 @@ var Timecard = (function () {
         var day = weekdays[weekday];
 
         // date associated with day at time of first slot
-        var dayDate = moment(focusDate).startOf("week").add(weekday, "day");
+        var dayDate = moment(weekStart).add(weekday, "day");
         dayDate.set({
             "hour": tc.slotFirstStart.hour(),
             "minute": tc.slotFirstStart.minute()
@@ -276,6 +279,7 @@ var Timecard = (function () {
     // set focused date to current week
     tc.currentWeek = function () {
         focusDate = moment(tc.initialDate);
+        weekStart = moment(focusDate).startOf("week");
         navUpdate();
         tc.hideTemplEdit();
         getFromDatabase();
@@ -284,6 +288,7 @@ var Timecard = (function () {
     // move focused date back one week
     tc.prevWeek = function () {
         focusDate.subtract(1, "week");
+        weekStart = moment(focusDate).startOf("week");
         navUpdate();
         tc.hideTemplEdit();
         getFromDatabase();
@@ -292,6 +297,7 @@ var Timecard = (function () {
     // move focused date forward one week
     tc.nextWeek = function () {
         focusDate.add(1, "week");
+        weekStart = moment(focusDate).startOf("week");
         navUpdate();
         tc.hideTemplEdit();
         getFromDatabase();

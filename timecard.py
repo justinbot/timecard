@@ -28,7 +28,7 @@ class Timeslot(db.Model):
 
     # Uses BigInteger due to 2038 problem
     timestamp = db.Column(db.BigInteger, primary_key=True)
-    parent_id = db.Column(db.String, db.ForeignKey('user.id'))
+    user_id = db.Column(db.String, db.ForeignKey('user.id'))
 
 
 #class Template(db.Model):
@@ -92,12 +92,13 @@ def update():
         abort(400)
     
     # we only want timestamps inside these bounds
+    # TODO: Make sure malformed requests don't break
     lower_bound = request_json['range'][0]
     upper_bound = request_json['range'][1]
 
     response_dict = {}
     response_dict['lastmodified'] = user.last_modified.strftime("%Y-%m-%d %H:%M:%S")
-    response_dict['selected'] = [str(ts.timestamp) for ts in Timeslot.query.filter(Timeslot.parent_id == user.id, Timeslot.timestamp >= lower_bound, Timeslot.timestamp <= upper_bound)]
+    response_dict['selected'] = [str(ts.timestamp) for ts in Timeslot.query.filter(Timeslot.user_id == user.id, Timeslot.timestamp >= lower_bound, Timeslot.timestamp <= upper_bound)]
 
     #print 'lastmodified:', response_dict['lastmodified']
     #print 'selected:', response_dict['selected']
@@ -128,20 +129,27 @@ def save():
         selected = request_json['selected']
         #print 'selected:', selected
 
-        # TODO: Ignore duplicate timestamps and those in locked timecards (prior to lock date) unless admin
-        # maybe have a lock date and refuse changes to timestamps prior, maybe lock by day/week
-
-        user.timeslots.extend([Timeslot(timestamp=t) for t in selected])
         user.last_modified = datetime.datetime.now()
+        #user.timeslots.extend([Timeslot(timestamp=t) for t in selected])
+        for t in selected:
+            # TODO: Ignore changes to timestamps before lock date (unless admin?)
+            user.timeslots.append(Timeslot(timestamp=t))
+            try:
+                db.session.commit()
+            except IntegrityError as err:
+                db.session.rollback()
+                # Will probably be a duplicate entry
+                print 'DEBUG: Timeslot insertion integrity error'
+            
     
     # Delete timestamps in 'unselected'
     if 'unselected' in request_json:
         unselected = request_json['unselected']
         #print 'unselected:', unselected
-        Timeslot.query.filter(Timeslot.parent_id == user.id, Timeslot.timestamp.in_(unselected)).delete(synchronize_session='fetch')
+
         user.last_modified = datetime.datetime.now()
-        
-    db.session.commit()
+        Timeslot.query.filter(Timeslot.user_id == user.id, Timeslot.timestamp.in_(unselected)).delete(synchronize_session='fetch')
+        db.session.commit()
 
     return Response()
 
@@ -180,21 +188,21 @@ def init_db():
     db.drop_all()
     db.create_all()
 
-    # creating users should only be done through admin panel
+    # TODO: creating users should only be done through admin panel
     # TODO: Initial lock date should be 00:00 on date first admin account is created?
     test_user = User(id='carlsj4', name='Justin Carlson')
 
-    test_user_2 = User(id='testoa4', name='Test User')
-    test_user_2.timeslots = [Timeslot(timestamp = 1483799400)]
+    #test_user_2 = User(id='testoa4', name='Test User')
+    #test_user_2.timeslots = [Timeslot(timestamp = 1483799400)]
 
     db.session.add(test_user)
-    db.session.add(test_user_2)
+    #db.session.add(test_user_2)
     db.session.commit()
 
 
 if __name__ == '__main__':
 	# for release, disable debugger and add argument for init_db
-    #init_db()
+    init_db()
 
     if not slot_first_start < slot_last_start:
         raise RuntimeError('cfg error: SLOTFIRSTSTART must be before SLOTLASTSTART')
