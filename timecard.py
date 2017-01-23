@@ -27,6 +27,7 @@ class Timeslot(db.Model):
     #__tablename__ = 'timeslot'
 
     # Uses BigInteger due to 2038 problem
+    # potentially use index=True? Timestamps should be indexed on user id for performance
     timestamp = db.Column(db.BigInteger, primary_key=True)
     user_id = db.Column(db.String, db.ForeignKey('user.id'))
 
@@ -58,6 +59,7 @@ def hours_range(start_time, end_time, increment):
 @app.route('/')
 #@app.route('/index')
 def show_timecard():
+    # TODO: All pages should require login
     #if session['logged_in']:
     # session should contain info like privilege, username, name
     #session['username'] = app.config['USERNAME']
@@ -80,6 +82,8 @@ def show_timecard():
 def update():
     # Takes request with range of two UNIX timestamps
     # Returns all timestamps in range, and user last modified date
+
+    # TODO: Combine pages so every action doesn't require its own route?
 
     # TODO: Should query with login id
     #u = db.session.query(User).get('carlsj4')
@@ -112,6 +116,11 @@ def save():
     # Takes request contents of selected and unselected timestamps
     # Applies to database, ignoring timestamps for locked dates
 
+    # TODO: request_json could also include template info?
+    # a template consists of name and slots
+    # if a template is present in 'templates', it will be overwritten/created
+    # potential usability feature: know which template each week is using, select it on load
+
     user = User.query.filter_by(id='carlsj4').first()
     
     request_json = request.get_json(silent=True)
@@ -129,9 +138,9 @@ def save():
         selected = request_json['selected']
         #print 'selected:', selected
 
-        user.last_modified = datetime.datetime.now()
         #user.timeslots.extend([Timeslot(timestamp=t) for t in selected])
         for t in selected:
+            # TODO: Find more efficient way to ignore duplicate timestamps in bulk add?
             # TODO: Ignore changes to timestamps before lock date (unless admin?)
             user.timeslots.append(Timeslot(timestamp=t))
             try:
@@ -140,17 +149,19 @@ def save():
                 db.session.rollback()
                 # Will probably be a duplicate entry
                 print 'DEBUG: Timeslot insertion integrity error'
+        
+        user.last_modified = datetime.datetime.now()
+        db.session.commit()
             
     
     # Delete timestamps in 'unselected'
     if 'unselected' in request_json:
         unselected = request_json['unselected']
         #print 'unselected:', unselected
-
-        user.last_modified = datetime.datetime.now()
+        
         Timeslot.query.filter(Timeslot.user_id == user.id, Timeslot.timestamp.in_(unselected)).delete(synchronize_session='fetch')
         db.session.commit()
-
+        
     return Response()
 
 
@@ -183,7 +194,7 @@ def init_db():
     # for use with command line argument to reset database
     # remember to change db in config
 
-    print 'Reinitializing Database, all information dropped'
+    print 'Reinitializing database, all information dropped'
 
     db.drop_all()
     db.create_all()
@@ -201,8 +212,9 @@ def init_db():
 
 
 if __name__ == '__main__':
-	# for release, disable debugger and add argument for init_db
-    init_db()
+	# for release, disable debugger and add argument for init_db to allow database resets
+    # also add support for database export?
+    #init_db()
 
     if not slot_first_start < slot_last_start:
         raise RuntimeError('cfg error: SLOTFIRSTSTART must be before SLOTLASTSTART')
