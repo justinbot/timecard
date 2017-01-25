@@ -58,7 +58,7 @@ def hours_range(start_time, end_time, increment):
 
 @app.route('/')
 #@app.route('/index')
-def show_timecard():
+def show_tc_user():
     # TODO: All pages should require login
     #if session['logged_in']:
     # session should contain info like privilege, username, name
@@ -73,7 +73,7 @@ def show_timecard():
     # times representing start of each cell eg. 8:30
     times = [slot for slot in hours_range(slot_first_start, slot_last_start, slot_increment)]
 
-    return render_template('layout.html', initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), slot_increment=slot_increment, slot_first_start=times[0].strftime("%H%M"), days=days, times=times)
+    return render_template('user.html', initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), slot_increment=slot_increment, slot_first_start=times[0].strftime("%H%M"), days=days, times=times)
     #else:
     #return redirect(url_for('login'))
 
@@ -152,8 +152,7 @@ def save():
         
         user.last_modified = datetime.datetime.now()
         db.session.commit()
-            
-    
+
     # Delete timestamps in 'unselected'
     if 'unselected' in request_json:
         unselected = request_json['unselected']
@@ -163,6 +162,11 @@ def save():
         db.session.commit()
         
     return Response()
+
+
+@app.route('/admin')
+def show_tc_admin():
+    return render_template('admin.html')
 
 
 #@app.route('/login', methods=['GET', 'POST'])

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>timecard</title>
+    <link rel="icon" type="image/ico" href="http://www.rpi.edu/favicon.ico">
+    <link rel="stylesheet" href="../static/stylesheets/timecard.base.css">
+    <link rel="stylesheet" href="../static/stylesheets/timecard.admin.css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
+    <!-- Leet navbar -->
+    <!--<link rel="stylesheet" href="../static/stylesheets/custom.css">-->
+    <nav id="bar">
+        <ul>
+            <li><a class="nav-link red" href="/quicklogs" target="_blank">Quicklogs</a></li>
+            <li><a class="nav-link red" href="/forum" target="_blank">Forum</a></li>
+            <li><a class="nav-link red" href="http://leet.arc.rpi.edu:8000" target="_blank">Print Queue</a></li>
+            <li><a class="nav-link red" href="/printers" target="_blank">Printer Picker</a></li>
+            <li><a class="nav-link red" href="http://afsws.rpi.edu/AFS/dept/acs/consult/Schedule.html" target="_blank">Schedule</a></li>
+            <li><a class="nav-link red" href="https://apex.cct.rpi.edu/apex/f?p=187:SEARCH:34401092285::NO:::" target="_blank">Pickup</a></li>
+            <li><a class="nav-link red" href="http://hd-time.arc.rpi.edu/timecard.php?group=Helpdesk" target="_blank">Time Card</a></li>
+        </ul>
+    </nav>
+    <!-- End Leet navbar -->
+    <script src="../static/js/moment.min.js"></script>
+</head>
+
+<body>
+
+    <div class="header-container">
+        <div class="header-content">
+            <a class="logo" href="{{ url_for('show_tc_admin') }}">
+                <img src="static/img/logo.svg" height="30px">
+            </a>
+            <a class="tc-link" style="color: white; margin-left: auto;" href="{{ url_for('show_tc_admin') }}">Logout {{ session["CAS_USERNAME"] }}</a>
+        </div>
+    </div>
+
+    <div class="tools-container">
+        <div class="tools-content">
+            tools</div>
+    </div>
+
+    <div id="nav-container">
+        <div class="nav-content">
+            <button id="tc-nav-today" class="tc-button" onclick="TcAdmin.currentWeek();">Today</button>
+            <button id="tc-nav-prev" class="tc-button" onclick="TcAdmin.prevWeek();"></button>
+            <button id="tc-nav-next" class="tc-button" onclick="TcAdmin.nextWeek();"></button>
+            <span id="tc-nav-range" style="margin-left: 20px">Jan 1 – 7, 2000</span>
+        </div>
+    </div>
+
+    <div class="content-container">
+        <hr class="nav-shadow" />
+        <div class="content-content">
+            <table border="1" style="width: 100%;">
+                <thead style="background: #eaeaea">
+                    <tr>
+                        <th>Name</th>
+                        <th>User ID</th>
+                        <th>Last Modified</th>
+                        {% for i in range(14) %}
+                        <th>Jan 31</th>
+                        {% endfor %}
+                        <th>Total Hours</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in range(30) %}
+                    <tr>
+                        <td><a class="tc-link">Lastname, Firstname</a></td>
+                        <td>lastnf1</td>
+                        <td>1/31/17</td>
+                        {% for i in range(14) %}
+                        <td>0.0</td>
+                        {% endfor %}
+                        <td>00.0</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="../static/js/admin.js"></script>
+    <script>
+        // TODO: Better way to pass server data on load?
+        //TcAdmin.slotIncrement = {{ slot_increment }} / 60;
+        //TcAdmin.initialDate = moment("{{ initial_date }}");
+        //TcAdmin.lockdate = 
+        //TcAdmin.init();
+    </script>
+
+    <div class="footer">
+        <div>A VCC Helpdesk Project | <a href="https://github.com/justinbot/timecard" target="_blank" title="Source">Source</a></div>
+    </div>
+</body>
+
+</html>

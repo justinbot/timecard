@@ -1,4 +1,4 @@
-var Timecard = (function () {
+var TcUser = (function () {
     var tc = {};
 
     /* DOM elements */
