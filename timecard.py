@@ -166,7 +166,7 @@ def save():
 
 @app.route('/admin')
 def show_tc_admin():
-    return render_template('admin.html')
+    return render_template('admin.html', initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), slot_increment=slot_increment)
 
 
 #@app.route('/login', methods=['GET', 'POST'])

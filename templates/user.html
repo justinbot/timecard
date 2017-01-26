@@ -3,42 +3,29 @@
 
 <head>
     <meta charset="utf-8">
-    <title>timecard</title>
+    <title>Timecard - {{ session['CAS_USERNAME'] }}</title>
     <link rel="icon" type="image/ico" href="http://www.rpi.edu/favicon.ico">
     <link rel="stylesheet" href="../static/stylesheets/timecard.base.css">
     <link rel="stylesheet" href="../static/stylesheets/timecard.user.css">
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
-    <!-- Leet navbar -->
-    <!-- <link rel="stylesheet" href="../static/stylesheets/custom.css"> -->
-    <nav id="bar">
-        <ul>
-            <li><a class="nav-link red" href="/quicklogs" target="_blank">Quicklogs</a></li>
-            <li><a class="nav-link red" href="/forum" target="_blank">Forum</a></li>
-            <li><a class="nav-link red" href="http://leet.arc.rpi.edu:8000" target="_blank">Print Queue</a></li>
-            <li><a class="nav-link red" href="/printers" target="_blank">Printer Picker</a></li>
-            <li><a class="nav-link red" href="http://afsws.rpi.edu/AFS/dept/acs/consult/Schedule.html" target="_blank">Schedule</a></li>
-            <li><a class="nav-link red" href="https://apex.cct.rpi.edu/apex/f?p=187:SEARCH:34401092285::NO:::" target="_blank">Pickup</a></li>
-            <li><a class="nav-link red" href="http://hd-time.arc.rpi.edu/timecard.php?group=Helpdesk" target="_blank">Time Card</a></li>
-        </ul>
-    </nav>
-    <!-- End Leet navbar -->
     <script src="../static/js/moment.min.js"></script>
 </head>
 
 <body>
+    {% include 'leetbar.html' %}
 
     <div class="header-container">
         <div class="header-content">
             <a class="logo" href="{{ url_for('show_tc_user') }}">
                 <img src="static/img/logo.svg" height="30px">
             </a>
-            <a class="tc-link" style="color: white; margin-left: auto;" href="{{ url_for('show_tc_user') }}">Logout {{ session["CAS_USERNAME"] }}</a>
+            <a class="tc-link" style="color: white; margin-left: auto" href="{{ url_for('show_tc_user') }}">Logout {{ session['CAS_USERNAME'] }}</a>
         </div>
     </div>
 
     <div class="tools-container">
         <div class="tools-content">
-            <div style="display: inline-block;">Template:</div>
+            <div>Template:</div>
             <div id="templ-select-container">
                 <select id="templ-select" class="tc-select" onchange="TcUser.templSelectChanged(this);">
                     <option value="" selected>None</option>
@@ -47,13 +34,13 @@
             </div>
             <div id="templ-edit-container" style="display: none;">
                 <input id="templ-textinput" class="tc-textinput" type="text" minlength="2" maxlength="18" oninput="TcUser.templInputName(this);">
-                <button id="templ-save" class="tc-button" onclick="TcUser.templSaveOption();">Save</button>
-                <button id="templ-delete" class="tc-button" onclick="TcUser.templDeleteOption()">Delete</button>
-                <button id="templ-cancel" class="tc-button" onclick="TcUser.hideTemplEdit();">Cancel</button>
+                <button id="templ-save" class="tc-button" style="margin-left: 5px" onclick="TcUser.templSaveOption();">Save</button>
+                <button id="templ-delete" class="tc-button" style="margin-left: 5px" onclick="TcUser.templDeleteOption()">Delete</button>
+                <button id="templ-cancel" class="tc-button" style="margin-left: 5px" onclick="TcUser.hideTemplEdit();">Cancel</button>
             </div>
-            <span id="db-status">Last modified: …</span>
+            <span id="db-status" style="color: #9a9a9a; margin-left: auto">Last modified: …</span>
             <!-- save button for testing purposes -->
-            <button id="database-save" class="tc-button" onclick="TcUser.saveToDatabase();">Save</button>
+            <button id="database-save" class="tc-button" style="margin-left: auto" onclick="TcUser.saveToDatabase();">Save</button>
         </div>
     </div>
 
@@ -63,34 +50,32 @@
             <button id="tc-nav-prev" class="tc-button" onclick="TcUser.prevWeek();"></button>
             <button id="tc-nav-next" class="tc-button" onclick="TcUser.nextWeek();"></button>
             <span id="tc-nav-range" style="margin-left: 20px">Jan 1 – 7, 2000</span>
-            <span id="tc-nav-total">Total Hours: 0.0</span>
+            <span id="tc-nav-total" style="margin-left: auto; font-weight: bold">Total Hours: 0.0</span>
         </div>
     </div>
 
     <div class="content-container unselectable" ondragstart="return false;" ondrop="return false;">
         <hr class="nav-shadow" />
         <div class="content-content">
-            <table class="tc-day-table">
-                <tr>
+            <div style="margin: 0 -20px 0 -20px">
+                <div class="tc-day-table">
                     {% for d in days %} {% include 'day.html' %} {% endfor %}
-                </tr>
-            </table>
+                </div>
+            </div>
         </div>
     </div>
 
     <script src="../static/js/user.js"></script>
     <script>
         // TODO: Better way to pass server data on load?
-        TcUser.slotIncrement = {{ slot_increment }} / 60;
+        TcUser.slotIncrement = "{{ slot_increment }}" / 60;
         TcUser.slotFirstStart = moment("{{ slot_first_start }}", "HHmm");
         TcUser.initialDate = moment("{{ initial_date }}");
         //TcUser.lockDate = 
         TcUser.init();
     </script>
 
-    <div class="footer">
-        <div>A VCC Helpdesk Project | <a href="https://github.com/justinbot/timecard" target="_blank" title="Source">Source</a></div>
-    </div>
+    {% include 'footer.html' %}
 </body>
 
 </html>

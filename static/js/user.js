@@ -169,77 +169,6 @@ var TcUser = (function () {
         }
     }
 
-    // update date info for this day
-    function dayUpdateHeader(weekday) {
-        var day = weekdays[weekday];
-
-        // date associated with day at time of first slot
-        var dayDate = moment(weekStart).add(weekday, "day");
-        dayDate.set({
-            "hour": tc.slotFirstStart.hour(),
-            "minute": tc.slotFirstStart.minute()
-        })
-        day.dataset.date = dayDate.unix();
-
-        // highlight header of current day
-        if (dayDate.isSame(tc.initialDate, "day")) {
-            day.style.background = "#f5f5f5";
-        } else {
-            day.style.background = "";
-        }
-
-        day.children[0].textContent = dayDate.format("dddd, MMM D");
-    }
-
-    // update slots of this day
-    function dayUpdateContent(weekday) {
-        var day = weekdays[weekday];
-        var slots = day.getElementsByTagName("td");
-
-        //var dayLocked = day.dataset.date <= tc.lockDate;//focusDate.isSameOrBefore(tc.lockDate);
-
-        dayHours[weekday] = 0.0;
-        for (var i = 0; i < slots.length; i++) {
-            // update timestamp of every slot by using its delta (seconds from first slot)
-            // dataset values are stored as strings and must be parsed
-            var ts = slots[i].dataset.timestamp = (parseInt(day.dataset.date) + parseInt(slots[i].dataset.timedelta)).toString();
-            // time is selected if it was selected locally, or was selected in the database and not unselected locally
-            if (localSelectedTimestamps.has(ts) || (selectedTimestamps.has(ts) && !localUnselectedTimestamps.has(ts))) {
-                if (locked) {
-                    slots[i].className = "tc-slot-selected-locked";
-                } else {
-                    slots[i].className = "tc-slot-selected";
-                }
-                dayHours[weekday] += tc.slotIncrement;
-            } else {
-                if (locked) {
-                    slots[i].className = "tc-slot-locked";
-                } else {
-                    slots[i].className = "tc-slot";
-                }
-            }
-        }
-
-        totalHours += dayHours[weekday];
-        day.children[1].textContent = "Hours: " + dayHours[weekday].toFixed(1);
-    }
-
-    function daySelectSlot(weekday) {
-        dayHours[weekday] += tc.slotIncrement;
-        weekdays[weekday].children[1].textContent = "Hours: " + dayHours[weekday].toFixed(1);
-
-        totalHours += tc.slotIncrement;
-        navUpdateTotal();
-    }
-
-    function dayUnselectSlot(weekday) {
-        dayHours[weekday] -= tc.slotIncrement;
-        weekdays[weekday].children[1].textContent = "Hours: " + dayHours[weekday].toFixed(1);
-
-        totalHours -= tc.slotIncrement;
-        navUpdateTotal();
-    }
-
     function navUpdate() {
         tcNavToday.disabled = focusDate.isSame(tc.initialDate, "day");
         tcNavRange.textContent = moment(focusDate).startOf("week").format("MMM D") + " – " + moment(focusDate).endOf("week").format("D, YYYY");
@@ -303,77 +232,6 @@ var TcUser = (function () {
         getFromDatabase();
 
     }
-
-    function slotSelect(slot) {
-        // this check may not be necessary
-        if (slot.className == "tc-slot") {
-            slot.className = "tc-slot-selected";
-
-            if (!selectedTimestamps.has(slot.dataset.timestamp)) {
-                localSelectedTimestamps.add(slot.dataset.timestamp);
-            }
-
-            if (localUnselectedTimestamps.has(slot.dataset.timestamp)) {
-                localUnselectedTimestamps.delete(slot.dataset.timestamp);
-            }
-
-            // TODO: slot changes have been made, no longer template-valid
-
-            daySelectSlot(slot.dataset.weekday);
-        } else {
-            console.error("selecting already selected slot");
-        }
-    }
-
-    function slotUnselect(slot) {
-        if (slot.className == "tc-slot-selected") {
-            slot.className = "tc-slot";
-
-            if (localSelectedTimestamps.has(slot.dataset.timestamp)) {
-                localSelectedTimestamps.delete(slot.dataset.timestamp);
-            }
-
-            // if this was originally selected from the database, add it to be unselected
-            if (selectedTimestamps.has(slot.dataset.timestamp)) {
-                localUnselectedTimestamps.add(slot.dataset.timestamp);
-            }
-
-            // TODO: slot changes have been made, no longer template-valid
-
-            dayUnselectSlot(slot.dataset.weekday);
-        } else {
-            console.error("unselecting already unselected slot");
-        }
-    }
-
-    tc.slotMouseOver = function (slot) {
-        if (!slotDown) {
-            return;
-        }
-        if (slotToggleTo) {
-            // changing slots to selected, only if not already selected
-            if (slot.className == "tc-slot") {
-                slotSelect(slot);
-            }
-        } else {
-            // changing slots to unselected, only if already selected
-            if (slot.className == "tc-slot-selected") {
-                slotUnselect(slot);
-            }
-        }
-    }
-
-    tc.slotMouseDown = function (slot) {
-        slotDown = true;
-        slotToggleTo = slot.className == "tc-slot";
-        tc.slotMouseOver(slot);
-    }
-
-    tc.slotMouseUp = function () {
-        slotDown = false;
-        navUpdateSave();
-    }
-
 
     tc.showTemplEdit = function () {
         templSelectContainer.style.display = "none";
@@ -446,6 +304,147 @@ var TcUser = (function () {
         }
 
         // Apply template to hours if not None
+    }
+
+    // update date info for this day
+    function dayUpdateHeader(weekday) {
+        var day = weekdays[weekday];
+
+        // date associated with day at time of first slot
+        var dayDate = moment(weekStart).add(weekday, "day");
+        dayDate.set({
+            "hour": tc.slotFirstStart.hour(),
+            "minute": tc.slotFirstStart.minute()
+        })
+        day.dataset.date = dayDate.unix();
+
+        // highlight header of current day
+        if (dayDate.isSame(tc.initialDate, "day")) {
+            day.style.background = "#f5f5f5";
+        } else {
+            day.style.background = "";
+        }
+
+        day.children[0].textContent = dayDate.format("dddd, MMM D");
+    }
+
+    // update slots of this day
+    function dayUpdateContent(weekday) {
+        var day = weekdays[weekday];
+        var slots = day.getElementsByTagName("td");
+
+        //var dayLocked = day.dataset.date <= tc.lockDate;//focusDate.isSameOrBefore(tc.lockDate);
+
+        dayHours[weekday] = 0.0;
+        for (var i = 0; i < slots.length; i++) {
+            // update timestamp of every slot by using its delta (seconds from first slot)
+            // dataset values are stored as strings and must be parsed
+            var ts = slots[i].dataset.timestamp = (parseInt(day.dataset.date) + parseInt(slots[i].dataset.timedelta)).toString();
+            // time is selected if it was selected locally, or was selected in the database and not unselected locally
+            if (localSelectedTimestamps.has(ts) || (selectedTimestamps.has(ts) && !localUnselectedTimestamps.has(ts))) {
+                if (locked) {
+                    slots[i].className = "tc-slot-selected-locked";
+                } else {
+                    slots[i].className = "tc-slot-selected";
+                }
+                dayHours[weekday] += tc.slotIncrement;
+            } else {
+                if (locked) {
+                    slots[i].className = "tc-slot-locked";
+                } else {
+                    slots[i].className = "tc-slot";
+                }
+            }
+        }
+
+        totalHours += dayHours[weekday];
+        day.children[1].textContent = "Hours: " + dayHours[weekday].toFixed(1);
+    }
+
+    function daySelectSlot(weekday) {
+        dayHours[weekday] += tc.slotIncrement;
+        weekdays[weekday].children[1].textContent = "Hours: " + dayHours[weekday].toFixed(1);
+
+        totalHours += tc.slotIncrement;
+        navUpdateTotal();
+    }
+
+    function dayUnselectSlot(weekday) {
+        dayHours[weekday] -= tc.slotIncrement;
+        weekdays[weekday].children[1].textContent = "Hours: " + dayHours[weekday].toFixed(1);
+
+        totalHours -= tc.slotIncrement;
+        navUpdateTotal();
+    }
+
+    function slotSelect(slot) {
+        // this check may not be necessary
+        if (slot.className == "tc-slot") {
+            slot.className = "tc-slot-selected";
+
+            if (!selectedTimestamps.has(slot.dataset.timestamp)) {
+                localSelectedTimestamps.add(slot.dataset.timestamp);
+            }
+
+            if (localUnselectedTimestamps.has(slot.dataset.timestamp)) {
+                localUnselectedTimestamps.delete(slot.dataset.timestamp);
+            }
+
+            // TODO: slot changes have been made, no longer template-valid
+
+            daySelectSlot(slot.dataset.weekday);
+        } else {
+            console.error("selecting already selected slot");
+        }
+    }
+
+    function slotUnselect(slot) {
+        if (slot.className == "tc-slot-selected") {
+            slot.className = "tc-slot";
+
+            if (localSelectedTimestamps.has(slot.dataset.timestamp)) {
+                localSelectedTimestamps.delete(slot.dataset.timestamp);
+            }
+
+            // if this was originally selected from the database, add it to be unselected
+            if (selectedTimestamps.has(slot.dataset.timestamp)) {
+                localUnselectedTimestamps.add(slot.dataset.timestamp);
+            }
+
+            // TODO: slot changes have been made, no longer template-valid
+
+            dayUnselectSlot(slot.dataset.weekday);
+        } else {
+            console.error("unselecting already unselected slot");
+        }
+    }
+
+    tc.slotMouseOver = function (slot) {
+        if (!slotDown) {
+            return;
+        }
+        if (slotToggleTo) {
+            // changing slots to selected, only if not already selected
+            if (slot.className == "tc-slot") {
+                slotSelect(slot);
+            }
+        } else {
+            // changing slots to unselected, only if already selected
+            if (slot.className == "tc-slot-selected") {
+                slotUnselect(slot);
+            }
+        }
+    }
+
+    tc.slotMouseDown = function (slot) {
+        slotDown = true;
+        slotToggleTo = slot.className == "tc-slot";
+        tc.slotMouseOver(slot);
+    }
+
+    tc.slotMouseUp = function () {
+        slotDown = false;
+        navUpdateSave();
     }
 
     return tc;

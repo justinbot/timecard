@@ -10,22 +10,7 @@ var TcAdmin = (function () {
     var dbSave;
 
     /* local variables */
-    var currentTemplate = ""; // store template associated with each day? or just have a template if set
-
-    var localSelectedTimestamps = new Set();
-    var localUnselectedTimestamps = new Set();
-    var selectedTimestamps = new Set();
     var focusDate;
-    var weekStart;
-    var lastModified;
-
-    var changesMade = false;
-    var locked = false;
-    var dayHours = [];
-    var totalHours = 0.0;
-
-    var slotDown = false;
-    var slotToggleTo = true;
 
     /* public variables */
     // all values provided by server
@@ -41,8 +26,34 @@ var TcAdmin = (function () {
         tcNavToday = document.getElementById("tc-nav-today");
         tcNavRange = document.getElementById("tc-nav-range");
         tcNavTotal = document.getElementById("tc-nav-total");
-        
+
         tc.currentWeek();
+    }
+
+    function getFromDatabase() {}
+    
+    function navUpdate() {
+        tcNavToday.disabled = focusDate.isSame(tc.initialDate, "day");
+        // TODO: Need to define 2-week pay period given config day offset?
+        tcNavRange.textContent = moment(focusDate).startOf("week").format("MMM D") + " – " + moment(focusDate).endOf("week").format("D, YYYY");
+    }
+
+    tc.currentWeek = function () {
+        focusDate = moment(tc.initialDate);
+        navUpdate();
+        getFromDatabase();
+    }
+
+    tc.prevWeek = function () {
+        focusDate.subtract(1, "week");
+        navUpdate();
+        getFromDatabase();
+    }
+
+    tc.nextWeek = function () {
+        focusDate.add(1, "week");
+        navUpdate();
+        getFromDatabase();
     }
 
     return tc;

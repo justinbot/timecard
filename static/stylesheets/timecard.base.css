@@ -5,9 +5,13 @@ body {
     font-family: 'Roboto', arial, sans-serif;
     font-size: 14px;
     vertical-align: baseline;
-    min-width: 720px;
+    min-width: 700px;
     margin: 0;
     padding: 0;
+}
+
+a {
+    color: inherit;
 }
 
 table {
@@ -33,7 +37,7 @@ th {
     /* Disable Android and iOS callouts*/
 }
 
-.tc-button {
+button {
     background: #f5f5f5;
     color: #444;
     border: 1px solid #9a9a9a;
@@ -46,17 +50,17 @@ th {
     cursor: pointer;
 }
 
-.tc-button:focus {
+button:focus {
     outline: 0;
 }
 
-.tc-button:disabled {
+button:disabled {
     background: #e2e2e2;
     color: #b8b8b8;
     cursor: inherit;
 }
 
-.tc-button:enabled:hover {
+button:enabled:hover {
     transition: background 0.1s ease-out;
     background: white;
     color: black;
@@ -65,7 +69,7 @@ th {
     z-index: 5;
 }
 
-.tc-button:enabled:active {
+button:enabled:active {
     background: #eaeaea;
     border: 1px solid black;
 }
@@ -90,8 +94,8 @@ th {
     outline: 0;
     width: 140px;
     height: 18px;
-    padding: 1px 4px;
     margin-left: 10px;
+    padding: 1px 4px;
 }
 
 .tc-textinput:focus {
@@ -165,8 +169,6 @@ th {
 
 .content-container {
     width: 100%;
-    margin: 0;
-    display: block;
 }
 
 .content-content {
@@ -178,9 +180,51 @@ th {
 }
 
 .footer {
-    background-color: #eaeaea;
+    background: #eaeaea;
+    color: #9a9a9a;
     text-align: center;
+    width: 100%;
     font-size: 12px;
-    margin: 10px 0 0 0;
+    margin-top: 10px;
     padding: 5px 0;
+}
+
+#tc-nav-today {
+    width: 80px;
+    height: 28px;
+    font-weight: bold;
+}
+
+#tc-nav-prev {
+    background-image: url(../img/nav_left.svg);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 8px;
+    border-bottom-right-radius: 0;
+    border-top-right-radius: 0;
+    width: 40px;
+    height: 28px;
+    margin-left: 10px;
+    margin-right: -1px;
+    font-weight: bold;
+}
+
+#tc-nav-prev:enabled:hover {
+    background-image: url(../img/nav_left_black.svg);
+}
+
+#tc-nav-next {
+    background-image: url(../img/nav_right.svg);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 8px;
+    border-bottom-left-radius: 0;
+    border-top-left-radius: 0;
+    width: 40px;
+    height: 28px;
+    font-weight: bold;
+}
+
+#tc-nav-next:enabled:hover {
+    background-image: url(../img/nav_right_black.svg);
 }
