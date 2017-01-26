@@ -1,10 +1,14 @@
 import datetime
 from flask import Flask, request, Response, session, redirect, url_for, render_template, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
+from flask_cas import CAS
+from flask_cas import login_required
 
 app = Flask(__name__)
 app.config.from_pyfile('timecard.cfg')
 db = SQLAlchemy(app)
+cas = CAS(app, '/cas')
+
 
 slot_increment = int(app.config['SLOTINCREMENT'])
 slot_first_start = datetime.datetime.strptime(app.config['SLOTFIRSTSTART'], '%H:%M')
@@ -57,6 +61,7 @@ def hours_range(start_time, end_time, increment):
 
 
 @app.route('/')
+@login_required
 #@app.route('/index')
 def show_tc_user():
     # TODO: All pages should require login
@@ -65,7 +70,7 @@ def show_tc_user():
     #session['username'] = app.config['USERNAME']
 
     # will be supplied by cas
-    session['CAS_USERNAME'] = 'carlsj4'
+    session['CAS_USERNAME'] = cas.username
 
     # days of week 0-6
     days=range(7)
