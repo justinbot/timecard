@@ -80,3 +80,13 @@
     padding: 0;
     cursor: default;
 }
+
+#templ-select-form {
+    display: inherit;
+    align-items: inherit;
+}
+
+#templ-edit-form {
+    display: inherit;
+    align-items: inherit;
+}

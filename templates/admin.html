@@ -4,9 +4,9 @@
 <head>
     <meta charset="utf-8">
     <title>Timecard Admin - {{ session['CAS_USERNAME'] }}</title>
-    <link rel="icon" type="image/ico" href="http://www.rpi.edu/favicon.ico">
-    <link rel="stylesheet" href="../static/stylesheets/timecard.base.css">
-    <link rel="stylesheet" href="../static/stylesheets/timecard.admin.css">
+    <link href="http://www.rpi.edu/favicon.ico" type="image/ico" rel="icon">
+    <link href="../static/stylesheets/timecard.base.css" rel="stylesheet">
+    <link href="../static/stylesheets/timecard.admin.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
     <script src="../static/js/moment.min.js"></script>
 </head>
@@ -19,13 +19,23 @@
             <a class="logo" href="{{ url_for('show_tc_admin') }}">
                 <img src="static/img/logo.svg" height="30px">
             </a>
-            <a class="tc-link" style="color: white; margin-left: auto" href="{{ url_for('show_tc_admin') }}">Logout {{ session['CAS_USERNAME'] }}</a>
+            <a class="tc-link" style="color: white; margin-left: auto" href="{{ url_for('cas.logout') }}">Logout {{ session['CAS_USERNAME'] }}</a>
         </div>
     </div>
 
     <div class="tools-container">
         <div class="tools-content">
-            tools</div>
+            <!--<button>New User</button>-->
+            <form style="display: inherit; align-items: inherit" onsubmit="return false">
+                <div style="font-weight: bold">New User</div>
+                <div style="margin-left: 20px">Name:</div>
+                <input style="width: 180px; margin-left: 10px" type="text" minlength="2" maxlength="64" oninput="">
+                <div style="margin-left: 20px">ID:</div>
+                <input style="width: 60px; margin-left: 10px" type="text" minlength="7" maxlength="7" oninput="">
+                <button style="margin-left: 20px">Submit</button>
+                <button style="margin-left: 5px">Cancel</button>
+            </form>
+        </div>
     </div>
 
     <div id="nav-container">
@@ -33,7 +43,7 @@
             <button id="tc-nav-today" onclick="TcAdmin.currentWeek();">Today</button>
             <button id="tc-nav-prev" onclick="TcAdmin.prevWeek();"></button>
             <button id="tc-nav-next" onclick="TcAdmin.nextWeek();"></button>
-            <span id="tc-nav-range" style="margin-left: 20px">Jan 1 – 7, 2000</span>
+            <div id="tc-nav-range" style="margin-left: 20px">Jan 1 – 7, 2000</div>
         </div>
     </div>
 

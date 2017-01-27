@@ -4,9 +4,9 @@
 <head>
     <meta charset="utf-8">
     <title>Timecard - {{ session['CAS_USERNAME'] }}</title>
-    <link rel="icon" type="image/ico" href="http://www.rpi.edu/favicon.ico">
-    <link rel="stylesheet" href="../static/stylesheets/timecard.base.css">
-    <link rel="stylesheet" href="../static/stylesheets/timecard.user.css">
+    <link href="http://www.rpi.edu/favicon.ico" type="image/ico" rel="icon">
+    <link href="../static/stylesheets/timecard.base.css" rel="stylesheet">
+    <link href="../static/stylesheets/timecard.user.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
     <script src="../static/js/moment.min.js"></script>
 </head>
@@ -19,38 +19,38 @@
             <a class="logo" href="{{ url_for('show_tc_user') }}">
                 <img src="static/img/logo.svg" height="30px">
             </a>
-            <a class="tc-link" style="color: white; margin-left: auto" href="{{ url_for('show_tc_user') }}">Logout {{ session['CAS_USERNAME'] }}</a>
+            <a class="tc-link" style="color: white; margin-left: auto" href="{{ url_for('cas.logout') }}">Logout {{ session['CAS_USERNAME'] }}</a>
         </div>
     </div>
 
     <div class="tools-container">
         <div class="tools-content">
             <div>Template:</div>
-            <div id="templ-select-container">
-                <select id="templ-select" class="tc-select" onchange="TcUser.templSelectChanged(this);">
+            <div id="templ-select-form">
+                <select id="templ-select" style="margin-left: 10px" onchange="TcUser.templSelectChanged(this);">
                     <option value="" selected>None</option>
                 </select>
-                <button id="templ-new" class="tc-button" onclick="TcUser.showTemplEdit();">New Template</button>
+                <button id="templ-new" style="margin-left: 5px" onclick="TcUser.showTemplEdit();">New Template</button>
             </div>
-            <div id="templ-edit-container" style="display: none;">
-                <input id="templ-textinput" class="tc-textinput" type="text" minlength="2" maxlength="18" oninput="TcUser.templInputName(this);">
-                <button id="templ-save" class="tc-button" style="margin-left: 5px" onclick="TcUser.templSaveOption();">Save</button>
-                <button id="templ-delete" class="tc-button" style="margin-left: 5px" onclick="TcUser.templDeleteOption()">Delete</button>
-                <button id="templ-cancel" class="tc-button" style="margin-left: 5px" onclick="TcUser.hideTemplEdit();">Cancel</button>
-            </div>
-            <span id="db-status" style="color: #9a9a9a; margin-left: auto">Last modified: …</span>
+            <form id="templ-edit-form" onsubmit="return false">
+                <input id="templ-edit-textinput" style="margin-left: 10px" type="text" minlength="2" maxlength="18" oninput="TcUser.templInputName(this);">
+                <button id="templ-edit-save" style="margin-left: 20px" onclick="TcUser.templSaveOption();">Save</button>
+                <button id="templ-edit-delete" style="margin-left: 5px" onclick="TcUser.templDeleteOption()">Delete</button>
+                <button id="templ-edit-cancel" style="margin-left: 5px" onclick="TcUser.hideTemplEdit();">Cancel</button>
+            </form>
+            <div id="db-status" style="color: #9a9a9a; margin-left: auto">Last modified: …</div>
             <!-- save button for testing purposes -->
-            <button id="database-save" class="tc-button" style="margin-left: auto" onclick="TcUser.saveToDatabase();">Save</button>
+            <button id="database-save" style="margin-left: auto" onclick="TcUser.saveToDatabase();">Save</button>
         </div>
     </div>
 
     <div class="nav-container">
         <div class="nav-content">
-            <button id="tc-nav-today" class="tc-button" onclick="TcUser.currentWeek();">Today</button>
-            <button id="tc-nav-prev" class="tc-button" onclick="TcUser.prevWeek();"></button>
-            <button id="tc-nav-next" class="tc-button" onclick="TcUser.nextWeek();"></button>
-            <span id="tc-nav-range" style="margin-left: 20px">Jan 1 – 7, 2000</span>
-            <span id="tc-nav-total" style="margin-left: auto; font-weight: bold">Total Hours: 0.0</span>
+            <button id="tc-nav-today" onclick="TcUser.currentWeek();">Today</button>
+            <button id="tc-nav-prev" onclick="TcUser.prevWeek();"></button>
+            <button id="tc-nav-next" onclick="TcUser.nextWeek();"></button>
+            <div id="tc-nav-range" style="margin-left: 20px">Jan 1 – 7, 2000</div>
+            <div id="tc-nav-total" style="margin-left: auto; font-weight: bold">Total Hours: 0.0</div>
         </div>
     </div>
 

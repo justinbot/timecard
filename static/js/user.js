@@ -8,13 +8,13 @@ var TcUser = (function () {
     var tcNavRange;
     var tcNavTotal;
 
-    var templSelectContainer;
+    var templSelectForm;
     var templSelect;
     var templNew;
-    var templEditContainer;
-    var templTextInput;
-    var templSave;
-    var templDelete;
+    var templEditForm;
+    var templEditTextInput;
+    var templEditSave;
+    var templEditDelete;
 
     var dbStatus;
     var dbSave;
@@ -46,13 +46,13 @@ var TcUser = (function () {
 
 
     tc.init = function () {
-        templSelectContainer = document.getElementById("templ-select-container");
-        templEditContainer = document.getElementById("templ-edit-container");
+        templSelectForm = document.getElementById("templ-select-form");
         templSelect = document.getElementById("templ-select");
         templNew = document.getElementById("templ-new");
-        templTextInput = document.getElementById("templ-textinput");
-        templSave = document.getElementById("templ-save");
-        templDelete = document.getElementById("templ-delete");
+        templEditForm = document.getElementById("templ-edit-form");
+        templEditTextInput = document.getElementById("templ-edit-textinput");
+        templEditSave = document.getElementById("templ-edit-save");
+        templEditDelete = document.getElementById("templ-edit-delete");
 
         dbStatus = document.getElementById("db-status");
         dbSave = document.getElementById("database-save");
@@ -234,27 +234,28 @@ var TcUser = (function () {
     }
 
     tc.showTemplEdit = function () {
-        templSelectContainer.style.display = "none";
-        templEditContainer.style.display = "inline-block";
+        templSelectForm.style.display = "none";
+        templEditForm.style.display = "";
 
         if (templSelect.selectedIndex == 0) {
             // Making new template
-            templTextInput.value = "New Template";
-            templDelete.style.display = "none";
+            templEditTextInput.value = "New Template";
+            templEditDelete.style.display = "none";
         } else {
             // Renaming existing template
-            templTextInput.value = templSelect.options[templSelect.selectedIndex].text;
-            templDelete.style.display = "inline-block";
+            templEditTextInput.value = templSelect.options[templSelect.selectedIndex].text;
+            templEditDelete.style.display = "";
         }
 
-        tc.templInputName(templTextInput);
-        templTextInput.focus();
+        // TODO: Revise template logic
+        tc.templInputName(templEditTextInput);
+        templEditTextInput.focus();
     }
 
     tc.hideTemplEdit = function () {
         //templatesTextInput.value = "";
-        templSelectContainer.style.display = "inline-block";
-        templEditContainer.style.display = "none";
+        templSelectForm.style.display = "";
+        templEditForm.style.display = "none";
     }
 
     // called when contents of template name input change
@@ -263,11 +264,11 @@ var TcUser = (function () {
             saveNewTemplate();
         }*/
         // Disable save button unless template name is unique
-        templSave.disabled = false;
+        templEditSave.disabled = false;
         for (var i = 0; i < templSelect.length; i++) {
             if (e.value.trim() == templSelect.options[i].text) {
                 // Disable save unless template timestamps or name changed
-                templSave.disabled = true;
+                templEditSave.disabled = true;
                 break;
             }
         }
@@ -276,11 +277,11 @@ var TcUser = (function () {
     // save changes to the selected template
     tc.templSaveOption = function () {
         if (templSelect.selectedIndex == 0) {
-            // creating new template
-            templSelect.options[templSelect.options.length] = new Option(templTextInput.value.trim(), "new-template-value");
+            // TODO: creating new template with form
+            templSelect.options[templSelect.options.length] = new Option(templEditTextInput.value.trim(), "new-template-value");
         } else {
-            // TODO: modifying existing template
-            templSelect.options[templSelect.selectedIndex] = new Option(templTextInput.value.trim(), "new-template-value");
+            // TODO: modifying existing template with form
+            templSelect.options[templSelect.selectedIndex] = new Option(templEditTextInput.value.trim(), "new-template-value");
         }
         tc.templSelectChanged();
         tc.hideTemplEdit();
