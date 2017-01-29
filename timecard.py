@@ -1,13 +1,12 @@
 import datetime
 from flask import Flask, request, Response, session, redirect, url_for, render_template, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
-from flask_cas import CAS
-from flask_cas import login_required
+from flask_cas import CAS, login_required, logout
 
 app = Flask(__name__)
 app.config.from_pyfile('timecard.cfg')
 db = SQLAlchemy(app)
-cas = CAS(app, '/cas')
+cas = CAS(app)
 
 
 slot_increment = int(app.config['SLOTINCREMENT'])
@@ -17,8 +16,6 @@ pay_period = app.config['PAY_PERIOD']
 
 
 class User(db.Model):
-    #__tablename__ = 'user'
-
     # id, also used for login
     id = db.Column(db.String, primary_key=True)
     # actual name
@@ -29,8 +26,6 @@ class User(db.Model):
 
 
 class Timeslot(db.Model):
-    #__tablename__ = 'timeslot'
-
     # Uses BigInteger due to 2038 problem
     # potentially use index=True? Timestamps should be indexed on user id for performance
     timestamp = db.Column(db.BigInteger, primary_key=True)
@@ -63,44 +58,38 @@ def hours_range(start_time, end_time, increment):
 
 @app.route('/')
 @login_required
-#@app.route('/index')
 def show_tc_user():
-    # TODO: All pages should require login
-    #if session['logged_in']:
-    # session should contain info like privilege, username, name
-    #session['username'] = app.config['USERNAME']
-
-    # will be supplied by cas
-    session['CAS_USERNAME'] = cas.username
-
     # days of week 0-6
-    days=range(7)
+    days = range(7)
 
     # times representing start of each cell eg. 8:30
     times = [slot for slot in hours_range(slot_first_start, slot_last_start, slot_increment)]
 
-    return render_template('user.html', initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), slot_increment=slot_increment, slot_first_start=times[0].strftime("%H%M"), days=days, times=times)
-    #else:
-    #return redirect(url_for('login'))
+    # TODO: Cleaner way to pass data? Maybe store persistent values in session
+    return render_template('user.html',
+                           initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                           slot_increment=slot_increment,
+                           slot_first_start=times[0].strftime("%H%M"),
+                           days=days,
+                           times=times)
 
 
-@app.route('/update', methods = ['POST'])
+@app.route('/update', methods=['POST'])
 def update():
     # Takes request with range of two UNIX timestamps
     # Returns all timestamps in range, and user last modified date
 
     # TODO: Combine pages so every action doesn't require its own route?
 
-    # TODO: Should query with login id
-    #u = db.session.query(User).get('carlsj4')
-    user = User.query.filter_by(id='carlsj4').first()
+    user = User.query.filter_by(id=session['CAS_USERNAME']).first()
+    if not user:
+        abort(400)
 
     request_json = request.get_json(silent=True)
-    
-    if not request_json or not 'range' in request_json:
-        # abort with error code 400 bad request
+
+    if not request_json or 'range' not in request_json:
         abort(400)
-    
+
     # we only want timestamps inside these bounds
     # TODO: Make sure malformed requests don't break
     lower_bound = request_json['range'][0]
@@ -108,16 +97,19 @@ def update():
 
     response_dict = {}
     response_dict['lastmodified'] = user.last_modified.strftime("%Y-%m-%d %H:%M:%S")
-    response_dict['selected'] = [str(ts.timestamp) for ts in Timeslot.query.filter(Timeslot.user_id == user.id, Timeslot.timestamp >= lower_bound, Timeslot.timestamp <= upper_bound)]
+    response_dict['selected'] = [str(ts.timestamp) for ts in Timeslot.query.filter(
+        Timeslot.user_id == user.id,
+        Timeslot.timestamp >= lower_bound,
+        Timeslot.timestamp <= upper_bound)]
 
-    #print 'lastmodified:', response_dict['lastmodified']
-    #print 'selected:', response_dict['selected']
+    # print 'lastmodified:', response_dict['lastmodified']
+    # print 'selected:', response_dict['selected']
 
     # jsonfiy creates a complete Response
     return jsonify(response_dict)
-        
 
-@app.route('/save', methods = ['POST'])
+
+@app.route('/save', methods=['POST'])
 def save():
     # Takes request contents of selected and unselected timestamps
     # Applies to database, ignoring timestamps for locked dates
@@ -127,15 +119,15 @@ def save():
     # if a template is present in 'templates', it will be overwritten/created
     # potential usability feature: know which template each week is using, select it on load
 
-    user = User.query.filter_by(id='carlsj4').first()
-    
+    user = User.query.filter_by(id=session['CAS_USERNAME']).first()
+    if not user:
+        abort(400)
+
     request_json = request.get_json(silent=True)
 
-    if not request_json or (not 'selected' in request_json and not 'unselected' in request_json):
+    if not request_json or ('selected' not in request_json and 'unselected' not in request_json):
         # abort with error code 400 bad request
         abort(400)
-    
-    #timestamps = request.get_json()
 
     # can check if an item exists with session.query(q.exists())
 
@@ -155,7 +147,7 @@ def save():
                 db.session.rollback()
                 # Will probably be a duplicate entry
                 print 'DEBUG: Timeslot insertion integrity error'
-        
+
         user.last_modified = datetime.datetime.now()
         db.session.commit()
 
@@ -163,16 +155,21 @@ def save():
     if 'unselected' in request_json:
         unselected = request_json['unselected']
         #print 'unselected:', unselected
-        
-        Timeslot.query.filter(Timeslot.user_id == user.id, Timeslot.timestamp.in_(unselected)).delete(synchronize_session='fetch')
+
+        Timeslot.query.filter(Timeslot.user_id == user.id,
+                              Timeslot.timestamp.in_(unselected)).delete(synchronize_session='fetch')
         db.session.commit()
-        
+
     return Response()
 
 
 @app.route('/admin')
+@login_required
 def show_tc_admin():
-    return render_template('admin.html', initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), slot_increment=slot_increment)
+    return render_template(
+        'admin.html',
+        initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        slot_increment=slot_increment)
 
 
 @app.route('/admin/update', methods = ['POST'])
@@ -207,32 +204,20 @@ def admin_update():
         response_dict[user.name] = user_dict
     # print response_dict
     return jsonify(response_dict)
-        
-
-#@app.route('/login', methods=['GET', 'POST'])
-#def login():
-#    error = None
-#    if request.method == 'POST':
-#        if request.form['username'] != app.config['USERNAME']:
-#            error = 'Invalid username'
-#        elif request.form['password'] != app.config['PASSWORD']:
-#            error = 'Invalid password'
-#        else:
-#            session['logged_in'] = True
-#            session['username'] = app.config['USERNAME']
-#            return redirect(url_for('show_timecard'))
-#    return render_template('login.html', error=error)
 
 
-#@app.route('/logout')
-#def logout():
-#   session.clear()
-#    session.pop('logged_in', None)
-#    return render_template('logout.html')
+@app.route('/login/redirect')
+@login_required
+def tc_login():
+    # This endpoint is for redirecting the user after login
 
-#@app.errorhandler(404)
-#def page_not_found(e):
-#    return render_template('404.html'), 404
+    print 'Logged in', cas.username
+    # username is automatically stored in session CAS_USERNAME
+
+    # TODO: redirect to admin panel if user is an admin
+
+    return redirect(url_for('show_tc_user'))
+
 
 def init_db():
     # for use with command line argument to reset database
@@ -245,8 +230,8 @@ def init_db():
 
     # TODO: creating users should only be done through admin panel
     # TODO: Initial lock date should be 00:00 on date first admin account is created?
-    test_user = User(id='carlsj4', name='Justin Carlson')
-    test_user2 = User(id='shina2', name='Albert Shin')
+    test_user = User(id='CARLSJ4', name='Justin Carlson')
+    test_user2 = User(id='SHINA2', name='Albert Shin')
 
     #test_user_2 = User(id='testoa4', name='Test User')
     #test_user_2.timeslots = [Timeslot(timestamp = 1483799400)]
@@ -258,12 +243,14 @@ def init_db():
 
 
 if __name__ == '__main__':
-	# for release, disable debugger and add argument for init_db to allow database resets
+    # for release, disable debugger and add argument for init_db to allow database resets
     # also add support for database export?
     #init_db()
 
+    # TODO: initialization logic and error checking
+    # require at least one admin, ...
     if not slot_first_start < slot_last_start:
-        raise RuntimeError('cfg error: SLOTFIRSTSTART must be before SLOTLASTSTART')
+        raise RuntimeError('cfg error: SLOT_FIRST_START must be before SLOT_LAST_START')
 
     app.run(threaded=True) # use different WSGI server for deployment
     # use app.run(threaded=True, host=app.config['HOST'], port=int(app.config['PORT']), debug=app.config['DEBUG']) for release

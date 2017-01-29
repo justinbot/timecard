@@ -46,7 +46,7 @@ button {
     font-size: 12px;
     min-width: 22px;
     min-height: 22px;
-    padding: 2px 8px;
+    padding: 2px 10px;
     cursor: pointer;
 }
 
@@ -74,33 +74,39 @@ button:enabled:active {
     border: 1px solid black;
 }
 
-.tc-select {
+select {
     border: 1px solid #9a9a9a;
     border-radius: 2px;
     width: 150px;
     height: 22px;
-    margin-left: 10px;
     cursor: pointer;
 }
 
-.tc-select:focus {
+select:focus {
     border: 1px solid #0c78d6;
     outline: 0;
 }
 
-.tc-textinput {
+input[type=text] {
+    background: white;
     border: 1px solid #9a9a9a;
     border-radius: 2px;
-    outline: 0;
-    width: 140px;
+    width: 120px;
     height: 18px;
-    margin-left: 10px;
+    margin: 0;
     padding: 1px 4px;
 }
 
-.tc-textinput:focus {
+input[type=text]:focus {
     border: 1px solid #0c78d6;
     outline: 0;
+}
+
+input[type=checkbox] {
+    width: 15px;
+    height: 15px;
+    margin: 0;
+    cursor: pointer;
 }
 
 .tc-link {
