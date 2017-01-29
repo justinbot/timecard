@@ -13,6 +13,7 @@ cas = CAS(app, '/cas')
 slot_increment = int(app.config['SLOTINCREMENT'])
 slot_first_start = datetime.datetime.strptime(app.config['SLOTFIRSTSTART'], '%H:%M')
 slot_last_start = datetime.datetime.strptime(app.config['SLOTLASTSTART'], '%H:%M')
+pay_period = app.config['PAY_PERIOD']
 
 
 class User(db.Model):
@@ -174,6 +175,40 @@ def show_tc_admin():
     return render_template('admin.html', initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), slot_increment=slot_increment)
 
 
+@app.route('/admin/update', methods = ['POST'])
+def admin_update():
+    request_json = request.get_json(silent=True)
+
+    if not request_json:
+        # abort with error code 400 bad request
+        abort(400)
+
+    lower_bound = request_json['days']['ts-day-' + str(pay_period-1)]['range'][0]
+    upper_bound = request_json['days']['ts-day-' + str(pay_period-1)]['range'][1]
+
+    response_dict = {}
+    users = User.query.order_by(User.name)
+    for user in users:
+        times = [ts.timestamp for ts in Timeslot.query.filter(Timeslot.user_id == user.id, Timeslot.timestamp >= lower_bound, Timeslot.timestamp <= upper_bound)]
+        user_dict = {}
+        user_dict['id'] = user.id
+        user_dict['lastmodified'] = user.last_modified.strftime("%Y-%m-%d %H:%M:%S")
+        user_dict['total'] = 0
+
+        for cnt in xrange(pay_period):
+            day_lower_bound = request_json['days']['ts-day-' + str(cnt)]['range'][0]
+            day_upper_bound = request_json['days']['ts-day-' + str(cnt)]['range'][1]
+            day_times = [t for t in times if t >= day_lower_bound and t <= day_upper_bound]
+            print day_times
+            hour_amount = (len(day_times) * slot_increment) / 60.0
+            user_dict['ts-day-' + str(cnt)] = hour_amount
+            user_dict['total'] = user_dict['total'] + hour_amount
+        # print user_dict
+        response_dict[user.name] = user_dict
+    # print response_dict
+    return jsonify(response_dict)
+        
+
 #@app.route('/login', methods=['GET', 'POST'])
 #def login():
 #    error = None
@@ -211,11 +246,13 @@ def init_db():
     # TODO: creating users should only be done through admin panel
     # TODO: Initial lock date should be 00:00 on date first admin account is created?
     test_user = User(id='carlsj4', name='Justin Carlson')
+    test_user2 = User(id='shina2', name='Albert Shin')
 
     #test_user_2 = User(id='testoa4', name='Test User')
     #test_user_2.timeslots = [Timeslot(timestamp = 1483799400)]
 
     db.session.add(test_user)
+    db.session.add(test_user2)
     #db.session.add(test_user_2)
     db.session.commit()
 
