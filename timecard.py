@@ -2,17 +2,18 @@ import datetime
 from flask import Flask, request, Response, session, redirect, url_for, render_template, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_cas import CAS, login_required, logout
+from functools import wraps
 
 app = Flask(__name__)
 app.config.from_pyfile('timecard.cfg')
 db = SQLAlchemy(app)
 cas = CAS(app)
 
-
-slot_increment = int(app.config['SLOT_INCREMENT'])
-slot_first_start = datetime.datetime.strptime(app.config['SLOT_FIRST_START'], '%H:%M')
-slot_last_start = datetime.datetime.strptime(app.config['SLOT_LAST_START'], '%H:%M')
-pay_period = app.config['PAY_PERIOD']
+admins = None
+slot_increment = None
+slot_first_start = None
+slot_last_start = None
+pay_period = None
 
 
 class User(db.Model):
@@ -56,6 +57,15 @@ def hours_range(start_time, end_time, increment):
         curr = curr + increment_delta
 
 
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session['CAS_USERNAME'] not in admins:
+            return abort(403)
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 @app.route('/')
 @login_required
 def show_user():
@@ -84,14 +94,14 @@ def user_update():
 
     # TODO: Combine pages so every action doesn't require its own route?
 
-    user = User.query.filter_by(id=session['CAS_USERNAME']).first()
-    if not user:
-        print 'ERROR: Failed to lookup user', session['CAS_USERNAME']
-        abort(400)
-
     request_json = request.get_json(silent=True)
 
     if not request_json or 'range' not in request_json:
+        abort(400)
+
+    user = User.query.filter_by(id=session['CAS_USERNAME']).first()
+    if not user:
+        print 'ERROR: Failed to lookup user', session['CAS_USERNAME']
         abort(400)
 
     # we only want timestamps inside these bounds
@@ -124,15 +134,15 @@ def user_save():
     # if a template is present in 'templates', it will be overwritten/created
     # potential usability feature: know which template each week is using, select it on load
 
-    user = User.query.filter_by(id=session['CAS_USERNAME']).first()
-    if not user:
-        print 'ERROR: Failed to lookup user', session['CAS_USERNAME']
-        abort(400)
-
     request_json = request.get_json(silent=True)
 
     if not request_json or ('selected' not in request_json and 'unselected' not in request_json):
         # abort with error code 400 bad request
+        abort(400)
+
+    user = User.query.filter_by(id=session['CAS_USERNAME']).first()
+    if not user:
+        print 'ERROR: Failed to lookup user', session['CAS_USERNAME']
         abort(400)
 
     # can check if an item exists with session.query(q.exists())
@@ -171,7 +181,9 @@ def user_save():
 
 @app.route('/admin')
 @login_required
+@admin_required
 def show_admin():
+    # TODO: Require admin
     return render_template(
         'admin.html',
         initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -179,7 +191,9 @@ def show_admin():
         pay_period=pay_period)
 
 
-@app.route('/admin/update', methods = ['POST'])
+@app.route('/admin/update', methods=['POST'])
+@login_required
+@admin_required
 def admin_update():
     request_json = request.get_json(silent=True)
 
@@ -213,6 +227,54 @@ def admin_update():
         response_dict[user.name] = user_dict
 
     # print response_dict
+    return jsonify(response_dict)
+
+
+@app.route('/user/<id>')
+@login_required
+@admin_required
+def show_viewas(id):
+    id = id.upper()
+
+    days = range(7)
+    times = [slot for slot in hours_range(slot_first_start, slot_last_start, slot_increment)]
+
+    return render_template('viewas.html',
+                           initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                           slot_increment=slot_increment,
+                           slot_first_start=times[0].strftime("%H%M"),
+                           pay_period=pay_period,
+                           days=days,
+                           times=times,
+                           user_id=id)
+
+
+@app.route('/user/update', methods=['POST'])
+@login_required
+@admin_required
+def viewas_update():
+    request_json = request.get_json(silent=True)
+
+    if not request_json or 'id' not in request_json or 'range' not in request_json:
+        abort(400)
+
+    user = User.query.filter_by(id=request_json['id']).first()
+    if not user:
+        print 'id', request_json['id'], 'not found'
+        abort(400)
+
+    # we only want timestamps inside these bounds
+    # TODO: Make sure malformed requests don't break
+    lower_bound = request_json['range'][0]
+    upper_bound = request_json['range'][1]
+
+    response_dict = {}
+    response_dict['lastmodified'] = user.last_modified.strftime("%Y-%m-%d %H:%M:%S")
+    response_dict['selected'] = [str(ts.timestamp) for ts in Timeslot.query.filter(
+        Timeslot.user_id == user.id,
+        Timeslot.timestamp >= lower_bound,
+        Timeslot.timestamp <= upper_bound)]
+
     return jsonify(response_dict)
 
 
@@ -258,6 +320,16 @@ if __name__ == '__main__':
 
     # TODO: initialization logic and error checking
     # require at least one admin, ...
+    admins = app.config['ADMINS'].upper().replace(' ', '').split(',')
+
+    if not len(admins) > 0:
+        raise RuntimeError('cfg error: No admins specified')
+
+    slot_increment = int(app.config['SLOT_INCREMENT'])
+    slot_first_start = datetime.datetime.strptime(app.config['SLOT_FIRST_START'], '%H:%M')
+    slot_last_start = datetime.datetime.strptime(app.config['SLOT_LAST_START'], '%H:%M')
+    pay_period = app.config['PAY_PERIOD']
+
     if not slot_first_start < slot_last_start:
         raise RuntimeError('cfg error: SLOT_FIRST_START must be before SLOT_LAST_START')
 

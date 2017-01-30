@@ -202,7 +202,7 @@ input[type=checkbox] {
 }
 
 #tc-nav-prev {
-    background-image: url(../img/nav_left.svg);
+    background-image: url(/static/img/nav_left.svg);
     background-repeat: no-repeat;
     background-position: center;
     background-size: 8px;
@@ -216,11 +216,11 @@ input[type=checkbox] {
 }
 
 #tc-nav-prev:enabled:hover {
-    background-image: url(../img/nav_left_black.svg);
+    background-image: url(/static/img/nav_left_black.svg);
 }
 
 #tc-nav-next {
-    background-image: url(../img/nav_right.svg);
+    background-image: url(/static/img/nav_right.svg);
     background-repeat: no-repeat;
     background-position: center;
     background-size: 8px;
@@ -232,5 +232,5 @@ input[type=checkbox] {
 }
 
 #tc-nav-next:enabled:hover {
-    background-image: url(../img/nav_right_black.svg);
+    background-image: url(/static/img/nav_right_black.svg);
 }

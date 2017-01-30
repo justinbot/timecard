@@ -39,11 +39,12 @@ var TcUser = (function () {
     var slotToggleTo = true;
 
     /* public variables */
-    // all values provided by server
+    tc.initialDate;
+    tc.lockDate;
     tc.slotIncrement;
     tc.slotFirstStart;
-    tc.initialDate;
-    tc.lockDate = 1483228800; // TODO: provided by server
+    tc.payPeriod;
+    tc.payDay;
 
 
     tc.init = function () {

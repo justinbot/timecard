@@ -15,10 +15,10 @@ var TcAdmin = (function () {
     var periodStart;
 
     /* public variables */
-    // all values provided by server
-    tc.slotIncrement;
     tc.initialDate;
     tc.lockDate;
+    tc.slotIncrement;
+    tc.slotFirstStart;
     tc.payPeriod;
     tc.payDay;
 
@@ -123,7 +123,12 @@ var TcAdmin = (function () {
                 var newRow = newTsBody.insertRow();
 
                 var nameCell = newRow.insertCell(0);
-                nameCell.textContent = elem;
+                var nameA = document.createElement("a");
+                nameA.setAttribute("class", "tc-link");
+                nameA.setAttribute("href", "/user/" + response[elem]["id"]);
+                nameA.setAttribute("target", "_blank");
+                nameA.textContent = elem;
+                nameCell.appendChild(nameA);
 
                 var idCell = newRow.insertCell(1);
                 idCell.textContent = response[elem]["id"];
@@ -149,7 +154,7 @@ var TcAdmin = (function () {
 
     function navUpdate() {
         tcNavToday.disabled = focusDate.isSame(tc.initialDate, "day");
-        
+
         var startDate = moment(tsDays[0].dataset.date)
         var endDate = moment(tsDays[tsDays.length - 1].dataset.date)
         if (startDate.isSame(endDate, "month")) {

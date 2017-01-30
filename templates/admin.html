@@ -5,10 +5,10 @@
     <meta charset="utf-8">
     <title>Timecard Admin - {{ session['CAS_USERNAME'].lower() }}</title>
     <link href="http://www.rpi.edu/favicon.ico" type="image/ico" rel="icon">
-    <link href="../static/stylesheets/timecard.base.css" rel="stylesheet">
-    <link href="../static/stylesheets/timecard.admin.css" rel="stylesheet">
+    <link href="/static/stylesheets/timecard.base.css" rel="stylesheet">
+    <link href="/static/stylesheets/timecard.admin.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
-    <script src="../static/js/moment.min.js"></script>
+    <script src="/static/js/moment.min.js"></script>
 </head>
 
 <body>
@@ -17,7 +17,7 @@
     <div class="header-container">
         <div class="header-content">
             <a class="logo" href="{{ url_for('show_admin') }}">
-                <img src="static/img/logo.svg" height="30px">
+                <img src="/static/img/logo.svg" height="30px">
             </a>
             <a class="tc-link" style="color: white; margin-left: auto" href="{{ url_for('cas.logout') }}">Logout {{ session['CAS_USERNAME'].lower() }}</a>
         </div>
@@ -54,8 +54,8 @@
                 <thead id="ts-head" style="background: #eaeaea">
                     <tr>
                         <th style="width: 140px">Name</th>
-                        <th style="width: 60px">User ID</th>
-                        <th style="width: 120px">Last Modified</th>
+                        <th style="width: 70px">User ID</th>
+                        <th style="width: 140px">Last Modified</th>
                         {% for i in range(pay_period) %}
                         <th id="ts-day-{{i}}" style="width: 60px" data-date="">Jan 1</th>
                         {% endfor %}
@@ -68,7 +68,7 @@
         </div>
     </div>
 
-    <script src="../static/js/admin.js"></script>
+    <script src="/static/js/admin.js"></script>
     <script>
         // TODO: Better way to pass server data on load?
         // TODO: Provide these values from server
