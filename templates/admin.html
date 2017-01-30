@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Timecard Admin - {{ session['CAS_USERNAME'] }}</title>
+    <title>Timecard Admin - {{ session['CAS_USERNAME'].lower() }}</title>
     <link href="http://www.rpi.edu/favicon.ico" type="image/ico" rel="icon">
     <link href="../static/stylesheets/timecard.base.css" rel="stylesheet">
     <link href="../static/stylesheets/timecard.admin.css" rel="stylesheet">
@@ -16,10 +16,10 @@
 
     <div class="header-container">
         <div class="header-content">
-            <a class="logo" href="{{ url_for('show_tc_admin') }}">
+            <a class="logo" href="{{ url_for('show_admin') }}">
                 <img src="static/img/logo.svg" height="30px">
             </a>
-            <a class="tc-link" style="color: white; margin-left: auto" href="{{ url_for('cas.logout') }}">Logout {{ session['CAS_USERNAME'] }}</a>
+            <a class="tc-link" style="color: white; margin-left: auto" href="{{ url_for('cas.logout') }}">Logout {{ session['CAS_USERNAME'].lower() }}</a>
         </div>
     </div>
 
@@ -50,31 +50,19 @@
     <div class="content-container">
         <hr class="nav-shadow" />
         <div class="content-content">
-            <table border="1" style="width: 100%">
-                <thead style="background: #eaeaea">
+            <table id="ts-table" border="1" style="width: 100%">
+                <thead id="ts-head" style="background: #eaeaea">
                     <tr>
-                        <th>Name</th>
-                        <th>User ID</th>
-                        <th>Last Modified</th>
-                        {% for i in range(14) %}
-                        <th>Jan 31</th>
+                        <th style="width: 140px">Name</th>
+                        <th style="width: 60px">User ID</th>
+                        <th style="width: 120px">Last Modified</th>
+                        {% for i in range(pay_period) %}
+                        <th id="ts-day-{{i}}" style="width: 60px" data-date="">Jan 1</th>
                         {% endfor %}
-                        <th>Total Hours</th>
+                        <th style="width: 100px">Total Hours</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for i in range(30) %}
-                    <tr>
-                        <!-- Name should link to 'view-as' page for user -->
-                        <td><a class="tc-link" href="{{ url_for('show_tc_user') }}" target="_blank">Lastname, Firstname</a></td>
-                        <td>lastnf1</td>
-                        <td>1/31/17</td>
-                        {% for i in range(14) %}
-                        <td>0.0</td>
-                        {% endfor %}
-                        <td>00.0</td>
-                    </tr>
-                    {% endfor %}
                 </tbody>
             </table>
         </div>
@@ -83,9 +71,13 @@
     <script src="../static/js/admin.js"></script>
     <script>
         // TODO: Better way to pass server data on load?
-        TcAdmin.slotIncrement = "{{ slot_increment }}" / 60;
+        // TODO: Provide these values from server
         TcAdmin.initialDate = moment("{{ initial_date }}");
-        //TcAdmin.lockdate = 
+        TcAdmin.lockdate = 1483228800;
+        TcAdmin.slotIncrement = "{{ slot_increment }}" / 60;
+        TcAdmin.payPeriod = "{{ pay_period }}";
+        TcAdmin.payDay = 5;
+
         TcAdmin.init();
     </script>
 

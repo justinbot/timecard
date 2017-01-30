@@ -9,9 +9,9 @@ db = SQLAlchemy(app)
 cas = CAS(app)
 
 
-slot_increment = int(app.config['SLOTINCREMENT'])
-slot_first_start = datetime.datetime.strptime(app.config['SLOTFIRSTSTART'], '%H:%M')
-slot_last_start = datetime.datetime.strptime(app.config['SLOTLASTSTART'], '%H:%M')
+slot_increment = int(app.config['SLOT_INCREMENT'])
+slot_first_start = datetime.datetime.strptime(app.config['SLOT_FIRST_START'], '%H:%M')
+slot_last_start = datetime.datetime.strptime(app.config['SLOT_LAST_START'], '%H:%M')
 pay_period = app.config['PAY_PERIOD']
 
 
@@ -58,7 +58,8 @@ def hours_range(start_time, end_time, increment):
 
 @app.route('/')
 @login_required
-def show_tc_user():
+def show_user():
+    # TODO: Configurable days to display
     # days of week 0-6
     days = range(7)
 
@@ -70,12 +71,14 @@ def show_tc_user():
                            initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                            slot_increment=slot_increment,
                            slot_first_start=times[0].strftime("%H%M"),
+                           pay_period=pay_period,
                            days=days,
                            times=times)
 
 
 @app.route('/update', methods=['POST'])
-def update():
+@login_required
+def user_update():
     # Takes request with range of two UNIX timestamps
     # Returns all timestamps in range, and user last modified date
 
@@ -83,6 +86,7 @@ def update():
 
     user = User.query.filter_by(id=session['CAS_USERNAME']).first()
     if not user:
+        print 'ERROR: Failed to lookup user', session['CAS_USERNAME']
         abort(400)
 
     request_json = request.get_json(silent=True)
@@ -110,7 +114,8 @@ def update():
 
 
 @app.route('/save', methods=['POST'])
-def save():
+@login_required
+def user_save():
     # Takes request contents of selected and unselected timestamps
     # Applies to database, ignoring timestamps for locked dates
 
@@ -121,6 +126,7 @@ def save():
 
     user = User.query.filter_by(id=session['CAS_USERNAME']).first()
     if not user:
+        print 'ERROR: Failed to lookup user', session['CAS_USERNAME']
         abort(400)
 
     request_json = request.get_json(silent=True)
@@ -165,43 +171,47 @@ def save():
 
 @app.route('/admin')
 @login_required
-def show_tc_admin():
+def show_admin():
     return render_template(
         'admin.html',
         initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        slot_increment=slot_increment)
+        slot_increment=slot_increment,
+        pay_period=pay_period)
 
 
 @app.route('/admin/update', methods = ['POST'])
 def admin_update():
     request_json = request.get_json(silent=True)
 
-    if not request_json:
-        # abort with error code 400 bad request
+    if not request_json or 'days' not in request_json:
         abort(400)
 
-    lower_bound = request_json['days']['ts-day-' + str(pay_period-1)]['range'][0]
-    upper_bound = request_json['days']['ts-day-' + str(pay_period-1)]['range'][1]
+    lower_bound = request_json['days']['ts-day-0'][0]
+    upper_bound = request_json['days']['ts-day-' + str(pay_period - 1)][1]
 
     response_dict = {}
     users = User.query.order_by(User.name)
+
     for user in users:
-        times = [ts.timestamp for ts in Timeslot.query.filter(Timeslot.user_id == user.id, Timeslot.timestamp >= lower_bound, Timeslot.timestamp <= upper_bound)]
+        user_times = [ts.timestamp for ts in Timeslot.query.filter(Timeslot.user_id == user.id, Timeslot.timestamp >= lower_bound, Timeslot.timestamp <= upper_bound)]
         user_dict = {}
-        user_dict['id'] = user.id
+        user_dict['id'] = user.id.lower()
         user_dict['lastmodified'] = user.last_modified.strftime("%Y-%m-%d %H:%M:%S")
         user_dict['total'] = 0
 
-        for cnt in xrange(pay_period):
-            day_lower_bound = request_json['days']['ts-day-' + str(cnt)]['range'][0]
-            day_upper_bound = request_json['days']['ts-day-' + str(cnt)]['range'][1]
-            day_times = [t for t in times if t >= day_lower_bound and t <= day_upper_bound]
-            print day_times
-            hour_amount = (len(day_times) * slot_increment) / 60.0
-            user_dict['ts-day-' + str(cnt)] = hour_amount
-            user_dict['total'] = user_dict['total'] + hour_amount
-        # print user_dict
+        for d in request_json['days']:
+            day_lower_bound = request_json['days'][d][0]
+            day_upper_bound = request_json['days'][d][1]
+            day_times = [ts for ts in user_times if day_lower_bound <= ts <= day_upper_bound]
+
+            day_hours = (len(day_times) * slot_increment) / 60.0
+
+            user_dict[d] = day_hours
+            user_dict['total'] += day_hours
+
+        #print user_dict
         response_dict[user.name] = user_dict
+
     # print response_dict
     return jsonify(response_dict)
 
@@ -216,7 +226,7 @@ def tc_login():
 
     # TODO: redirect to admin panel if user is an admin
 
-    return redirect(url_for('show_tc_user'))
+    return redirect(url_for('show_user'))
 
 
 def init_db():
@@ -231,14 +241,13 @@ def init_db():
     # TODO: creating users should only be done through admin panel
     # TODO: Initial lock date should be 00:00 on date first admin account is created?
     test_user = User(id='CARLSJ4', name='Justin Carlson')
-    test_user2 = User(id='SHINA2', name='Albert Shin')
-
-    #test_user_2 = User(id='testoa4', name='Test User')
-    #test_user_2.timeslots = [Timeslot(timestamp = 1483799400)]
+    test_user_2 = User(id='SHINA2', name='Albert Shin')
+    test_user_3 = User(id='TEST04', name='Firstname Lastname')
 
     db.session.add(test_user)
-    db.session.add(test_user2)
-    #db.session.add(test_user_2)
+    db.session.add(test_user_2)
+    db.session.add(test_user_3)
+
     db.session.commit()
 
 
