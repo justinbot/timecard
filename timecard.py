@@ -26,7 +26,12 @@ class User(db.Model):
 
     created_on = db.Column(db.DateTime, default=datetime.datetime.now())
     last_modified = db.Column(db.DateTime, default=datetime.datetime.now())
-    timeslots = db.relationship('Timeslot', backref='user', cascade='all, delete-orphan', lazy='dynamic')
+    # TODO: make sure timeslots are deleted when user is deleted
+    timeslots = db.relationship('Timeslot',
+                                #single_parent=True,
+                                cascade='all, delete',
+                                backref='user')
+                                #lazy='dynamic')
 
 
 class Timeslot(db.Model):
@@ -277,22 +282,18 @@ def admin_create_user():
 @admin_required
 def admin_edit_user():
     request_json = request.get_json(silent=True)
-    print request_json
 
     if not request_json or 'id' not in request_json:
-        print 'a'
         abort(400)
 
     user = User.query.filter_by(id=request_json['id'].upper()).first()
     if not user:
-        print 'b'
         abort(400)
 
     if 'new_name' in request_json:
         new_name = request_json['new_name']
 
         if not len(new_name) > 0:
-            print 'c'
             abort(400)
 
         # Split name on first space into First and Last
@@ -309,11 +310,30 @@ def admin_edit_user():
     if 'new_id' in request_json:
 
         if not len(new_name) > 0:
-            print 'd'
             abort(400)
 
         new_id = request_json['new_id'].upper()
         user.id = new_id
+
+    db.session.commit()
+
+    return Response()
+
+
+@app.route('/admin/delete', methods=['POST'])
+@login_required
+@admin_required
+def admin_delete_user():
+    request_json = request.get_json(silent=True)
+
+    if not request_json or 'id' not in request_json:
+        abort(400)
+
+    user = User.query.filter_by(id=request_json['id'].upper()).first()
+    if not user:
+        abort(400)
+
+    User.query.filter_by(id=request_json['id'].upper()).delete()
 
     db.session.commit()
 
@@ -405,7 +425,7 @@ def init_db():
 if __name__ == '__main__':
     # for release, disable debugger and add argument for init_db to allow database resets
     # also add support for database export?
-    #init_db()
+    init_db()
 
     # TODO: initialization logic and error checking
     # require at least one admin, ...

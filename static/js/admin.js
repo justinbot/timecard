@@ -91,18 +91,23 @@ var TcAdmin = (function () {
                 var newRow = newTsBody.insertRow();
 
                 var nameCell = newRow.insertCell(0);
-                var nameString = response[elem]["lastname"] + ", " + response[elem]["firstname"];
-                var nameText = document.createElement("div");
+
+                var editButton = document.createElement("div");
+                editButton.setAttribute("class", "icon-edit")
+                editButton.setAttribute("onclick", "TcAdmin.userEditShow(this)");
+                editButton.dataset.name = response[elem]["firstname"] + " " + response[elem]["lastname"];
+                editButton.dataset.id = elem;
+                nameCell.appendChild(editButton);
+
+                var nameText = document.createElement("a");
                 nameText.setAttribute("class", "tc-link");
-                nameText.setAttribute("onclick", "TcAdmin.userEditShow(\"" + response[elem]["firstname"] + " " + response[elem]["lastname"] + "\", \"" + elem + "\")");
+                nameText.setAttribute("href", "/user/" + elem);
+                nameText.setAttribute("target", "_blank");
                 nameText.textContent = response[elem]["lastname"] + ", " + response[elem]["firstname"];
                 nameCell.appendChild(nameText);
 
-                var idCell = newRow.insertCell(1);
-                idCell.textContent = elem;
-
-                var lastModifiedCell = newRow.insertCell(2);
-                lastModifiedCell.textContent = moment(response[elem]["lastmodified"]).from(tc.initialDate);
+                var lastModifiedCell = newRow.insertCell();
+                lastModifiedCell.textContent = moment(response[elem]["lastmodified"]).fromNow(); //(tc.initialDate); TODO: Keep initialDate up to date
 
                 for (var i = 0; i < tc.payPeriod; i++) {
                     var dayCell = newRow.insertCell();
@@ -189,7 +194,7 @@ var TcAdmin = (function () {
         // Validate input, use dbStatus for response
         // Also validate server-side
         if (userNewInputName.value.length > 0 && userNewInputID.value.length > 0) {
-            submitNewUser(userNewInputName.value, userNewInputID.value);
+            dbNewUser(userNewInputName.value, userNewInputID.value);
             tc.userNewCancel();
         } else {
             dbStatus.textContent = "Required fields: Name and ID";
@@ -205,7 +210,7 @@ var TcAdmin = (function () {
         dbStatus.textContent = "";
     }
 
-    function submitNewUser(name, id) {
+    function dbNewUser(name, id) {
         var user_dict = {
             "name": name,
             "id": id
@@ -217,12 +222,12 @@ var TcAdmin = (function () {
         // TODO: also set xhr.timeout and xhr.ontimeout?
         xhr.responseType = "json";
         xhr.onload = function () {
-            submitNewUserOnload(xhr.status, xhr.response);
+            dbNewUserOnload(xhr.status, xhr.response);
         }
         xhr.send(JSON.stringify(user_dict));
     }
 
-    function submitNewUserOnload(status, response) {
+    function dbNewUserOnload(status, response) {
         if (status == 200) {
             dbStatus.textContent = "User creation successful";
         } else {
@@ -231,28 +236,61 @@ var TcAdmin = (function () {
         getFromDatabase();
     }
 
-    tc.userEditShow = function (name, id) {
+    tc.userEditShow = function (button) {
         tc.userNewCancel();
-        
+
         userNewButton.style.display = "none";
         userEditForm.style.display = "";
 
-        userEditForm.dataset.name = name;
-        userEditForm.dataset.id = id;
+        userEditForm.dataset.name = button.dataset.name;
+        userEditForm.dataset.id = button.dataset.id;
 
-        userEditInputName.value = name;
-        userEditInputID.value = id;
+        userEditInputName.value = button.dataset.name;
+        userEditInputName.placeholder = button.dataset.name;
+        userEditInputID.value = button.dataset.id;
+        userEditInputID.placeholder = button.dataset.id;
         userEditInputName.focus();
     }
 
     tc.userEditSubmit = function () {
         // TODO: Make sure length > 0
         if (userEditInputName.value != userEditForm.dataset.name || userEditInputID.value != userEditForm.dataset.id) {
-            submitEditUser(userEditInputName.value, userEditInputID.value);
+            dbEditUser(userEditInputName.value, userEditInputID.value);
             tc.userEditCancel();
         } else {
             dbStatus.textContent = "Modify a field to submit";
         }
+    }
+
+    tc.userEditDelete = function () {
+        // TODO: Prompt "Are you sure?"
+        dbDeleteUser(userEditForm.dataset.id);
+        tc.userEditCancel();
+    }
+
+    function dbDeleteUser(id) {
+        var user_dict = {
+            "id": userEditForm.dataset.id
+        };
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/admin/delete", true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        // TODO: also set xhr.timeout and xhr.ontimeout?
+        xhr.responseType = "json";
+        xhr.onload = function () {
+            dbDeleteUserOnload(xhr.status, xhr.response);
+        }
+        xhr.send(JSON.stringify(user_dict));
+    }
+
+    function dbDeleteUserOnload(status, response) {
+        if (status == 200) {
+            dbStatus.textContent = "User successfully deleted";
+        } else {
+            dbStatus.textContent = "Failed to delete user (Error " + status + ")";
+        }
+        getFromDatabase();
     }
 
     tc.userEditCancel = function () {
@@ -267,7 +305,7 @@ var TcAdmin = (function () {
         dbStatus.textContent = "";
     }
 
-    function submitEditUser(name, id) {
+    function dbEditUser(name, id) {
         var user_dict = {
             "id": userEditForm.dataset.id,
             "new_name": name,
@@ -280,12 +318,12 @@ var TcAdmin = (function () {
         // TODO: also set xhr.timeout and xhr.ontimeout?
         xhr.responseType = "json";
         xhr.onload = function () {
-            submitEditUserOnload(xhr.status, xhr.response);
+            dbEditUserOnload(xhr.status, xhr.response);
         }
         xhr.send(JSON.stringify(user_dict));
     }
 
-    function submitEditUserOnload(status, response) {
+    function dbEditUserOnload(status, response) {
         if (status == 200) {
             dbStatus.textContent = "User successfully edited";
         } else {

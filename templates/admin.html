@@ -43,6 +43,7 @@
                 <input id="user-edit-input-id" style="width: 60px; margin-left: 10px" type="text" maxlength="12" oninput="">
                 <button style="margin-left: 20px" onclick="TcAdmin.userEditSubmit()">Submit</button>
                 <button style="margin-left: 5px" onclick="TcAdmin.userEditCancel()">Cancel</button>
+                <button style="margin-left: auto" onclick="TcAdmin.userEditDelete()">Delete User</button>
             </div>
             <div id="db-status" style="color: #9a9a9a; margin-left: auto"></div>
         </div>
@@ -63,13 +64,13 @@
             <table id="ts-table" border="1" style="width: 100%">
                 <thead id="ts-head" style="background: #eaeaea">
                     <tr>
-                        <th style="width: 140px">Name</th>
-                        <th style="width: 70px">User ID</th>
+                        <th style="width: 180px">Name</th>
+                        <!--<th style="width: 70px">User ID</th>-->
                         <th style="width: 140px">Last Modified</th>
                         {% for i in range(pay_period) %}
-                        <th id="ts-day-{{i}}" style="width: 60px" data-date="">Jan 1</th>
+                        <th id="ts-day-{{i}}" style="width: 70px" data-date="">Jan 1</th>
                         {% endfor %}
-                        <th style="width: 100px">Total Hours</th>
+                        <th style="width: 120px">Total Hours</th>
                     </tr>
                 </thead>
                 <tbody>
