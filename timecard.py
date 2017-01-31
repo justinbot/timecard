@@ -19,8 +19,11 @@ pay_period = None
 class User(db.Model):
     # id, also used for login
     id = db.Column(db.String, primary_key=True)
+
     # actual name
-    name = db.Column(db.String)
+    name_first = db.Column(db.String)
+    name_last = db.Column(db.String)
+
     created_on = db.Column(db.DateTime, default=datetime.datetime.now())
     last_modified = db.Column(db.DateTime, default=datetime.datetime.now())
     timeslots = db.relationship('Timeslot', backref='user', cascade='all, delete-orphan', lazy='dynamic')
@@ -69,6 +72,10 @@ def admin_required(f):
 @app.route('/')
 @login_required
 def show_user():
+    user = User.query.filter_by(id=session['CAS_USERNAME']).first()
+    if not user:
+        abort(403)
+
     # TODO: Configurable days to display
     # days of week 0-6
     days = range(7)
@@ -204,12 +211,13 @@ def admin_update():
     upper_bound = request_json['days']['ts-day-' + str(pay_period - 1)][1]
 
     response_dict = {}
-    users = User.query.order_by(User.name)
+    users = User.query.order_by(User.name_last, User.name_first)
 
     for user in users:
         user_times = [ts.timestamp for ts in Timeslot.query.filter(Timeslot.user_id == user.id, Timeslot.timestamp >= lower_bound, Timeslot.timestamp <= upper_bound)]
         user_dict = {}
-        user_dict['id'] = user.id.lower()
+        user_dict['firstname'] = user.name_first
+        user_dict['lastname'] = user.name_last
         user_dict['lastmodified'] = user.last_modified.strftime("%Y-%m-%d %H:%M:%S")
         user_dict['total'] = 0
 
@@ -224,10 +232,92 @@ def admin_update():
             user_dict['total'] += day_hours
 
         #print user_dict
-        response_dict[user.name] = user_dict
+        response_dict[user.id.lower()] = user_dict
 
     # print response_dict
     return jsonify(response_dict)
+
+
+@app.route('/admin/create', methods=['POST'])
+@login_required
+@admin_required
+def admin_create_user():
+    request_json = request.get_json(silent=True)
+
+    if not request_json or 'name' not in request_json or 'id' not in request_json:
+        abort(400)
+
+    name = request_json['name']
+    id = request_json['id'].upper()
+
+    if not (len(name) > 0 and len(id) > 0):
+        abort(400)
+
+    # For now, delete the user if it already exists
+    User.query.filter_by(id=id).delete()
+
+    # Split name on first space into First and Last
+    name = name.split(' ', 1)
+    first = name[0]
+    if len(name) > 1:
+        last = name[1]
+    else:
+        last = ''
+
+    new_user = User(id=id, name_first=first, name_last=last)
+
+    db.session.add(new_user)
+    db.session.commit()
+
+    return Response()
+
+
+@app.route('/admin/edit', methods=['POST'])
+@login_required
+@admin_required
+def admin_edit_user():
+    request_json = request.get_json(silent=True)
+    print request_json
+
+    if not request_json or 'id' not in request_json:
+        print 'a'
+        abort(400)
+
+    user = User.query.filter_by(id=request_json['id'].upper()).first()
+    if not user:
+        print 'b'
+        abort(400)
+
+    if 'new_name' in request_json:
+        new_name = request_json['new_name']
+
+        if not len(new_name) > 0:
+            print 'c'
+            abort(400)
+
+        # Split name on first space into First and Last
+        new_name = new_name.split(' ', 1)
+        first = new_name[0]
+        if len(new_name) > 1:
+            last = new_name[1]
+        else:
+            last = ''
+
+        user.name_first = first
+        user.name_last = last
+
+    if 'new_id' in request_json:
+
+        if not len(new_name) > 0:
+            print 'd'
+            abort(400)
+
+        new_id = request_json['new_id'].upper()
+        user.id = new_id
+
+    db.session.commit()
+
+    return Response()
 
 
 @app.route('/user/<id>')
@@ -235,6 +325,10 @@ def admin_update():
 @admin_required
 def show_viewas(id):
     id = id.upper()
+
+    user = User.query.filter_by(id=id).first()
+    if not user:
+        abort(404)
 
     days = range(7)
     times = [slot for slot in hours_range(slot_first_start, slot_last_start, slot_increment)]
@@ -260,7 +354,6 @@ def viewas_update():
 
     user = User.query.filter_by(id=request_json['id']).first()
     if not user:
-        print 'id', request_json['id'], 'not found'
         abort(400)
 
     # we only want timestamps inside these bounds
@@ -302,13 +395,9 @@ def init_db():
 
     # TODO: creating users should only be done through admin panel
     # TODO: Initial lock date should be 00:00 on date first admin account is created?
-    test_user = User(id='CARLSJ4', name='Justin Carlson')
-    test_user_2 = User(id='SHINA2', name='Albert Shin')
-    test_user_3 = User(id='TEST04', name='Firstname Lastname')
+    #test_user = User(id='CARLSJ4', name='Justin Carlson')
 
-    db.session.add(test_user)
-    db.session.add(test_user_2)
-    db.session.add(test_user_3)
+    #db.session.add(test_user)
 
     db.session.commit()
 

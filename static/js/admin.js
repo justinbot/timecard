@@ -10,6 +10,17 @@ var TcAdmin = (function () {
     var tsHead;
     var tsDays = [];
 
+    var userNewButton;
+    var userNewForm;
+    var userNewInputName;
+    var userNewInputID;
+
+    var userEditForm;
+    var userEditInputName;
+    var userEditInputID;
+
+    var dbStatus;
+
     /* local variables */
     var focusDate;
     var periodStart;
@@ -34,11 +45,22 @@ var TcAdmin = (function () {
             tsDays.push(document.getElementById("ts-day-" + i));
         }
 
+        userNewButton = document.getElementById("user-new-button");
+        userNewForm = document.getElementById("user-new-form");
+        userNewInputName = document.getElementById("user-new-input-name");
+        userNewInputID = document.getElementById("user-new-input-id");
+
+        userEditForm = document.getElementById("user-edit-form");
+        userEditInputName = document.getElementById("user-edit-input-name");
+        userEditInputID = document.getElementById("user-edit-input-id");
+
+        dbStatus = document.getElementById("db-status");
+
         tc.currentWeek();
     }
 
     function getFromDatabase() {
-        var get_ranges = {
+        var get_dict = {
             "days": {}
         };
 
@@ -46,62 +68,8 @@ var TcAdmin = (function () {
             var lower = moment(tsDays[i].dataset.date).startOf("day").unix();
             var upper = moment(tsDays[i].dataset.date).endOf("day").unix();
 
-            get_ranges["days"]["ts-day-" + i] = [lower, upper];
+            get_dict["days"]["ts-day-" + i] = [lower, upper];
         }
-
-        console.log(get_ranges);
-
-
-        /* // Test response:
-        var response = {
-            "Carlson, Justin": {
-                "id": "carlsj4",
-                "lastmodified": "2017-01-27 00:00:00",
-                "ts-day-0": "0.0",
-                "ts-day-1": "0.0",
-                "ts-day-2": "0.0",
-                "ts-day-3": "0.0",
-                "ts-day-4": "0.0",
-                "ts-day-5": "0.0",
-                "ts-day-6": "0.0",
-                "ts-day-7": "0.0",
-                "ts-day-8": "0.0",
-                "ts-day-9": "0.0",
-                "ts-day-10": "0.0",
-                "ts-day-11": "0.0",
-                "ts-day-12": "0.0",
-                "ts-day-13": "0.0",
-                "ts-day-14": "0.0",
-                "ts-day-15": "0.0",
-                "total": "5.0"
-            },
-
-            "Shin, Albert": {
-                "id": "albshin",
-                "lastmodified": "2017-01-27 00:00:00",
-                "ts-day-0": "0.0",
-                "ts-day-1": "0.0",
-                "ts-day-2": "0.0",
-                "ts-day-3": "0.0",
-                "ts-day-4": "0.0",
-                "ts-day-5": "0.0",
-                "ts-day-6": "0.0",
-                "ts-day-7": "0.0",
-                "ts-day-8": "0.0",
-                "ts-day-9": "0.0",
-                "ts-day-10": "0.0",
-                "ts-day-11": "0.0",
-                "ts-day-12": "0.0",
-                "ts-day-13": "0.0",
-                "ts-day-14": "0.0",
-                "ts-day-15": "0.0",
-                "total": "5.0"
-            }
-        }
-
-        getOnload(200, response);
-        
-        */
 
         var xhr = new XMLHttpRequest();
         xhr.open("POST", "/admin/update", true);
@@ -111,7 +79,7 @@ var TcAdmin = (function () {
         xhr.onload = function () {
             getOnload(xhr.status, xhr.response);
         }
-        xhr.send(JSON.stringify(get_ranges));
+        xhr.send(JSON.stringify(get_dict));
     }
 
     function getOnload(status, response) {
@@ -123,15 +91,15 @@ var TcAdmin = (function () {
                 var newRow = newTsBody.insertRow();
 
                 var nameCell = newRow.insertCell(0);
-                var nameA = document.createElement("a");
-                nameA.setAttribute("class", "tc-link");
-                nameA.setAttribute("href", "/user/" + response[elem]["id"]);
-                nameA.setAttribute("target", "_blank");
-                nameA.textContent = elem;
-                nameCell.appendChild(nameA);
+                var nameString = response[elem]["lastname"] + ", " + response[elem]["firstname"];
+                var nameText = document.createElement("div");
+                nameText.setAttribute("class", "tc-link");
+                nameText.setAttribute("onclick", "TcAdmin.userEditShow(\"" + response[elem]["firstname"] + " " + response[elem]["lastname"] + "\", \"" + elem + "\")");
+                nameText.textContent = response[elem]["lastname"] + ", " + response[elem]["firstname"];
+                nameCell.appendChild(nameText);
 
                 var idCell = newRow.insertCell(1);
-                idCell.textContent = response[elem]["id"];
+                idCell.textContent = elem;
 
                 var lastModifiedCell = newRow.insertCell(2);
                 lastModifiedCell.textContent = moment(response[elem]["lastmodified"]).from(tc.initialDate);
@@ -209,6 +177,121 @@ var TcAdmin = (function () {
         var dayDate = moment(periodStart).add(d, "day");
         day.textContent = dayDate.format("MMM D"); //format("dddd, MMM D");
         day.dataset.date = dayDate.format("YYYY-MM-DD")
+    }
+
+    tc.userNewShow = function () {
+        userNewButton.style.display = "none";
+        userNewForm.style.display = "";
+        userNewInputName.focus();
+    }
+
+    tc.userNewSubmit = function () {
+        // Validate input, use dbStatus for response
+        // Also validate server-side
+        if (userNewInputName.value.length > 0 && userNewInputID.value.length > 0) {
+            submitNewUser(userNewInputName.value, userNewInputID.value);
+            tc.userNewCancel();
+        } else {
+            dbStatus.textContent = "Required fields: Name and ID";
+        }
+    }
+
+    tc.userNewCancel = function () {
+        userNewButton.style.display = "";
+        userNewForm.style.display = "none";
+        userNewInputName.value = "";
+        userNewInputID.value = "";
+
+        dbStatus.textContent = "";
+    }
+
+    function submitNewUser(name, id) {
+        var user_dict = {
+            "name": name,
+            "id": id
+        };
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/admin/create", true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        // TODO: also set xhr.timeout and xhr.ontimeout?
+        xhr.responseType = "json";
+        xhr.onload = function () {
+            submitNewUserOnload(xhr.status, xhr.response);
+        }
+        xhr.send(JSON.stringify(user_dict));
+    }
+
+    function submitNewUserOnload(status, response) {
+        if (status == 200) {
+            dbStatus.textContent = "User creation successful";
+        } else {
+            dbStatus.textContent = "Failed to create user (Error " + status + ")";
+        }
+        getFromDatabase();
+    }
+
+    tc.userEditShow = function (name, id) {
+        tc.userNewCancel();
+        
+        userNewButton.style.display = "none";
+        userEditForm.style.display = "";
+
+        userEditForm.dataset.name = name;
+        userEditForm.dataset.id = id;
+
+        userEditInputName.value = name;
+        userEditInputID.value = id;
+        userEditInputName.focus();
+    }
+
+    tc.userEditSubmit = function () {
+        // TODO: Make sure length > 0
+        if (userEditInputName.value != userEditForm.dataset.name || userEditInputID.value != userEditForm.dataset.id) {
+            submitEditUser(userEditInputName.value, userEditInputID.value);
+            tc.userEditCancel();
+        } else {
+            dbStatus.textContent = "Modify a field to submit";
+        }
+    }
+
+    tc.userEditCancel = function () {
+        userNewButton.style.display = "";
+        userEditForm.style.display = "none";
+        userEditInputName.value = "";
+        userEditInputID.value = "";
+
+        userEditForm.dataset.name = "";
+        userEditForm.dataset.id = "";
+
+        dbStatus.textContent = "";
+    }
+
+    function submitEditUser(name, id) {
+        var user_dict = {
+            "id": userEditForm.dataset.id,
+            "new_name": name,
+            "new_id": id
+        };
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/admin/edit", true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        // TODO: also set xhr.timeout and xhr.ontimeout?
+        xhr.responseType = "json";
+        xhr.onload = function () {
+            submitEditUserOnload(xhr.status, xhr.response);
+        }
+        xhr.send(JSON.stringify(user_dict));
+    }
+
+    function submitEditUserOnload(status, response) {
+        if (status == 200) {
+            dbStatus.textContent = "User successfully edited";
+        } else {
+            dbStatus.textContent = "Failed to edit user (Error " + status + ")";
+        }
+        getFromDatabase();
     }
 
     return tc;

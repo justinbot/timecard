@@ -1,0 +1,4 @@
+#user-new-form, #user-edit-form {
+    display: inherit;
+    align-items: inherit;
+}
