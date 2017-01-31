@@ -1,0 +1,21 @@
+#user-new-form,
+#user-edit-form {
+    display: inherit;
+    align-items: inherit;
+}
+
+.icon-edit {
+    display: inline-block;
+    background-image: url(/static/img/edit.svg);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 12px;
+    width: 12px;
+    height: 12px;
+    margin-right: 4px;
+    cursor: pointer;
+}
+
+.icon-edit:hover {
+    background-image: url(/static/img/edit_black.svg);
+}

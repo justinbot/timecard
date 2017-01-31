@@ -3,12 +3,12 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Timecard - {{ session['CAS_USERNAME'] }}</title>
+    <title>Timecard - {{ session['CAS_USERNAME'].lower() }}</title>
     <link href="http://www.rpi.edu/favicon.ico" type="image/ico" rel="icon">
-    <link href="../static/stylesheets/timecard.base.css" rel="stylesheet">
-    <link href="../static/stylesheets/timecard.user.css" rel="stylesheet">
+    <link href="/static/stylesheets/timecard.base.css" rel="stylesheet">
+    <link href="/static/stylesheets/timecard.user.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
-    <script src="../static/js/moment.min.js"></script>
+    <script src="/static/js/moment.min.js"></script>
 </head>
 
 <body>
@@ -16,10 +16,10 @@
 
     <div class="header-container">
         <div class="header-content">
-            <a class="logo" href="{{ url_for('show_tc_user') }}">
-                <img src="static/img/logo.svg" height="30px">
+            <a class="logo" href="{{ url_for('show_user') }}">
+                <img src="/static/img/logo.svg" height="30px">
             </a>
-            <a class="tc-link" style="color: white; margin-left: auto" href="{{ url_for('cas.logout') }}">Logout {{ session['CAS_USERNAME'] }}</a>
+            <a class="tc-link" style="color: white; margin-left: auto" href="{{ url_for('cas.logout') }}">Logout {{ session['CAS_USERNAME'].lower() }}</a>
         </div>
     </div>
 
@@ -65,13 +65,16 @@
         </div>
     </div>
 
-    <script src="../static/js/user.js"></script>
+    <script src="/static/js/user.js"></script>
     <script>
         // TODO: Better way to pass server data on load?
+        TcUser.initialDate = moment("{{ initial_date }}");
+        TcUser.lockdate = 1483228800;
         TcUser.slotIncrement = "{{ slot_increment }}" / 60;
         TcUser.slotFirstStart = moment("{{ slot_first_start }}", "HHmm");
-        TcUser.initialDate = moment("{{ initial_date }}");
-        //TcUser.lockDate = 
+        TcUser.payPeriod = "{{ pay_period }}";
+        TcUser.payDay = 5;
+
         TcUser.init();
     </script>
 

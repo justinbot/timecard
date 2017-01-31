@@ -3,12 +3,12 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Timecard Admin - {{ session['CAS_USERNAME'] }}</title>
+    <title>Timecard Admin - {{ session['CAS_USERNAME'].lower() }}</title>
     <link href="http://www.rpi.edu/favicon.ico" type="image/ico" rel="icon">
-    <link href="../static/stylesheets/timecard.base.css" rel="stylesheet">
-    <link href="../static/stylesheets/timecard.admin.css" rel="stylesheet">
+    <link href="/static/stylesheets/timecard.base.css" rel="stylesheet">
+    <link href="/static/stylesheets/timecard.admin.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
-    <script src="../static/js/moment.min.js"></script>
+    <script src="/static/js/moment.min.js"></script>
 </head>
 
 <body>
@@ -16,25 +16,36 @@
 
     <div class="header-container">
         <div class="header-content">
-            <a class="logo" href="{{ url_for('show_tc_admin') }}">
-                <img src="static/img/logo.svg" height="30px">
+            <a class="logo" href="{{ url_for('show_admin') }}">
+                <img src="/static/img/logo.svg" height="30px">
             </a>
-            <a class="tc-link" style="color: white; margin-left: auto" href="{{ url_for('cas.logout') }}">Logout {{ session['CAS_USERNAME'] }}</a>
+            <a class="tc-link" style="color: white; margin-left: auto" href="{{ url_for('cas.logout') }}">Logout {{ session['CAS_USERNAME'].lower() }}</a>
         </div>
     </div>
 
     <div class="tools-container">
         <div class="tools-content">
-            <!--<button>New User</button>-->
-            <form style="display: inherit; align-items: inherit" onsubmit="return false">
+            <button id="user-new-button" onclick="TcAdmin.userNewShow()">New User</button>
+            <div id="user-new-form" style="display: none" onsubmit="return false">
                 <div style="font-weight: bold">New User</div>
                 <div style="margin-left: 20px">Name:</div>
-                <input style="width: 180px; margin-left: 10px" type="text" minlength="2" maxlength="64" oninput="">
+                <input id="user-new-input-name" style="width: 180px; margin-left: 10px" type="text" maxlength="64" oninput="">
                 <div style="margin-left: 20px">ID:</div>
-                <input style="width: 60px; margin-left: 10px" type="text" minlength="7" maxlength="7" oninput="">
-                <button style="margin-left: 20px">Submit</button>
-                <button style="margin-left: 5px">Cancel</button>
-            </form>
+                <input id="user-new-input-id" style="width: 60px; margin-left: 10px" type="text" maxlength="12" oninput="">
+                <button style="margin-left: 20px" onclick="TcAdmin.userNewSubmit()">Submit</button>
+                <button style="margin-left: 5px" onclick="TcAdmin.userNewCancel()">Cancel</button>
+            </div>
+            <div id="user-edit-form" style="display: none" onsubmit="return false">
+                <div style="font-weight: bold">Edit User</div>
+                <div style="margin-left: 20px">Name:</div>
+                <input id="user-edit-input-name" style="width: 180px; margin-left: 10px" type="text" maxlength="64" oninput="">
+                <div style="margin-left: 20px">ID:</div>
+                <input id="user-edit-input-id" style="width: 60px; margin-left: 10px" type="text" maxlength="12" oninput="">
+                <button style="margin-left: 20px" onclick="TcAdmin.userEditSubmit()">Submit</button>
+                <button style="margin-left: 5px" onclick="TcAdmin.userEditCancel()">Cancel</button>
+                <button style="margin-left: auto" onclick="TcAdmin.userEditDelete()">Delete User</button>
+            </div>
+            <div id="db-status" style="color: #9a9a9a; margin-left: auto"></div>
         </div>
     </div>
 
@@ -50,42 +61,34 @@
     <div class="content-container">
         <hr class="nav-shadow" />
         <div class="content-content">
-            <table border="1" style="width: 100%">
-                <thead style="background: #eaeaea">
+            <table id="ts-table" border="1" style="width: 100%">
+                <thead id="ts-head" style="background: #eaeaea">
                     <tr>
-                        <th>Name</th>
-                        <th>User ID</th>
-                        <th>Last Modified</th>
-                        {% for i in range(14) %}
-                        <th>Jan 31</th>
+                        <th style="width: 180px">Name</th>
+                        <!--<th style="width: 70px">User ID</th>-->
+                        <th style="width: 140px">Last Modified</th>
+                        {% for i in range(pay_period) %}
+                        <th id="ts-day-{{i}}" style="width: 70px" data-date="">Jan 1</th>
                         {% endfor %}
-                        <th>Total Hours</th>
+                        <th style="width: 120px">Total Hours</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for i in range(30) %}
-                    <tr>
-                        <!-- Name should link to 'view-as' page for user -->
-                        <td><a class="tc-link" href="{{ url_for('show_tc_user') }}" target="_blank">Lastname, Firstname</a></td>
-                        <td>lastnf1</td>
-                        <td>1/31/17</td>
-                        {% for i in range(14) %}
-                        <td>0.0</td>
-                        {% endfor %}
-                        <td>00.0</td>
-                    </tr>
-                    {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 
-    <script src="../static/js/admin.js"></script>
+    <script src="/static/js/admin.js"></script>
     <script>
         // TODO: Better way to pass server data on load?
-        TcAdmin.slotIncrement = "{{ slot_increment }}" / 60;
+        // TODO: Provide these values from server
         TcAdmin.initialDate = moment("{{ initial_date }}");
-        //TcAdmin.lockdate = 
+        TcAdmin.lockdate = 1483228800;
+        TcAdmin.slotIncrement = "{{ slot_increment }}" / 60;
+        TcAdmin.payPeriod = "{{ pay_period }}";
+        TcAdmin.payDay = 5;
+
         TcAdmin.init();
     </script>
 
