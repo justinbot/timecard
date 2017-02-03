@@ -2,83 +2,83 @@
 <html>
 
 <head>
-    <meta charset="utf-8">
-    <title>Timecard - {{ session['CAS_USERNAME'].lower() }}</title>
-    <link href="http://www.rpi.edu/favicon.ico" type="image/ico" rel="icon">
-    <link href="/static/stylesheets/timecard.base.css" rel="stylesheet">
-    <link href="/static/stylesheets/timecard.user.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
-    <script src="/static/js/moment.min.js"></script>
+	<meta charset="utf-8">
+	<title>Timecard - {{ session['CAS_USERNAME'].lower() }}</title>
+	<link href="http://www.rpi.edu/favicon.ico" type="image/ico" rel="icon">
+	<link href="/static/stylesheets/timecard.base.css" rel="stylesheet">
+	<link href="/static/stylesheets/timecard.user.css" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
+	<script src="/static/js/moment.min.js"></script>
 </head>
 
 <body>
-    {% include 'leetbar.html' %}
+	{% include 'leetbar.html' %}
 
-    <div class="header-container">
-        <div class="header-content">
-            <a class="logo" href="{{ url_for('show_user') }}">
-                <img src="/static/img/logo.svg" height="30px">
-            </a>
-            <a class="tc-link" style="color: white; margin-left: auto" href="{{ url_for('cas.logout') }}">Logout {{ session['CAS_USERNAME'].lower() }}</a>
-        </div>
-    </div>
+	<div class="header-container">
+		<div class="header-content">
+			<a class="logo" href="{{ url_for('show_user') }}">
+				<img src="/static/img/logo.svg" height="30px">
+			</a>
+			<a class="tc-link" style="color: white; margin-left: auto" href="{{ url_for('cas.logout') }}">Log out {{ session['CAS_USERNAME'].lower() }}</a>
+		</div>
+	</div>
 
-    <div class="tools-container">
-        <div class="tools-content">
-            <div>Template:</div>
-            <div id="templ-select-form">
-                <select id="templ-select" style="margin-left: 10px" onchange="TcUser.templSelectChanged(this);">
-                    <option value="" selected>None</option>
-                </select>
-                <button id="templ-new" style="margin-left: 5px" onclick="TcUser.showTemplEdit();">New Template</button>
-            </div>
-            <form id="templ-edit-form" onsubmit="return false">
-                <input id="templ-edit-textinput" style="margin-left: 10px" type="text" minlength="2" maxlength="18" oninput="TcUser.templInputName(this);">
-                <button id="templ-edit-save" style="margin-left: 20px" onclick="TcUser.templSaveOption();">Save</button>
-                <button id="templ-edit-delete" style="margin-left: 5px" onclick="TcUser.templDeleteOption()">Delete</button>
-                <button id="templ-edit-cancel" style="margin-left: 5px" onclick="TcUser.hideTemplEdit();">Cancel</button>
-            </form>
-            <div id="db-status" style="color: #9a9a9a; margin-left: auto">Last modified: …</div>
-            <!-- save button for testing purposes -->
-            <button id="database-save" style="margin-left: auto" onclick="TcUser.saveToDatabase();">Save</button>
-        </div>
-    </div>
+	<div class="tools-container">
+		<div class="tools-content">
+			<div>Template:</div>
+			<div id="templ-select-form">
+				<select id="templ-select" style="margin-left: 10px" onchange="TcUser.templSelectChanged(this);">
+					<option value="" selected>None</option>
+				</select>
+				<button id="templ-new" style="margin-left: 5px" onclick="TcUser.showTemplEdit();">New Template</button>
+			</div>
+			<form id="templ-edit-form" onsubmit="return false">
+				<input id="templ-edit-textinput" style="margin-left: 10px" type="text" minlength="2" maxlength="18" oninput="TcUser.templInputName(this);">
+				<button id="templ-edit-save" style="margin-left: 20px" onclick="TcUser.templSaveOption();">Save</button>
+				<button id="templ-edit-delete" style="margin-left: 5px" onclick="TcUser.templDeleteOption()">Delete</button>
+				<button id="templ-edit-cancel" style="margin-left: 5px" onclick="TcUser.hideTemplEdit();">Cancel</button>
+			</form>
+			<div id="db-status" style="color: #9a9a9a; margin-left: auto">Last modified: …</div>
+			<!-- save button for testing purposes -->
+			<button id="database-save" style="margin-left: auto" onclick="TcUser.saveToDatabase();">Save</button>
+		</div>
+	</div>
 
-    <div class="nav-container">
-        <div class="nav-content">
-            <button id="tc-nav-today" onclick="TcUser.currentWeek();">Today</button>
-            <button id="tc-nav-prev" onclick="TcUser.prevWeek();"></button>
-            <button id="tc-nav-next" onclick="TcUser.nextWeek();"></button>
-            <div id="tc-nav-range" style="margin-left: 20px">Jan 1 – 7, 2000</div>
-            <div id="tc-nav-total" style="margin-left: auto; font-weight: bold">Total Hours: 0.0</div>
-        </div>
-    </div>
+	<div class="nav-container">
+		<div class="nav-content">
+			<button id="tc-nav-today" onclick="TcUser.currentPeriod();">Today</button>
+			<button id="tc-nav-prev" onclick="TcUser.prevPeriod();"></button>
+			<button id="tc-nav-next" onclick="TcUser.nextPeriod();"></button>
+			<div id="tc-nav-range" style="margin-left: 20px">Jan 1 – 7, 2000</div>
+			<div id="tc-nav-total" style="margin-left: auto; font-weight: bold">Total Hours: 0.0</div>
+		</div>
+	</div>
 
-    <div class="content-container unselectable" ondragstart="return false;" ondrop="return false;">
-        <hr class="nav-shadow" />
-        <div class="content-content">
-            <div style="margin: 0 -20px 0 -20px">
-                <div class="tc-day-table">
-                    {% for d in days %} {% include 'day.html' %} {% endfor %}
-                </div>
-            </div>
-        </div>
-    </div>
+	<div class="content-container unselectable" ondragstart="return false;" ondrop="return false;">
+		<hr class="nav-shadow" />
+		<div class="content-content">
+			<div style="margin: 0 -20px 0 -20px">
+				<div class="tc-day-table">
+					{% for d in range(period_duration) %} {% include 'day.html' %} {% endfor %}
+				</div>
+			</div>
+		</div>
+	</div>
 
-    <script src="/static/js/user.js"></script>
-    <script>
-        // TODO: Better way to pass server data on load?
-        TcUser.initialDate = moment("{{ initial_date }}");
-        TcUser.lockdate = 1483228800;
-        TcUser.slotIncrement = "{{ slot_increment }}" / 60;
-        TcUser.slotFirstStart = moment("{{ slot_first_start }}", "HHmm");
-        TcUser.payPeriod = "{{ pay_period }}";
-        TcUser.payDay = 5;
+	<script src="/static/js/user.js"></script>
+	<script>
+		// TODO: Better way to pass server data on load?
+		TcUser.initialDate = moment("{{ initial_date }}");
+		TcUser.lockdate = 1483228800;
+		TcUser.slotIncrement = "{{ slot_increment }}" / 60;
+		TcUser.slotFirstStart = moment("{{ slot_first_start }}", "HHmm");
+		TcUser.periodDuration = "{{ period_duration }}";
+		TcUser.validPeriodStart = moment("{{ valid_period_start }}");
 
-        TcUser.init();
-    </script>
+		TcUser.init();
+	</script>
 
-    {% include 'footer.html' %}
+	{% include 'footer.html' %}
 </body>
 
 </html>
