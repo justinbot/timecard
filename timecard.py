@@ -1,6 +1,7 @@
 import datetime
 from flask import Flask, request, Response, session, redirect, url_for, render_template, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import exc
 from flask_cas import CAS, login_required, logout
 from functools import wraps
 
@@ -10,10 +11,12 @@ db = SQLAlchemy(app)
 cas = CAS(app)
 
 admins = None
+period_duration = None
+valid_period_start = None
+view_days = None
 slot_increment = None
 slot_first_start = None
 slot_last_start = None
-pay_period = None
 
 
 class User(db.Model):
@@ -81,10 +84,6 @@ def show_user():
     if not user:
         abort(403)
 
-    # TODO: Configurable days to display
-    # days of week 0-6
-    days = range(7)
-
     # times representing start of each cell eg. 8:30
     times = [slot for slot in hours_range(slot_first_start, slot_last_start, slot_increment)]
 
@@ -93,8 +92,8 @@ def show_user():
                            initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                            slot_increment=slot_increment,
                            slot_first_start=times[0].strftime("%H%M"),
-                           pay_period=pay_period,
-                           days=days,
+                           period_duration=view_days,
+                           valid_period_start=valid_period_start,
                            times=times)
 
 
@@ -107,6 +106,7 @@ def user_update():
     # TODO: Combine pages so every action doesn't require its own route?
 
     request_json = request.get_json(silent=True)
+    print request_json
 
     if not request_json or 'range' not in request_json:
         abort(400)
@@ -131,6 +131,7 @@ def user_update():
     # print 'lastmodified:', response_dict['lastmodified']
     # print 'selected:', response_dict['selected']
 
+    print response_dict
     # jsonfiy creates a complete Response
     return jsonify(response_dict)
 
@@ -171,7 +172,7 @@ def user_save():
             user.timeslots.append(Timeslot(timestamp=t))
             try:
                 db.session.commit()
-            except IntegrityError as err:
+            except exc.IntegrityError as err:
                 db.session.rollback()
                 # Will probably be a duplicate entry
                 print 'DEBUG: Timeslot insertion integrity error'
@@ -200,7 +201,9 @@ def show_admin():
         'admin.html',
         initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         slot_increment=slot_increment,
-        pay_period=pay_period)
+        period_duration=period_duration,
+        valid_period_start=valid_period_start
+    )
 
 
 @app.route('/admin/update', methods=['POST'])
@@ -213,13 +216,15 @@ def admin_update():
         abort(400)
 
     lower_bound = request_json['days']['ts-day-0'][0]
-    upper_bound = request_json['days']['ts-day-' + str(pay_period - 1)][1]
+    upper_bound = request_json['days']['ts-day-' + str(period_duration - 1)][1]
 
     response_dict = {}
     users = User.query.order_by(User.name_last, User.name_first)
 
     for user in users:
-        user_times = [ts.timestamp for ts in Timeslot.query.filter(Timeslot.user_id == user.id, Timeslot.timestamp >= lower_bound, Timeslot.timestamp <= upper_bound)]
+        user_times = [ts.timestamp for ts in Timeslot.query.filter(Timeslot.user_id == user.id,
+                                                                   Timeslot.timestamp >= lower_bound,
+                                                                   Timeslot.timestamp <= upper_bound)]
         user_dict = {}
         user_dict['firstname'] = user.name_first
         user_dict['lastname'] = user.name_last
@@ -308,8 +313,9 @@ def admin_edit_user():
         user.name_last = last
 
     if 'new_id' in request_json:
+        new_id = request_json['new_id']
 
-        if not len(new_name) > 0:
+        if not len(new_id) > 0:
             abort(400)
 
         new_id = request_json['new_id'].upper()
@@ -357,10 +363,11 @@ def show_viewas(id):
                            initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                            slot_increment=slot_increment,
                            slot_first_start=times[0].strftime("%H%M"),
-                           pay_period=pay_period,
-                           days=days,
+                           period_duration=view_days,
+                           valid_period_start=valid_period_start,
                            times=times,
-                           user_id=id)
+                           user_id=id,
+                           user_name=user.name_first + " " + user.name_last)
 
 
 @app.route('/user/update', methods=['POST'])
@@ -404,6 +411,7 @@ def tc_login():
     return redirect(url_for('show_user'))
 
 
+@app.cli.command()
 def init_db():
     # for use with command line argument to reset database
     # remember to change db in config
@@ -413,11 +421,7 @@ def init_db():
     db.drop_all()
     db.create_all()
 
-    # TODO: creating users should only be done through admin panel
-    # TODO: Initial lock date should be 00:00 on date first admin account is created?
-    #test_user = User(id='CARLSJ4', name='Justin Carlson')
-
-    #db.session.add(test_user)
+    # TODO: Initial lock date should be 00:00 on date database is created?
 
     db.session.commit()
 
@@ -425,19 +429,23 @@ def init_db():
 if __name__ == '__main__':
     # for release, disable debugger and add argument for init_db to allow database resets
     # also add support for database export?
-    init_db()
+
+    #init_db()
 
     # TODO: initialization logic and error checking
-    # require at least one admin, ...
     admins = app.config['ADMINS'].upper().replace(' ', '').split(',')
-
     if not len(admins) > 0:
         raise RuntimeError('cfg error: No admins specified')
 
+    period_duration = int(app.config['PERIOD_DURATION'])
+    valid_period_start = app.config['VALID_PERIOD_START']
+    view_days = int(app.config['VIEW_DAYS'])
     slot_increment = int(app.config['SLOT_INCREMENT'])
     slot_first_start = datetime.datetime.strptime(app.config['SLOT_FIRST_START'], '%H:%M')
     slot_last_start = datetime.datetime.strptime(app.config['SLOT_LAST_START'], '%H:%M')
-    pay_period = app.config['PAY_PERIOD']
+
+    if None in (period_duration, valid_period_start, view_days, slot_increment, slot_first_start, slot_last_start):
+        raise RuntimeError('cfg error: None value')
 
     if not slot_first_start < slot_last_start:
         raise RuntimeError('cfg error: SLOT_FIRST_START must be before SLOT_LAST_START')
