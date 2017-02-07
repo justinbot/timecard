@@ -2,97 +2,161 @@
 <html>
 
 <head>
-	<meta charset="utf-8">
-	<title>Timecard Admin - {{ session['CAS_USERNAME'].lower() }}</title>
-	<link href="http://www.rpi.edu/favicon.ico" type="image/ico" rel="icon">
-	<link href="/static/stylesheets/timecard.base.css" rel="stylesheet">
-	<link href="/static/stylesheets/timecard.admin.css" rel="stylesheet">
-	<link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
-	<script src="/static/js/moment.min.js"></script>
+    <meta charset="utf-8">
+    <title>Timecard Admin - {{ session['CAS_USERNAME'].lower() }}</title>
+    <link href="http://www.rpi.edu/favicon.ico" type="image/ico" rel="icon">
+    <link href="/static/stylesheets/timecard.base.css" rel="stylesheet">
+    <link href="/static/stylesheets/timecard.admin.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
+    <script src="/static/js/moment.min.js"></script>
 </head>
 
 <body>
-	{% include 'leetbar.html' %}
+    {% include 'leetbar.html' %}
 
-	<div class="header-container">
-		<div class="header-content">
-			<a class="logo" href="{{ url_for('show_admin') }}">
-				<img src="/static/img/logo_admin.svg" height="30px">
-			</a>
-			<a class="tc-link" style="color: white; margin-left: auto" href="{{ url_for('cas.logout') }}">Log out {{ session['CAS_USERNAME'].lower() }}</a>
-		</div>
-	</div>
+    <div class="header-container">
+        <div class="header-content">
+            <a class="logo" href="{{ url_for('show_admin') }}">
+                <img src="/static/img/logo_admin.svg" height="24px">
+            </a>
+            <a class="tc-link" style="color: white; margin-left: auto" href="{{ url_for('cas.logout') }}">Log out {{ session['CAS_USERNAME'].lower() }}</a>
+        </div>
+    </div>
 
-	<div class="tools-container">
-		<div class="tools-content">
-			<button id="user-new-button" onclick="TcAdmin.userNewShow()">New User</button>
-			<div id="user-new-form" style="display: none" onsubmit="return false">
-				<div style="font-weight: bold">New User</div>
-				<div style="margin-left: 20px">Name:</div>
-				<input id="user-new-input-name" style="width: 180px; margin-left: 10px" type="text" maxlength="64" oninput="">
-				<div style="margin-left: 20px">ID:</div>
-				<input id="user-new-input-id" style="width: 60px; margin-left: 10px" type="text" maxlength="12" oninput="">
-				<button style="margin-left: 20px" onclick="TcAdmin.userNewSubmit()">Submit</button>
-				<button style="margin-left: 5px" onclick="TcAdmin.userNewCancel()">Cancel</button>
-			</div>
-			<div id="user-edit-form" style="display: none" onsubmit="return false">
-				<div style="font-weight: bold">Edit User</div>
-				<div style="margin-left: 20px">Name:</div>
-				<input id="user-edit-input-name" style="width: 180px; margin-left: 10px" type="text" maxlength="64" oninput="">
-				<div style="margin-left: 20px">ID:</div>
-				<input id="user-edit-input-id" style="width: 60px; margin-left: 10px" type="text" maxlength="12" oninput="">
-				<button style="margin-left: 20px" onclick="TcAdmin.userEditSubmit()">Submit</button>
-				<button style="margin-left: 5px" onclick="TcAdmin.userEditCancel()">Cancel</button>
-				<button style="margin-left: 100px" onclick="TcAdmin.userEditDelete()">Delete User</button>
-			</div>
-			<div id="db-status" style="color: #9a9a9a; margin-left: auto"></div>
-		</div>
-	</div>
+    <div class="title-container">
+        <div class="title-content">
+            <div>Users (0)</div>
+            <div id="tc-nav-range" style="margin-left: 40px">Jan 1 – 7, 2000</div>
+            <button id="tc-nav-prev" style="margin-left: auto" onclick="TcAdmin.prevPeriod();"></button>
+            <button id="tc-nav-today" onclick="TcAdmin.currentPeriod();">Today</button>
+            <button id="tc-nav-next" onclick="TcAdmin.nextPeriod();"></button>
 
-	<div id="nav-container">
-		<div class="nav-content">
-			<button id="tc-nav-today" onclick="TcAdmin.currentPeriod();">Today</button>
-			<button id="tc-nav-prev" onclick="TcAdmin.prevPeriod();"></button>
-			<button id="tc-nav-next" onclick="TcAdmin.nextPeriod();"></button>
-			<div id="tc-nav-range" style="margin-left: 20px">Jan 1 – 7, 2000</div>
-		</div>
-	</div>
+        </div>
+    </div>
 
-	<div class="content-container">
-		<hr class="nav-shadow" />
-		<div class="content-content">
-			<table id="ts-table" border="1" style="width: 100%">
-				<thead id="ts-head" style="background: #eaeaea">
-					<tr>
-						<th style="width: 180px">Name</th>
-						<!--<th style="width: 70px">User ID</th>-->
-						<th style="width: 140px">Last Modified</th>
-						{% for i in range(period_duration) %}
-						<th id="ts-day-{{i}}" style="width: 70px" data-date="">Jan 1</th>
-						{% endfor %}
-						<th style="width: 120px">Total Hours</th>
-					</tr>
-				</thead>
-				<tbody>
-				</tbody>
-			</table>
-		</div>
-	</div>
+    <div class="tools-container">
+        <div class="tools-content">
+            <button class="button-large">Actions v</button>
+            <button id="user-new-button" style="margin-left: auto" onclick="TcAdmin.userNewShow()">New User</button>
+            <div id="user-new-form" style="display: none" onsubmit="return false">
+                <div style="font-weight: bold">New User</div>
+                <div style="margin-left: 20px">Name:</div>
+                <input id="user-new-input-name" style="width: 180px; margin-left: 10px" type="text" maxlength="64" oninput="">
+                <div style="margin-left: 20px">ID:</div>
+                <input id="user-new-input-id" style="width: 60px; margin-left: 10px" type="text" maxlength="12" oninput="">
+                <button style="margin-left: 20px" onclick="TcAdmin.userNewSubmit()">Submit</button>
+                <button style="margin-left: 5px" onclick="TcAdmin.userNewCancel()">Cancel</button>
+            </div>
+            <div id="user-edit-form" style="display: none" onsubmit="return false">
+                <div style="font-weight: bold">Edit User</div>
+                <div style="margin-left: 20px">Name:</div>
+                <input id="user-edit-input-name" style="width: 180px; margin-left: 10px" type="text" maxlength="64" oninput="">
+                <div style="margin-left: 20px">ID:</div>
+                <input id="user-edit-input-id" style="width: 60px; margin-left: 10px" type="text" maxlength="12" oninput="">
+                <button style="margin-left: 20px" onclick="TcAdmin.userEditSubmit()">Submit</button>
+                <button style="margin-left: 5px" onclick="TcAdmin.userEditCancel()">Cancel</button>
+                <button style="margin-left: 100px" onclick="TcAdmin.userEditDelete()">Delete User</button>
+            </div>
+            <div id="db-status" style="color: #9a9a9a; margin-left: auto">...</div>
+        </div>
+    </div>
 
-	<script src="/static/js/admin.js"></script>
-	<script>
-		// TODO: Better way to pass server data on load?
-		// TODO: Provide these values from server
-		TcAdmin.initialDate = moment("{{ initial_date }}");
-		TcAdmin.lockdate = 1483228800;
-		TcAdmin.slotIncrement = "{{ slot_increment }}" / 60;
-		TcAdmin.periodDuration = "{{ period_duration }}";
-		TcAdmin.validPeriodStart = moment("{{ valid_period_start }}");
+    <div class="content-container">
+        <div class="content-content">
+            <table class="ts-table" id="ts-table">
+                <thead id="ts-head">
+                    <tr>
+                        <th style="width:20px">
+                            <input type="checkbox" id="ts-head-checkbox" onchange="TcAdmin.tableCheckAll(this)">
+                        </th>
+                        <th style="width: 180px">Name</th>
+                        <!--<th style="width: 70px">User ID</th>-->
+                        <th style="width: 140px">Last Modified</th>
+                        {% for i in range(period_duration) %}
+                        <th id="ts-day-{{i}}" style="width: 70px" data-date="">Jan 1</th>
+                        {% endfor %}
+                        <th style="width: 120px">Total Hours</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-		TcAdmin.init();
-	</script>
+    <!--<div class="tools-container">
+        <div class="tools-content">
+            <button id="user-new-button" onclick="TcAdmin.userNewShow()">New User</button>
+            <div id="user-new-form" style="display: none" onsubmit="return false">
+                <div style="font-weight: bold">New User</div>
+                <div style="margin-left: 20px">Name:</div>
+                <input id="user-new-input-name" style="width: 180px; margin-left: 10px" type="text" maxlength="64" oninput="">
+                <div style="margin-left: 20px">ID:</div>
+                <input id="user-new-input-id" style="width: 60px; margin-left: 10px" type="text" maxlength="12" oninput="">
+                <button style="margin-left: 20px" onclick="TcAdmin.userNewSubmit()">Submit</button>
+                <button style="margin-left: 5px" onclick="TcAdmin.userNewCancel()">Cancel</button>
+            </div>
+            <div id="user-edit-form" style="display: none" onsubmit="return false">
+                <div style="font-weight: bold">Edit User</div>
+                <div style="margin-left: 20px">Name:</div>
+                <input id="user-edit-input-name" style="width: 180px; margin-left: 10px" type="text" maxlength="64" oninput="">
+                <div style="margin-left: 20px">ID:</div>
+                <input id="user-edit-input-id" style="width: 60px; margin-left: 10px" type="text" maxlength="12" oninput="">
+                <button style="margin-left: 20px" onclick="TcAdmin.userEditSubmit()">Submit</button>
+                <button style="margin-left: 5px" onclick="TcAdmin.userEditCancel()">Cancel</button>
+                <button style="margin-left: 100px" onclick="TcAdmin.userEditDelete()">Delete User</button>
+            </div>
+            <div id="db-status" style="color: #9a9a9a; margin-left: auto"></div>
+        </div>
+    </div>
 
-	{% include 'footer.html' %}
+    <div id="nav-container">
+        <div class="nav-content">
+            <button id="tc-nav-today" onclick="TcAdmin.currentPeriod();">Today</button>
+            <button id="tc-nav-prev" onclick="TcAdmin.prevPeriod();"></button>
+            <button id="tc-nav-next" onclick="TcAdmin.nextPeriod();"></button>
+            <div id="tc-nav-range" style="margin-left: 20px">Jan 1 – 7, 2000</div>
+        </div>
+    </div>
+
+    <div class="content-container">
+        <hr class="nav-shadow" />
+        <div class="content-content">
+            <table class="ts-table" id="ts-table">
+                <caption>
+                    Users
+                </caption>
+                <thead id="ts-head">
+                    <tr>
+                        <th style="width: 180px">Name</th>
+                        <th style="width: 70px">User ID</th>
+                        <th style="width: 140px">Last Modified</th>
+                        {% for i in range(period_duration) %}
+                        <th id="ts-day-{{i}}" style="width: 70px" data-date="">Jan 1</th>
+                        {% endfor %}
+                        <th style="width: 120px">Total Hours</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>-->
+
+    <script src="/static/js/admin.js"></script>
+    <script>
+        // TODO: Better way to pass server data on load?
+        // TODO: Provide these values from server
+        TcAdmin.initialDate = moment("{{ initial_date }}");
+        TcAdmin.lockdate = 1483228800;
+        TcAdmin.slotIncrement = "{{ slot_increment }}" / 60;
+        TcAdmin.periodDuration = "{{ period_duration }}";
+        TcAdmin.validPeriodStart = moment("{{ valid_period_start }}");
+
+        TcAdmin.init();
+    </script>
+
+    {% include 'footer.html' %}
 </body>
 
 </html>

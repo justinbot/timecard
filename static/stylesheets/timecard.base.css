@@ -1,5 +1,5 @@
 body {
-    background: white;
+    background: #f0f2f5; //#ebeef3;
     color: #444;
     border: 0;
     font-family: 'Roboto', arial, sans-serif;
@@ -12,17 +12,7 @@ body {
 
 a {
     color: inherit;
-}
-
-table {
-    border-collapse: collapse;
-    //font-size: 12px;
-}
-
-td,
-th {
-    border: 1px solid #444;
-    padding: 5px;
+    text-decoration: inherit;
 }
 
 .unselectable {
@@ -38,7 +28,8 @@ th {
     /* Disable Android and iOS callouts*/
 }
 
-button {
+
+/*button {
     background: #f5f5f5;
     color: #444;
     border: 1px solid #9a9a9a;
@@ -49,6 +40,19 @@ button {
     min-height: 22px;
     padding: 2px 10px;
     cursor: pointer;
+}*/
+
+button {
+    background: #f0f2f5;
+    color: #444;
+    border: 2px solid #838ba2;
+    border-radius: 0;
+    font-family: inherit;
+    font-size: 14px;
+    min-width: 35px;
+    min-height: 25px;
+    padding: 2px 8px;
+    cursor: pointer;
 }
 
 button:focus {
@@ -56,60 +60,153 @@ button:focus {
 }
 
 button:disabled {
-    background: #e2e2e2;
-    color: #b8b8b8;
+    background: #c4c9d4;
+    color: #838ba2;
     cursor: inherit;
 }
 
 button:enabled:hover {
     transition: background 0.1s ease-out;
+    transition: border 0.1s ease-out;
     background: white;
     color: black;
-    fill: black;
-    border: 1px solid #5c5c5c;
+    //fill: black;
+    border: 2px solid #444;
     z-index: 5;
 }
 
 button:enabled:active {
-    background: #eaeaea;
-    border: 1px solid black;
+    background: #c4c9d4;
+    color: black;
+    border: 2px solid black;
+}
+
+.button-large {
+    font-size: 20px;
+    background: #22448e;
+    border: 2px solid #22448e;
+    border-radius: 0;
+    color: white;
+    padding: 5px 20px;
+}
+
+.button-large:enabled:hover {
+    color: #22448e;
+    border: 2px solid #22448e;
+}
+
+.button-large:enabled:active {
+    background: #d4ddef;
 }
 
 select {
-    border: 1px solid #9a9a9a;
-    border-radius: 2px;
+    border: 2px solid #838ba2;
+    border-radius: 0;
     width: 150px;
-    height: 22px;
+    height: 25px;
     cursor: pointer;
 }
 
 select:focus {
-    border: 1px solid #0c78d6;
+    border: 2px solid #4562af;
     outline: 0;
 }
 
 input[type=text] {
     background: white;
-    border: 1px solid #9a9a9a;
-    border-radius: 2px;
+    border: 2px solid #838ba2;
+    border-radius: 0;
     width: 120px;
-    height: 18px;
+    height: 22px;
     margin: 0;
     padding: 1px 4px;
 }
 
 input[type=text]:focus {
-    border: 1px solid #0c78d6;
+    border: 2px solid #4562af;
     outline: 0;
 }
 
 input[type=checkbox] {
-    width: 15px;
-    height: 15px;
+    width: 14px;
+    height: 14px;
     margin: 0;
     cursor: pointer;
 }
 
+.header-container {
+    background: #22448e;
+    width: 100%;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    color: white;
+    width: 90%;
+    max-width: 1200px;
+    height: 48px;
+    margin: 0 auto;
+    padding: 0 30px;
+}
+
+.title-container {
+    font-weight: bold;
+    font-size: 18px;
+    background: white;
+    color: #22448e;
+    width: 100%;
+}
+
+.title-content {
+    display: flex;
+    align-items: center;
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 10px 0;
+}
+
+.tools-container {
+    background: white;
+    border-bottom: 2px solid #c4c9d4;
+    width: 100%;
+}
+
+.tools-content {
+    display: flex;
+    align-items: center;
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 10px 0;
+}
+
+.content-container {
+    width: 100%;
+    min-height: 400px;
+}
+
+.content-content {
+    display: flex;
+    align-items: center;
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.footer {
+    text-align: center;
+    color: #838ba2;
+    border-top: 1px solid #c4c9d4;
+    width: 100%;
+    font-size: 12px;
+    margin-top: 10px;
+    padding: 5px 0;
+}
+
+
+/*
 .tc-link {
     font-weight: bold;
     text-decoration: none;
@@ -123,16 +220,18 @@ input[type=checkbox] {
 .header-container {
     background: #1b5689;
     width: 100%;
+    box-shadow: 0 0 6px 0 rgba(0, 0, 0, 1.0);
 }
 
 .header-content {
     display: flex;
     align-items: center;
     color: white;
-    width: 90%;
-    height: 60px;
-    max-width: 1200px;
+    //width: 90%;
+    height: 48px;
+    //max-width: 1200px;
     margin: 0 auto;
+    padding: 0 30px;
 }
 
 .tools-container {
@@ -234,4 +333,4 @@ input[type=checkbox] {
 
 #tc-nav-next:enabled:hover {
     background-image: url(/static/img/nav_right_black.svg);
-}
+}*/

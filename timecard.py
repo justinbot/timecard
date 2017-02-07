@@ -411,7 +411,7 @@ def tc_login():
     return redirect(url_for('show_user'))
 
 
-@app.cli.command()
+#@app.cli.command()
 def init_db():
     # for use with command line argument to reset database
     # remember to change db in config
