@@ -1,9 +1,61 @@
-.ts-nav {
-    display: flex;
-    background: white; //#f5f5f5;
-    color: #444;
-    border-bottom: 1px solid #eaeaea;
-    padding: 10px;
+.dots-button-1 {
+    background: none;
+    background-image: url(/static/img/dots_button_2.svg);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 20px;
+    border: 0;
+    width: 100%;
+    height: 10px;
+    padding: 0
+}
+
+.dots-button-1:enabled:hover {
+    background: none;
+    background-image: url(/static/img/dots_button_3.svg);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 20px;
+    border: 0;
+}
+
+.dots-button-1:disabled {
+    background: none;
+    background-image: url(/static/img/dots_button_1.svg);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 20px;
+    border: 0;
+}
+
+.dots-button-2 {
+    background: none;
+    background-image: url(/static/img/dots_button_1.svg);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 20px;
+    border: 0;
+    width: 100%;
+    height: 10px;
+    padding: 0;
+}
+
+.dots-button-2:enabled:hover {
+    background: none;
+    background-image: url(/static/img/dots_button_2.svg);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 20px;
+    border: 0;
+}
+
+.drop-menu {
+    text-align: left;
+    position: absolute;
+    //float: left;
+    background: white;
+    width: 120px;
+    padding: 5px;
 }
 
 .ts-table {
@@ -15,11 +67,10 @@
 .ts-table thead tr {
     text-align: left;
     background: white;
-    color: #838ba2;
+    color: #596586;
     background: #f0f2f5;
     height: 40px;
     border-bottom: 2px solid #c4c9d4;
-    //box-shadow: 0 2px 2px -2px rgba(0, 0, 0, 0.5);
 }
 
 .ts-table thead th {
@@ -35,6 +86,10 @@
     padding-right: 10px;
 }
 
+.ts-table thead th:nth-child(4) {
+    border-right: 2px solid #c4c9d4;
+}
+
 .ts-table tbody tr:nth-child(odd) {
     //background: #f5f5f5;
 }
@@ -42,12 +97,11 @@
 .ts-table tbody tr {
     height: 40px;
     background: #f0f2f5;
-    border-bottom: 1px solid #c4c9d4;
+    color: #6f6f6f;
+    border-bottom: 1px solid #e2e5eb;
 }
 
 .ts-table tbody td {
-    color: #444;
-    //border-bottom: 1px solid #c4c9d4;
     padding: 5px;
 }
 
@@ -59,13 +113,17 @@
     padding-right: 10px;
 }
 
+.ts-table tbody td:nth-child(4) {
+    border-right: 2px solid #e2e5eb;
+}
+
 
 /*.ts-table tbody tr:last-child td {
     border-bottom: none;
 }*/
 
 .ts-table tbody tr:hover {
-    background: #e2e5eb;//#f6f8fa;
+    background: #f6f8fa;
     cursor: default;
 }
 
@@ -80,12 +138,19 @@
     align-items: inherit;
 }
 
-*/
-/*#user-new-form,
-#user-edit-form {
-    display: inherit;
-    align-items: inherit;
+#period-range {
+    font-size: 16px;
+    font-weight: bold;
+    color: #4562af;
 }
+
+#table-status {
+    font-size: 16px;
+    color: #4562af;
+}
+
+
+/*
 
 .icon-edit {
     display: inline-block;
@@ -101,89 +166,4 @@
 
 .icon-edit:hover {
     background-image: url(/static/img/edit_black.svg);
-}
-
-.ts-table {
-    text-align: left;
-    line-height: 40px;
-    border-collapse: separate;
-    border-spacing: 0;
-    //border: 1px solid #9babc6;
-    width: 100%;
-    margin: 0;
-    //border-radius: 3px;
-    //box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.ts-table caption {
-    font-size: 16px;
-    font-weight: bold;
-    text-align: left;
-    background: #8195b9;
-    color: white;
-    padding-left: 15px;
-}
-
-.ts-table thead tr:first-child {
-    //background: #8195b9;
-    //color: white; //#51607d;
-    border: none;
 }*/
-
-
-/*th:first-child,
-td:first-child {
-    padding: 0 15px 0 20px;
-}
-
-.ts-table th {
-    font-weight: 100;
-    //border-bottom: 1px solid #9babc6;
-}
-
-.ts-table th:first-child {
-    //border-top-left-radius: 2px;
-    padding-left: 15px;
-}
-
-.ts-table th:last-child {
-    //border-top-right-radius: 2px;
-}
-
-.ts-table td:first-child {
-    border-left: 1px solid #eaeaea;
-    padding-left: 15px;
-}
-
-.ts-table td:last-child {
-    border-right: 1px solid #eaeaea;
-    padding-right: 15px;
-}
-
-.ts-table tbody td {
-    color: #444;
-    border-bottom: 1px solid #eaeaea;
-    padding: 0;
-}
-
-.ts-table tbody tr:last-child td {
-    //border-bottom: none;
-}
-
-tbody tr:hover {
-    background-color: #f0f2f5;
-    cursor: default;
-}
-*/
-
-
-/*
-tbody tr:last-child td {
-    border: none;
-}
-
-tbody td {
-    border-bottom: 1px solid #d8d8d8;
-}
-
-*/

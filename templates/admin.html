@@ -12,29 +12,42 @@
 </head>
 
 <body>
-    {% include 'leetbar.html' %}
+    <!--{% include 'leetbar.html' %}-->
 
     <div class="header-container">
         <div class="header-content">
             <a class="logo" href="{{ url_for('show_admin') }}">
                 <img src="/static/img/logo_admin.svg" height="24px">
             </a>
-            <a class="tc-link" style="color: white; margin-left: auto" href="{{ url_for('cas.logout') }}">Log out {{ session['CAS_USERNAME'].lower() }}</a>
+            <div id="db-status" style="color: #9a9a9a; margin-left: auto; margin-right: 20px">...</div>
+            <a class="tc-link" style="color: white" href="{{ url_for('cas.logout') }}">Log out {{ session['CAS_USERNAME'].lower() }}</a>
         </div>
     </div>
 
-    <div class="title-container">
-        <div class="title-content">
-            <div>Users (0)</div>
-            <div id="tc-nav-range" style="margin-left: 40px">Jan 1 – 7, 2000</div>
-            <button id="tc-nav-prev" style="margin-left: auto" onclick="TcAdmin.prevPeriod();"></button>
-            <button id="tc-nav-today" onclick="TcAdmin.currentPeriod();">Today</button>
-            <button id="tc-nav-next" onclick="TcAdmin.nextPeriod();"></button>
-
+    <div class="nav-container">
+        <div class="nav-content">
+            <a href="{{ url_for('show_admin') }}">Users</a>
+            <a href="{{ url_for('show_admin') }}">Settings</a>
         </div>
     </div>
 
-    <div class="tools-container">
+    <div class="row-container">
+        <div class="row-content" style="border-bottom: 2px solid #e2e5eb">
+            <div id="period-range">Jan 1 – 7, 2000</div>
+            <button class="arrow-nav-prev" style="margin-left: auto" onclick="TcAdmin.prevPeriod();"></button>
+            <button id="period-nav-today" class="arrow-nav-today" onclick="TcAdmin.currentPeriod();">Today</button>
+            <button class="arrow-nav-next" onclick="TcAdmin.nextPeriod();"></button>
+        </div>
+    </div>
+
+    <div class="row-container">
+        <div class="row-content">
+            <div id="table-status">0 Users</div>
+            <button class="button-large" style="margin-left: auto">New User</button>
+        </div>
+    </div>
+
+    <!--<div class="tools-container">
         <div class="tools-content">
             <button class="button-large">Actions v</button>
             <button id="user-new-button" style="margin-left: auto" onclick="TcAdmin.userNewShow()">New User</button>
@@ -59,23 +72,31 @@
             </div>
             <div id="db-status" style="color: #9a9a9a; margin-left: auto">...</div>
         </div>
-    </div>
+    </div>-->
 
     <div class="content-container">
         <div class="content-content">
             <table class="ts-table" id="ts-table">
                 <thead id="ts-head">
                     <tr>
-                        <th style="width:20px">
+                        <th>
                             <input type="checkbox" id="ts-head-checkbox" onchange="TcAdmin.tableCheckAll(this)">
                         </th>
-                        <th style="width: 180px">Name</th>
+                        <th>
+                            <button id="ts-head-button" class="dots-button-1"></button>
+                            <div class="drop-menu">
+                                <div>View As</div>
+                                <div>Edit</div>
+                                <div>Delete</div>
+                            </div>
+                        </th>
+                        <th>Name</th>
                         <!--<th style="width: 70px">User ID</th>-->
-                        <th style="width: 140px">Last Modified</th>
+                        <th>Last Modified</th>
                         {% for i in range(period_duration) %}
-                        <th id="ts-day-{{i}}" style="width: 70px" data-date="">Jan 1</th>
+                        <th id="ts-day-{{i}}" style="text-align: center; width: 70px" data-date="">Jan 1</th>
                         {% endfor %}
-                        <th style="width: 120px">Total Hours</th>
+                        <th style="text-align: center; width: 120px">Total Hours</th>
                     </tr>
                 </thead>
                 <tbody>

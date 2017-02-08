@@ -2,13 +2,13 @@ var TcAdmin = (function () {
     var tc = {};
 
     /* DOM elements */
-    var tcNavToday;
-    var tcNavRange;
-    var tcNavTotal;
+    var periodNavToday;
+    var periodRange;
 
     var tsTable;
     var tsHead;
     var tsHeadCheckbox;
+    var tsHeadButton;
     var tsDays = [];
 
     var userNewButton;
@@ -21,10 +21,14 @@ var TcAdmin = (function () {
     var userEditInputID;
 
     var dbStatus;
+    var tableStatus;
 
     /* local variables */
     var focusDate;
     var periodStart;
+
+    var userIds = new Set();
+    var checkedUsers = new Set();
 
     /* public variables */
     tc.initialDate;
@@ -35,13 +39,13 @@ var TcAdmin = (function () {
     tc.validPeriodStart;
 
     tc.init = function () {
-        tcNavToday = document.getElementById("tc-nav-today");
-        tcNavRange = document.getElementById("tc-nav-range");
-        tcNavTotal = document.getElementById("tc-nav-total");
+        periodNavToday = document.getElementById("period-nav-today");
+        periodRange = document.getElementById("period-range");
 
         tsTable = document.getElementById("ts-table");
         tsHead = document.getElementById("ts-head");
         tsHeadCheckbox = document.getElementById("ts-head-checkbox");
+        tsHeadButton = document.getElementById("ts-head-button");
 
         for (var i = 0; i < tc.periodDuration; i++) {
             tsDays.push(document.getElementById("ts-day-" + i));
@@ -57,6 +61,7 @@ var TcAdmin = (function () {
         userEditInputID = document.getElementById("user-edit-input-id");
 
         dbStatus = document.getElementById("db-status");
+        tableStatus = document.getElementById("table-status");
 
         tc.currentPeriod();
     }
@@ -89,13 +94,23 @@ var TcAdmin = (function () {
             var oldTsBody = tsTable.getElementsByTagName("tbody")[0];
             var newTsBody = document.createElement("tbody");
 
+            userIds = new Set();
             for (var elem in response) {
+                userIds.add(elem);
+
                 var newRow = newTsBody.insertRow();
 
                 var checkCell = newRow.insertCell();
-                var checkbox = document.createElement('input');
+                var checkbox = document.createElement("input");
                 checkbox.type = "checkbox";
+                checkbox.dataset.userid = elem;
+                checkbox.setAttribute("onchange", "TcAdmin.tableCheckRow(this)");
                 checkCell.appendChild(checkbox);
+
+                var menuCell = newRow.insertCell();
+                var menuButton = document.createElement("button");
+                menuButton.setAttribute("class", "dots-button-2");
+                menuCell.appendChild(menuButton);
 
                 var nameCell = newRow.insertCell();
 
@@ -103,7 +118,7 @@ var TcAdmin = (function () {
                 editButton.setAttribute("class", "icon-edit")
                 editButton.setAttribute("onclick", "TcAdmin.userEditShow(this)");
                 editButton.dataset.name = response[elem]["firstname"] + " " + response[elem]["lastname"];
-                editButton.dataset.id = elem;
+                editButton.dataset.userid = elem;
                 nameCell.appendChild(editButton);
 
                 var nameText = document.createElement("a");
@@ -118,29 +133,57 @@ var TcAdmin = (function () {
 
                 for (var i = 0; i < tc.periodDuration; i++) {
                     var dayCell = newRow.insertCell();
+                    dayCell.style.textAlign = "center";
                     // TODO: Same rounding error as everywhere else
                     dayCell.textContent = response[elem]["ts-day-" + i].toFixed(1);;
                 }
 
                 var totalCell = newRow.insertCell();
+                totalCell.style.textAlign = "center";
                 totalCell.textContent = response[elem]["total"].toFixed(1);
             }
 
             tsTable.replaceChild(newTsBody, oldTsBody);
+
+            tableStatusUpdate();
         } else {
             // TODO: Display error regarding status
         }
     }
 
-    function navUpdate() {
-        tcNavToday.disabled = focusDate.isSame(tc.initialDate, "day");
+    function periodUpdate() {
+        periodNavToday.disabled = focusDate.isSame(tc.initialDate, "day");
 
         var startDate = moment(tsDays[0].dataset.date)
         var endDate = moment(tsDays[tsDays.length - 1].dataset.date)
         if (startDate.isSame(endDate, "month")) {
-            tcNavRange.textContent = startDate.format("MMM D") + " – " + endDate.format("D, YYYY");
+            periodRange.textContent = startDate.format("MMM D") + " – " + endDate.format("D, YYYY");
         } else {
-            tcNavRange.textContent = startDate.format("MMM D") + " – " + endDate.format("MMM D, YYYY");
+            periodRange.textContent = startDate.format("MMM D") + " – " + endDate.format("MMM D, YYYY");
+        }
+    }
+
+    function tableStatusUpdate() {
+        if (checkedUsers.size == 0) {
+            tableStatus.textContent = userIds.size + " Users";
+        } else {
+            tableStatus.textContent = userIds.size + " Users (" + checkedUsers.size + " selected)";
+        }
+
+        if (checkedUsers.size == userIds.size) {
+            tsHeadCheckbox.indeterminate = false;
+            tsHeadCheckbox.checked = true;
+        } else if (checkedUsers.size == 0) {
+            tsHeadCheckbox.indeterminate = false;
+            tsHeadCheckbox.checked = false;
+        } else {
+            tsHeadCheckbox.indeterminate = true;
+        }
+
+        if (checkedUsers.size < 2) {
+            tsHeadButton.style.visibility = "hidden";
+        } else {
+            tsHeadButton.style.visibility = "visible";
         }
     }
 
@@ -154,7 +197,7 @@ var TcAdmin = (function () {
             tsUpdateDay(i);
         }
 
-        navUpdate();
+        periodUpdate();
 
         getFromDatabase();
     }
@@ -167,7 +210,7 @@ var TcAdmin = (function () {
             tsUpdateDay(i);
         }
 
-        navUpdate();
+        periodUpdate();
 
         getFromDatabase();
     }
@@ -180,7 +223,7 @@ var TcAdmin = (function () {
             tsUpdateDay(i);
         }
 
-        navUpdate();
+        periodUpdate();
 
         getFromDatabase();
     }
@@ -251,18 +294,18 @@ var TcAdmin = (function () {
         userEditForm.style.display = "";
 
         userEditForm.dataset.name = button.dataset.name;
-        userEditForm.dataset.id = button.dataset.id;
+        userEditForm.dataset.userid = button.dataset.userid;
 
         userEditInputName.value = button.dataset.name;
         userEditInputName.placeholder = button.dataset.name;
-        userEditInputID.value = button.dataset.id;
-        userEditInputID.placeholder = button.dataset.id;
+        userEditInputID.value = button.dataset.userid;
+        userEditInputID.placeholder = button.dataset.userid;
         userEditInputName.focus();
     }
 
     tc.userEditSubmit = function () {
         // TODO: Make sure length > 0
-        if (userEditInputName.value != userEditForm.dataset.name || userEditInputID.value != userEditForm.dataset.id) {
+        if (userEditInputName.value != userEditForm.dataset.name || userEditInputID.value != userEditForm.dataset.userid) {
             dbEditUser(userEditInputName.value, userEditInputID.value);
             tc.userEditCancel();
         } else {
@@ -272,13 +315,13 @@ var TcAdmin = (function () {
 
     tc.userEditDelete = function () {
         // TODO: Prompt "Are you sure?"
-        dbDeleteUser(userEditForm.dataset.id);
+        dbDeleteUser(userEditForm.dataset.userid);
         tc.userEditCancel();
     }
 
     function dbDeleteUser(id) {
         var user_dict = {
-            "id": userEditForm.dataset.id
+            "id": userEditForm.dataset.userid
         };
 
         var xhr = new XMLHttpRequest();
@@ -308,14 +351,14 @@ var TcAdmin = (function () {
         userEditInputID.value = "";
 
         userEditForm.dataset.name = "";
-        userEditForm.dataset.id = "";
+        userEditForm.dataset.userid = "";
 
         dbStatus.textContent = "";
     }
 
     function dbEditUser(name, id) {
         var user_dict = {
-            "id": userEditForm.dataset.id,
+            "id": userEditForm.dataset.userid,
             "new_name": name,
             "new_id": id
         };
@@ -344,7 +387,25 @@ var TcAdmin = (function () {
         var checkboxes = tsTable.getElementsByTagName("tbody")[0].getElementsByTagName("input");
         for (var i = 0; i < checkboxes.length; i++) {
             checkboxes[i].checked = checkbox.checked;
+            if (checkbox.checked) {
+                checkedUsers.add(checkboxes[i].dataset.userid);
+            }
         }
+        if (!checkbox.checked) {
+            checkedUsers.clear();
+        }
+
+        tableStatusUpdate();
+    }
+
+    tc.tableCheckRow = function (checkbox) {
+        if (checkbox.checked) {
+            checkedUsers.add(checkbox.dataset.userid);
+        } else {
+            checkedUsers.delete(checkbox.dataset.userid);
+        }
+
+        tableStatusUpdate();
     }
 
     return tc;
