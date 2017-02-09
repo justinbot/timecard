@@ -109,7 +109,7 @@ var TcAdmin = (function () {
 
                 var menuCell = newRow.insertCell();
                 var menuButton = document.createElement("button");
-                menuButton.setAttribute("class", "dots-button-2");
+                menuButton.setAttribute("class", "dots-button-1");
                 menuCell.appendChild(menuButton);
 
                 var nameCell = newRow.insertCell();

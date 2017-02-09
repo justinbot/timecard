@@ -8,6 +8,7 @@
     <link href="/static/stylesheets/timecard.base.css" rel="stylesheet">
     <link href="/static/stylesheets/timecard.admin.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Titillium+Web:600" rel="stylesheet">
     <script src="/static/js/moment.min.js"></script>
 </head>
 
@@ -19,20 +20,25 @@
             <a class="logo" href="{{ url_for('show_admin') }}">
                 <img src="/static/img/logo_admin.svg" height="24px">
             </a>
+            <div class="nav-link">
+                <a href="{{ url_for('show_admin') }}">Users</a>
+            </div>
+            <div class="nav-link">
+                <a href="{{ url_for('show_admin') }}">Settings</a>
+            </div>
             <div id="db-status" style="color: #9a9a9a; margin-left: auto; margin-right: 20px">...</div>
             <a class="tc-link" style="color: white" href="{{ url_for('cas.logout') }}">Log out {{ session['CAS_USERNAME'].lower() }}</a>
         </div>
     </div>
 
-    <div class="nav-container">
-        <div class="nav-content">
-            <a href="{{ url_for('show_admin') }}">Users</a>
-            <a href="{{ url_for('show_admin') }}">Settings</a>
+    <div class="subheader-container">
+        <div class="subheader-content">
+            Users
         </div>
     </div>
 
     <div class="row-container">
-        <div class="row-content" style="border-bottom: 2px solid #e2e5eb">
+        <div class="row-content" style="border-bottom: 1px solid #e3e8eb">
             <div id="period-range">Jan 1 – 7, 2000</div>
             <button class="arrow-nav-prev" style="margin-left: auto" onclick="TcAdmin.prevPeriod();"></button>
             <button id="period-nav-today" class="arrow-nav-today" onclick="TcAdmin.currentPeriod();">Today</button>
@@ -84,11 +90,11 @@
                         </th>
                         <th>
                             <button id="ts-head-button" class="dots-button-1"></button>
-                            <div class="drop-menu">
+                            <!--<div class="drop-menu">
                                 <div>View As</div>
                                 <div>Edit</div>
                                 <div>Delete</div>
-                            </div>
+                            </div>-->
                         </th>
                         <th>Name</th>
                         <!--<th style="width: 70px">User ID</th>-->
