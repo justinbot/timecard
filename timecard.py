@@ -248,31 +248,32 @@ def admin_update():
     return jsonify(response_dict)
 
 
-@app.route('/admin/create', methods=['POST'])
+@app.route('/admin/add', methods=['POST'])
 @login_required
 @admin_required
-def admin_create_user():
+def admin_add_user():
     request_json = request.get_json(silent=True)
 
-    if not request_json or 'name' not in request_json or 'id' not in request_json:
+    if not request_json or 'firstname' not in request_json or 'lastname' not in request_json or 'id' not in request_json:
         abort(400)
 
-    name = request_json['name']
+    first = request_json['firstname']
+    last = request_json['lastname']
     id = request_json['id'].upper()
 
-    if not (len(name) > 0 and len(id) > 0):
+    if not (len(first) > 0 and len(last) > 0 and len(id) > 0):
         abort(400)
 
     # For now, delete the user if it already exists
     User.query.filter_by(id=id).delete()
 
     # Split name on first space into First and Last
-    name = name.split(' ', 1)
-    first = name[0]
-    if len(name) > 1:
-        last = name[1]
-    else:
-        last = ''
+    #name = name.split(' ', 1)
+    #first = name[0]
+    #if len(name) > 1:
+    #    last = name[1]
+    #else:
+    #    last = ''
 
     new_user = User(id=id, name_first=first, name_last=last)
 
@@ -295,23 +296,6 @@ def admin_edit_user():
     if not user:
         abort(400)
 
-    if 'new_name' in request_json:
-        new_name = request_json['new_name']
-
-        if not len(new_name) > 0:
-            abort(400)
-
-        # Split name on first space into First and Last
-        new_name = new_name.split(' ', 1)
-        first = new_name[0]
-        if len(new_name) > 1:
-            last = new_name[1]
-        else:
-            last = ''
-
-        user.name_first = first
-        user.name_last = last
-
     if 'new_id' in request_json:
         new_id = request_json['new_id']
 
@@ -320,6 +304,33 @@ def admin_edit_user():
 
         new_id = request_json['new_id'].upper()
         user.id = new_id
+
+    if 'new_first' in request_json:
+        new_first = request_json['new_first']
+
+        if not len(new_first) > 0:
+            abort(400)
+
+        user.name_first = new_first
+
+        # Split name on first space into First and Last
+        #new_name = new_name.split(' ', 1)
+        #first = new_name[0]
+        #if len(new_name) > 1:
+        #    last = new_name[1]
+        #else:
+        #    last = ''
+
+        #user.name_first = first
+        #user.name_last = last
+
+    if 'new_last' in request_json:
+        new_last = request_json['new_last']
+
+        if not len(new_last) > 0:
+            abort(400)
+
+        user.name_last = new_last
 
     db.session.commit()
 

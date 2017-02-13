@@ -1,5 +1,10 @@
 /*
 palette:
+    #1f2f50
+    #273a61
+    #3b5ca0
+    #779ad8
+
     #333
     #666
     #d8d8d8
@@ -21,14 +26,19 @@ body {
     font-family: 'Roboto', arial, sans-serif;
     font-size: 14px;
     vertical-align: baseline;
-    min-width: 900px;
+    min-width: 980px;
     margin: 0;
     padding: 0;
 }
 
 a {
     color: inherit;
-    text-decoration: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+a:hover {
+    text-decoration: underline;
 }
 
 .unselectable {
@@ -44,11 +54,48 @@ a {
     /* Disable Android and iOS callouts*/
 }
 
+select {
+    border: 2px solid #838ba2;
+    border-radius: 0;
+    width: 150px;
+    height: 25px;
+    cursor: pointer;
+}
+
+select:focus {
+    border: 2px solid #4562af;
+    outline: 0;
+}
+
+input[type=text] {
+    background: white;
+    border: 1px solid #959a9e;
+    border-radius: 2px;
+    width: 120px;
+    height: 20px;
+    margin: 0;
+    padding: 1px 4px;
+}
+
+input[type=text]:focus {
+    border: 1px solid #779ad8;
+    outline: 0;
+}
+
+input[type=checkbox] {
+    width: 14px;
+    height: 14px;
+    margin: 2px;
+    cursor: pointer;
+}
+
 button {
     //transition: all 100ms ease-out;
-    font-family: 'Titillium Web', sans-serif;
-    font-weight: 600;
+    //font-family: 'Titillium Web', sans-serif;
+    //font-weight: 600;
     font-size: 14px;
+    overflow: hidden;
+    white-space: nowrap;
     background: #fcfdff;
     color: #666;
     border: 2px solid #c2c6c7;
@@ -70,7 +117,9 @@ button:disabled {
 }
 
 button:enabled:hover {
-    transition: all 100ms ease-out;
+    transition: background 100ms ease-out;
+    transition: color 100ms ease-out;
+    transition: width 50ms ease-out;
     background: white;
     color: #666;
     border: 2px solid #959a9e;
@@ -82,58 +131,69 @@ button:enabled:active {
     border: 2px solid #959a9e;
 }
 
-.button-large {
+.button-solid {
+    font-family: 'Titillium Web', sans-serif;
+    font-weight: 600;
     font-size: 16px;
-    background: #1bd199;
-    border: 2px solid #1bd199;
+    background: #959a9e;
+    border: 2px solid #959a9e;
     border-radius: 4px;
     color: white;
     padding: 2px 20px;
 }
 
-.button-large:enabled:hover {
-    color: #1bd199;
-    border: 2px solid #1bd199;
+.button-solid:enabled:hover {
+    color: #959a9e;
+    border: 2px solid #959a9e;
 }
 
-.button-large:enabled:active {
-    background: #e1fff6;
+.button-solid:enabled:active {
+    background: #f1f2f4;
+    color: #959a9e;
+    border-color: #959a9e;
 }
 
-select {
-    border: 2px solid #838ba2;
-    border-radius: 0;
-    width: 150px;
-    height: 25px;
-    cursor: pointer;
+.button-solid-green {
+    background-color: #30c99a;
+    color: white;
+    //color: #333;
+    border-color: #30c99a;
 }
 
-select:focus {
-    border: 2px solid #4562af;
-    outline: 0;
+.button-solid-green:enabled:hover {
+    background-color: white;
+    color: #30c99a;
+    border-color: #30c99a;
 }
 
-input[type=text] {
-    background: white;
-    border: 2px solid #838ba2;
-    border-radius: 0;
-    width: 120px;
-    height: 22px;
-    margin: 0;
-    padding: 1px 4px;
+.button-solid-green:enabled:active {
+    background-color: #e1fff6;
+    color: #30c99a;
+    border-color: #30c99a;
 }
 
-input[type=text]:focus {
-    border: 2px solid #4562af;
-    outline: 0;
+.button-icon {
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0;
 }
 
-input[type=checkbox] {
-    width: 14px;
-    height: 14px;
-    margin: 0;
-    cursor: pointer;
+.button-outline {
+    font-family: 'Titillium Web', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    background: none;
+    color: #c2c6c7;
+    border-radius: 4px;
+    padding: 2px 20px;
 }
+
+.button-outline:enabled:hover {
+    color: #959a9e;
+    border: 2px solid #959a9e;
+}
+
+.button-outline:enabled:active {}
 
 .row-container {
     width: 100%;
@@ -195,6 +255,68 @@ input[type=checkbox] {
     //padding-top: 2px;
 }
 
+.nav-link-selected {
+    display: inline-flex;
+    align-items: center;
+    font-size: 18px;
+    font-family: 'Titillium Web', sans-serif;
+    font-weight: 600;
+    background: #779ad8;
+    color: #273a61;
+    height: 100%;
+    padding: 0 40px;
+}
+
+.infobanner-container {
+    transition: max-height 200ms ease-out;
+    width: 100%;
+    max-height: 400px;
+}
+
+.infobanner-container-hidden {
+    transition: max-height 200ms ease-out;
+    overflow: hidden;
+    width: 100%;
+    max-height: 0;
+}
+
+.infobanner-content {
+    display: flex;
+    align-items: center;
+    background: #e3edff;
+    color: #333;
+    border-top: 1px solid #779ad8;
+    border-bottom: 1px solid #779ad8;
+    margin: 0 80px;
+    margin-bottom: 10px;
+    padding: 5px 10px;
+}
+
+.action-container {
+    transition: max-height 200ms ease-out;
+    width: 100%;
+    max-height: 400px;
+}
+
+.action-container-hidden {
+    transition: max-height 200ms ease-out;
+    overflow: hidden;
+    width: 100%;
+    max-height: 0;
+}
+
+.action-content {
+    display: flex;
+    align-items: center;
+    background: #f8f9fb; //#e1fff6;
+    color: #333;
+    border-top: 1px solid #30c99a;
+    border-bottom: 1px solid #30c99a;
+    margin: 0 80px;
+    margin-bottom: 20px;
+    padding: 5px 10px;
+}
+
 .content-container {
     width: 100%;
     min-height: 400px;
@@ -204,13 +326,6 @@ input[type=checkbox] {
     display: flex;
     align-items: center;
     margin: 0 80px;
-}
-
-.logo {
-    display: inline-flex;
-    align-items: center;
-    height: 100%;
-    margin-right: 40px;
 }
 
 .arrow-nav-prev {
@@ -256,7 +371,9 @@ input[type=checkbox] {
 }
 
 .arrow-nav-today {
-    font-weight: 700;
+    font-family: 'Titillium Web', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
     color: #c2c6c7;
     border-radius: 0;
     height: 32px;
@@ -266,6 +383,38 @@ input[type=checkbox] {
 .arrow-nav-today:enabled:hover {
     color: #959a9e;
     z-index: 2;
+}
+
+.logo {
+    display: inline-flex;
+    align-items: center;
+    height: 100%;
+    margin-right: 40px;
+}
+
+.logo > img {
+    height: 24px;
+}
+
+.title {
+    font-size: 16px;
+}
+
+.title-bold {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.anchor-icon {
+    display: flex;
+    align-items: center;
+    color: #779ad8;
+}
+
+.anchor-icon > img {
+    width: 12px;
+    height: 12px;
+    margin-right: 5px;
 }
 
 .footer {

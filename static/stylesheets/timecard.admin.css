@@ -1,64 +1,3 @@
-.dots-button-1 {
-    background: none;
-    background-image: url(/static/img/dots_button_2.svg);
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 20px;
-    border: 0;
-    width: 100%;
-    height: 10px;
-    padding: 0
-}
-
-.dots-button-1:enabled:hover {
-    transition: all 100ms ease-out;
-    background: none;
-    background-image: url(/static/img/dots_button_3.svg);
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 20px;
-    border: 0;
-}
-
-.dots-button-1:disabled {
-    background: none;
-    background-image: url(/static/img/dots_button_1.svg);
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 20px;
-    border: 0;
-}
-
-.dots-button-2 {
-    background: none;
-    background-image: url(/static/img/dots_button_1.svg);
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 20px;
-    border: 0;
-    width: 100%;
-    height: 10px;
-    padding: 0;
-}
-
-.dots-button-2:enabled:hover {
-    background: none;
-    background-image: url(/static/img/dots_button_2.svg);
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 20px;
-    border: 0;
-}
-
-.drop-menu {
-    text-align: left;
-    position: absolute;
-    //float: left;
-    background: white;
-    width: 120px;
-    padding: 5px;
-}
-
 .ts-table {
     width: 100%;
     border-collapse: collapse;
@@ -100,7 +39,15 @@
     height: 40px;
     background: white;
     color: #666;
+    border-top: 1px solid #efefef;
     border-bottom: 1px solid #efefef;
+}
+
+.ts-table tbody .tr-selected,
+.ts-table tbody .tr-selected:hover {
+    background: #e7f0ff;
+    border-top: 1px solid #779ad8;
+    border-bottom: 1px solid #779ad8;
 }
 
 .ts-table tbody td {
@@ -131,24 +78,7 @@
 
 .ts-link {
     font-weight: 700;
-    color: #4562af;
-}
-
-#user-new-form,
-#user-edit-form {
-    display: inherit;
-    align-items: inherit;
-}
-
-#period-range {
-    font-size: 16px;
-    font-weight: 700;
-    color: #666;
-}
-
-#table-status {
-    font-size: 16px;
-    color: #959a9e;
+    color: #3b5ca0;
 }
 
 
