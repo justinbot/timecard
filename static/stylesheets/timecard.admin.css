@@ -1,21 +1,78 @@
-#user-new-form,
-#user-edit-form {
-    display: inherit;
-    align-items: inherit;
+.ts-table {
+    width: 100%;
+    border-collapse: collapse;
 }
 
-.icon-edit {
-    display: inline-block;
-    background-image: url(/static/img/edit.svg);
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 12px;
-    width: 12px;
-    height: 12px;
-    margin-right: 4px;
-    cursor: pointer;
+.ts-table thead tr {
+    text-align: left;
+    background: #f8f9fb;
+    color: #333;
+    height: 40px;
+    border-bottom: 1px solid #d8d9db;
+    border-top: 1px solid #d8d9db;
 }
 
-.icon-edit:hover {
-    background-image: url(/static/img/edit_black.svg);
+.ts-table thead th {
+    font-weight: 400;
+    padding: 10px 5px;
+}
+
+.ts-table thead th:first-child {
+    padding-left: 10px;
+}
+
+.ts-table thead th:last-child {
+    padding-right: 10px;
+}
+
+.ts-table thead th:nth-child(4) {
+    border-right: 1px solid #d8d9db;
+}
+
+.ts-table tbody tr:nth-child(even) {
+    //background: #fafcfb;
+}
+
+.ts-table tbody tr {
+    height: 40px;
+    background: white;
+    color: #666;
+    border-bottom: 1px solid #efefef;
+}
+
+.ts-table tbody .tr-selected,
+.ts-table tbody .tr-selected:hover {
+    background: #e7f0ff;
+    outline: 1px solid #779ad8;
+    outline-offset: -1px;
+}
+
+.ts-table tbody td {
+    padding: 10px 5px;
+}
+
+.ts-table tbody td:first-child {
+    padding-left: 10px;
+}
+
+.ts-table tbody td:last-child {
+    padding-right: 10px;
+}
+
+.ts-table tbody td:nth-child(4) {
+    border-right: 1px solid #efefef;
+}
+
+/*.ts-table tbody tr:last-child td {
+    border-bottom: none;
+}*/
+
+.ts-table tbody tr:hover {
+    background: #fcfdff;
+    cursor: default;
+}
+
+.ts-link {
+    font-weight: 700;
+    color: #3b5ca0;
 }

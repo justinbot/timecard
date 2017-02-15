@@ -85,16 +85,18 @@ def show_user():
         abort(403)
 
     # times representing start of each cell eg. 8:30
-    times = [slot for slot in hours_range(slot_first_start, slot_last_start, slot_increment)]
+    #times = [slot for slot in hours_range(slot_first_start, slot_last_start, slot_increment)]
 
     # TODO: Cleaner way to pass data? Maybe store persistent values in session
     return render_template('user.html',
                            initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                           slot_increment=slot_increment,
-                           slot_first_start=times[0].strftime("%H%M"),
-                           period_duration=view_days,
                            valid_period_start=valid_period_start,
-                           times=times)
+                           period_duration=view_days,
+                           lock_date=1485925200,
+                           slot_increment=slot_increment,
+                           slot_first_start=slot_first_start.strftime("%H%M"),
+                           slot_last_start=slot_last_start.strftime("%H%M")
+                           )
 
 
 @app.route('/update', methods=['POST'])
@@ -106,7 +108,7 @@ def user_update():
     # TODO: Combine pages so every action doesn't require its own route?
 
     request_json = request.get_json(silent=True)
-    print request_json
+    #print request_json
 
     if not request_json or 'range' not in request_json:
         abort(400)
@@ -131,7 +133,7 @@ def user_update():
     # print 'lastmodified:', response_dict['lastmodified']
     # print 'selected:', response_dict['selected']
 
-    print response_dict
+    #print response_dict
     # jsonfiy creates a complete Response
     return jsonify(response_dict)
 
@@ -200,9 +202,10 @@ def show_admin():
     return render_template(
         'admin.html',
         initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        slot_increment=slot_increment,
+        valid_period_start=valid_period_start,
         period_duration=period_duration,
-        valid_period_start=valid_period_start
+        lock_date=1485925200,
+        slot_increment=slot_increment
     )
 
 
@@ -248,31 +251,32 @@ def admin_update():
     return jsonify(response_dict)
 
 
-@app.route('/admin/create', methods=['POST'])
+@app.route('/admin/add', methods=['POST'])
 @login_required
 @admin_required
-def admin_create_user():
+def admin_add_user():
     request_json = request.get_json(silent=True)
 
-    if not request_json or 'name' not in request_json or 'id' not in request_json:
+    if not request_json or 'firstname' not in request_json or 'lastname' not in request_json or 'id' not in request_json:
         abort(400)
 
-    name = request_json['name']
+    first = request_json['firstname']
+    last = request_json['lastname']
     id = request_json['id'].upper()
 
-    if not (len(name) > 0 and len(id) > 0):
+    if not (len(first) > 0 and len(last) > 0 and len(id) > 0):
         abort(400)
 
     # For now, delete the user if it already exists
     User.query.filter_by(id=id).delete()
 
     # Split name on first space into First and Last
-    name = name.split(' ', 1)
-    first = name[0]
-    if len(name) > 1:
-        last = name[1]
-    else:
-        last = ''
+    #name = name.split(' ', 1)
+    #first = name[0]
+    #if len(name) > 1:
+    #    last = name[1]
+    #else:
+    #    last = ''
 
     new_user = User(id=id, name_first=first, name_last=last)
 
@@ -295,23 +299,6 @@ def admin_edit_user():
     if not user:
         abort(400)
 
-    if 'new_name' in request_json:
-        new_name = request_json['new_name']
-
-        if not len(new_name) > 0:
-            abort(400)
-
-        # Split name on first space into First and Last
-        new_name = new_name.split(' ', 1)
-        first = new_name[0]
-        if len(new_name) > 1:
-            last = new_name[1]
-        else:
-            last = ''
-
-        user.name_first = first
-        user.name_last = last
-
     if 'new_id' in request_json:
         new_id = request_json['new_id']
 
@@ -320,6 +307,33 @@ def admin_edit_user():
 
         new_id = request_json['new_id'].upper()
         user.id = new_id
+
+    if 'new_first' in request_json:
+        new_first = request_json['new_first']
+
+        if not len(new_first) > 0:
+            abort(400)
+
+        user.name_first = new_first
+
+        # Split name on first space into First and Last
+        #new_name = new_name.split(' ', 1)
+        #first = new_name[0]
+        #if len(new_name) > 1:
+        #    last = new_name[1]
+        #else:
+        #    last = ''
+
+        #user.name_first = first
+        #user.name_last = last
+
+    if 'new_last' in request_json:
+        new_last = request_json['new_last']
+
+        if not len(new_last) > 0:
+            abort(400)
+
+        user.name_last = new_last
 
     db.session.commit()
 
@@ -356,7 +370,6 @@ def show_viewas(id):
     if not user:
         abort(404)
 
-    days = range(7)
     times = [slot for slot in hours_range(slot_first_start, slot_last_start, slot_increment)]
 
     return render_template('viewas.html',
@@ -411,7 +424,7 @@ def tc_login():
     return redirect(url_for('show_user'))
 
 
-@app.cli.command()
+#@app.cli.command()
 def init_db():
     # for use with command line argument to reset database
     # remember to change db in config
