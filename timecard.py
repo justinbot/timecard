@@ -85,16 +85,18 @@ def show_user():
         abort(403)
 
     # times representing start of each cell eg. 8:30
-    times = [slot for slot in hours_range(slot_first_start, slot_last_start, slot_increment)]
+    #times = [slot for slot in hours_range(slot_first_start, slot_last_start, slot_increment)]
 
     # TODO: Cleaner way to pass data? Maybe store persistent values in session
     return render_template('user.html',
                            initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                           slot_increment=slot_increment,
-                           slot_first_start=times[0].strftime("%H%M"),
-                           period_duration=view_days,
                            valid_period_start=valid_period_start,
-                           times=times)
+                           period_duration=view_days,
+                           lock_date=1485925200,
+                           slot_increment=slot_increment,
+                           slot_first_start=slot_first_start.strftime("%H%M"),
+                           slot_last_start=slot_last_start.strftime("%H%M")
+                           )
 
 
 @app.route('/update', methods=['POST'])
@@ -106,7 +108,7 @@ def user_update():
     # TODO: Combine pages so every action doesn't require its own route?
 
     request_json = request.get_json(silent=True)
-    print request_json
+    #print request_json
 
     if not request_json or 'range' not in request_json:
         abort(400)
@@ -131,7 +133,7 @@ def user_update():
     # print 'lastmodified:', response_dict['lastmodified']
     # print 'selected:', response_dict['selected']
 
-    print response_dict
+    #print response_dict
     # jsonfiy creates a complete Response
     return jsonify(response_dict)
 
@@ -200,9 +202,10 @@ def show_admin():
     return render_template(
         'admin.html',
         initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        slot_increment=slot_increment,
+        valid_period_start=valid_period_start,
         period_duration=period_duration,
-        valid_period_start=valid_period_start
+        lock_date=1485925200,
+        slot_increment=slot_increment
     )
 
 
@@ -367,7 +370,6 @@ def show_viewas(id):
     if not user:
         abort(404)
 
-    days = range(7)
     times = [slot for slot in hours_range(slot_first_start, slot_last_start, slot_increment)]
 
     return render_template('viewas.html',

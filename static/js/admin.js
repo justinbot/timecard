@@ -38,41 +38,40 @@ var TcAdmin = (function () {
 
     /* public variables */
     tc.initialDate;
+    tc.validPeriodStart;
+    tc.periodDuration;
     tc.lockDate;
     tc.slotIncrement;
-    tc.slotFirstStart;
-    tc.periodDuration;
-    tc.validPeriodStart;
 
     tc.init = function () {
-        periodNavToday = document.getElementById("period-nav-today");
-        periodRange = document.getElementById("period-range");
+        periodNavToday = document.getElementById("periodNavToday");
+        periodRange = document.getElementById("periodRange");
 
-        tsTable = document.getElementById("ts-table");
-        tsHead = document.getElementById("ts-head");
-        tsHeadCheckbox = document.getElementById("ts-head-checkbox");
-        tsHeadButton = document.getElementById("ts-head-button");
+        tsTable = document.getElementById("tsTable");
+        tsHead = document.getElementById("tsHead");
+        tsHeadCheckbox = document.getElementById("tsHeadCheckbox");
+        tsHeadButton = document.getElementById("tsHeadButton");
 
         for (var i = 0; i < tc.periodDuration; i++) {
-            tsDays.push(document.getElementById("ts-day-" + i));
+            tsDays.push(document.getElementById("tsDay" + i));
         }
 
-        userAddButton = document.getElementById("user-add-button");
-        userAddContainer = document.getElementById("user-add-container");
-        userAddStatus = document.getElementById("user-add-status");
-        userAddInputFirstname = document.getElementById("user-add-input-firstname");
-        userAddInputLastname = document.getElementById("user-add-input-lastname");
-        userAddInputId = document.getElementById("user-add-input-id");
+        userAddButton = document.getElementById("userAddButton");
+        userAddContainer = document.getElementById("userAddContainer");
+        userAddStatus = document.getElementById("userAddStatus");
+        userAddInputFirstname = document.getElementById("userAddInputFirstname");
+        userAddInputLastname = document.getElementById("userAddInputLastname");
+        userAddInputId = document.getElementById("userAddInputId");
 
-        userViewAsButton = document.getElementById("user-viewas-button");
-        userEditButton = document.getElementById("user-edit-button");
-        userDeleteButton = document.getElementById("user-delete-button");
+        userViewAsButton = document.getElementById("userViewasButton");
+        userEditButton = document.getElementById("userEditButton");
+        userDeleteButton = document.getElementById("userDeleteButton");
 
-        infoBannerContainer = document.getElementById("infobanner-container");
-        infoBannerText = document.getElementById("infobanner-text");
+        infoBannerContainer = document.getElementById("infobannerContainer");
+        infoBannerText = document.getElementById("infobannerText");
 
-        dbStatus = document.getElementById("db-status");
-        tableStatus = document.getElementById("table-status");
+        dbStatus = document.getElementById("dbStatus");
+        tableStatus = document.getElementById("tableStatus");
 
         // TODO: Set up these values in HTML so page loads in correct state
         tc.infoBannerHide();
@@ -106,13 +105,13 @@ var TcAdmin = (function () {
 
             var newRow = newTsBody.insertRow();
             newRow.dataset.userid = userId;
-            newRow.setAttribute("id", "ts-row-" + userId);
+            newRow.setAttribute("id", "tsRow" + userId);
             //newRow.setAttribute("onclick", "TcAdmin.tableSelectRow(this.dataset.userid)");
 
             var checkCell = newRow.insertCell();
             var checkbox = document.createElement("input");
             checkbox.dataset.userid = userId;
-            checkbox.setAttribute("id", "ts-row-" + userId + "-checkbox");
+            checkbox.setAttribute("id", "tsRow" + userId + "Checkbox");
             checkbox.setAttribute("type", "checkbox");
             checkbox.setAttribute("onchange", "TcAdmin.tableSelectRow(this.dataset.userid)");
             if (selectedUsers.has(userId)) {
@@ -127,13 +126,13 @@ var TcAdmin = (function () {
             nameInput.dataset.userid = userId;
             nameInput.dataset.userfirst = userFirst;
             nameInput.dataset.userlast = userLast;
-            nameInput.setAttribute("id", "ts-row-" + userId + "-nameinput");
+            nameInput.setAttribute("id", "tsRow" + userId + "NameInput");
             nameInput.setAttribute("type", "text");
             nameInput.setAttribute("onblur", "TcAdmin.userEditCancel(this.dataset.userid)")
             nameInput.style.display = "none";
             nameCell.appendChild(nameInput);
             var nameLabel = document.createElement("a");
-            nameLabel.setAttribute("id", "ts-row-" + userId + "-namelabel");
+            nameLabel.setAttribute("id", "tsRow" + userId + "NameLabel");
             nameLabel.setAttribute("href", "/user/" + userId);
             nameLabel.setAttribute("target", "_blank");
             nameLabel.textContent = userLast + ", " + userFirst;
@@ -160,6 +159,15 @@ var TcAdmin = (function () {
         tsTable.replaceChild(newTsBody, oldTsBody);
 
         onSelectedUsersChanged();
+    }
+
+    function updateDays() {
+        for (var i = 0; i < tsDays.length; i++) {
+            var day = tsDays[i];
+            var dayDate = moment(periodStart).add(i, "day");
+            day.textContent = dayDate.format("MMM D"); //format("dddd, MMM D");
+            //day.dataset.date = dayDate.format("YYYY-MM-DD")
+        }
     }
 
     function updateCheckboxes() {
@@ -216,15 +224,6 @@ var TcAdmin = (function () {
         }
     }
 
-    function updateDays() {
-        for (var i = 0; i < tsDays.length; i++) {
-            var day = tsDays[i];
-            var dayDate = moment(periodStart).add(i, "day");
-            day.textContent = dayDate.format("MMM D"); //format("dddd, MMM D");
-            //day.dataset.date = dayDate.format("YYYY-MM-DD")
-        }
-    }
-
     function updatePeriod() {
         periodNavToday.disabled = focusDate.isSame(tc.initialDate, "day");
 
@@ -232,12 +231,12 @@ var TcAdmin = (function () {
         var endDate = moment(periodEnd);
         if (startDate.isSame(endDate, "year")) {
             if (startDate.isSame(endDate, "month")) {
-                periodRange.textContent = startDate.format("MMM D") + " – " + endDate.format("D, YYYY");
+                periodRange.textContent = startDate.format("MMM D") + "–" + endDate.format("D, YYYY");
             } else {
-                periodRange.textContent = startDate.format("MMM D") + " – " + endDate.format("MMM D, YYYY");
+                periodRange.textContent = startDate.format("MMM D") + "–" + endDate.format("MMM D, YYYY");
             }
         } else {
-            periodRange.textContent = startDate.format("MMM D, YYYY") + " – " + endDate.format("MMM D, YYYY");
+            periodRange.textContent = startDate.format("MMM D, YYYY") + "–" + endDate.format("MMM D, YYYY");
         }
     }
 
@@ -396,29 +395,28 @@ var TcAdmin = (function () {
     }
 
     tc.userEditShow = function (id) {
-        var nameInput = document.getElementById("ts-row-" + id + "-nameinput");
+        var nameInput = document.getElementById("tsRow" + id + "NameInput");
         nameInput.style.display = "";
         nameInput.value = userData[id]["firstname"] + " " + userData[id]["lastname"];
         nameInput.focus();
         nameInput.select();
 
-        var nameLabel = document.getElementById("ts-row-" + id + "-namelabel");
+        var nameLabel = document.getElementById("tsRow" + id + "NameLabel");
         nameLabel.style.display = "none";
     }
 
     tc.userEditCancel = function (id) {
-        var nameInput = document.getElementById("ts-row-" + id + "-nameinput");
+        var nameInput = document.getElementById("tsRow" + id + "NameInput");
         nameInput.style.display = "none";
         if (nameInput.value != (userData[id]["firstname"] + " " + userData[id]["lastname"])) {
             // TODO: Revise functionality. Maybe go back to combined first and last name split serverside?
+            // Also validate length and other criteria, display message if not valid
             var name = nameInput.value.split(" ", 2);
             console.log(name);
             dbEditUser(id, id, name[0], name[1]);
-        } else {
-            // TODO: Display invalid name message
         }
 
-        var nameLabel = document.getElementById("ts-row-" + id + "-namelabel");
+        var nameLabel = document.getElementById("tsRow" + id + "NameLabel");
         nameLabel.style.display = "";
     }
 
@@ -489,20 +487,6 @@ var TcAdmin = (function () {
         periodEnd.add(tc.periodDuration, "day");
         onPeriodChanged();
     }
-
-
-    /*
-
-    tc.userEditSubmit = function () {
-        // TODO: Make sure length > 0
-        if (userEditInputName.value != userEditForm.dataset.name || userEditInputID.value != userEditForm.dataset.userid) {
-            dbEditUser(userEditInputName.value, userEditInputID.value);
-            tc.userEditCancel();
-        } else {
-            dbStatus.textContent = "Modify a field to submit";
-        }
-    }
-    */
 
     return tc;
 })();
