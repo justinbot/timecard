@@ -6,14 +6,14 @@
 .ts-table thead tr {
     text-align: left;
     background: #f8f9fb;
-    color: #333;
+    color: #273a61;
     height: 40px;
-    border-bottom: 1px solid #d8d9db;
+    border-bottom: 1px solid #d8d9db; /* #8496b4 */
     border-top: 1px solid #d8d9db;
 }
 
 .ts-table thead th {
-    font-weight: 400;
+    font-weight: 700;
     padding: 10px 5px;
 }
 

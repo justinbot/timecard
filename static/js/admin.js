@@ -360,7 +360,7 @@ var TcAdmin = (function () {
 
     tc.userAddShow = function () {
         userAddButton.style.width = "32px";
-        userAddButton.setAttribute("class", "button-solid button-solid-green button-icon");
+        userAddButton.setAttribute("class", "solid solid-green icon");
         userAddButton.setAttribute("onclick", "TcAdmin.userAddCancel()");
         userAddButton.innerHTML = "&#10006;";
 
@@ -370,7 +370,7 @@ var TcAdmin = (function () {
 
     tc.userAddCancel = function () {
         userAddButton.style.width = "120px";
-        userAddButton.setAttribute("class", "button-solid button-solid-green");
+        userAddButton.setAttribute("class", "solid solid-green");
         userAddButton.setAttribute("onclick", "TcAdmin.userAddShow()");
         userAddButton.innerHTML = "+ Add User";
 

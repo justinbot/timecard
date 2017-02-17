@@ -95,8 +95,7 @@ def show_user():
                            lock_date=1485925200,
                            slot_increment=slot_increment,
                            slot_first_start=slot_first_start.strftime("%H%M"),
-                           slot_last_start=slot_last_start.strftime("%H%M")
-                           )
+                           slot_last_start=slot_last_start.strftime("%H%M"))
 
 
 @app.route('/update', methods=['POST'])
@@ -374,11 +373,12 @@ def show_viewas(id):
 
     return render_template('viewas.html',
                            initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                           slot_increment=slot_increment,
-                           slot_first_start=times[0].strftime("%H%M"),
-                           period_duration=view_days,
                            valid_period_start=valid_period_start,
-                           times=times,
+                           period_duration=view_days,
+                           lock_date=1485925200,
+                           slot_increment=slot_increment,
+                           slot_first_start=slot_first_start.strftime("%H%M"),
+                           slot_last_start=slot_last_start.strftime("%H%M"),
                            user_id=id,
                            user_name=user.name_first + " " + user.name_last)
 
