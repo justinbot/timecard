@@ -3,75 +3,136 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Timecard - {{ session['CAS_USERNAME'] }}</title>
+    <title>Timecard - {{ session['CAS_USERNAME'].lower() }}</title>
     <link href="http://www.rpi.edu/favicon.ico" type="image/ico" rel="icon">
-    <link href="../static/stylesheets/timecard.base.css" rel="stylesheet">
-    <link href="../static/stylesheets/timecard.user.css" rel="stylesheet">
+    <link href="/static/stylesheets/timecard.base.css" rel="stylesheet">
+    <link href="/static/stylesheets/timecard.user.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
-    <script src="../static/js/moment.min.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Titillium+Web:600" rel="stylesheet">
+    <script src="/static/js/moment.min.js"></script>
 </head>
 
 <body>
-    {% include 'leetbar.html' %}
+    {# include 'leetbar.html' #}
 
     <div class="header-container">
         <div class="header-content">
-            <a class="logo" href="{{ url_for('show_tc_user') }}">
-                <img src="static/img/logo.svg" height="30px">
+            <a class="logo" href="{{ url_for('show_user') }}">
+                <img src="/static/img/logo.svg">
             </a>
-            <a class="tc-link" style="color: white; margin-left: auto" href="{{ url_for('cas.logout') }}">Logout {{ session['CAS_USERNAME'] }}</a>
+            <div id="dbStatus" style="color: #9a9a9a; margin-left: auto; margin-right: 20px">...</div>
+            <a style="color: white" href="{{ url_for('cas.logout') }}">Log out {{ session['CAS_USERNAME'].lower() }}</a>
         </div>
     </div>
 
-    <div class="tools-container">
-        <div class="tools-content">
+    <div class="row-container">
+        <div class="row-content" style="border-bottom: 1px solid #e3e8eb">
+            <div id="periodRange" class="title" style="color: #666">Jan 1 – 7, 2000</div>
+            <button class="arrow-nav-prev" style="margin-left: auto" onclick="TcUser.prevPeriod();"></button>
+            <button id="periodNavToday" class="arrow-nav-today" onclick="TcUser.currentPeriod();">Today</button>
+            <button class="arrow-nav-next" onclick="TcUser.nextPeriod();"></button>
+        </div>
+    </div>
+
+    <div class="row-container">
+        <div class="row-content">
             <div>Template:</div>
-            <div id="templ-select-form">
-                <select id="templ-select" style="margin-left: 10px" onchange="TcUser.templSelectChanged(this);">
+            <div>
+                <select style="margin-left: 10px" onchange="">
                     <option value="" selected>None</option>
                 </select>
-                <button id="templ-new" style="margin-left: 5px" onclick="TcUser.showTemplEdit();">New Template</button>
+                <button style="margin-left: 5px" onclick="">New Template</button>
             </div>
-            <form id="templ-edit-form" onsubmit="return false">
-                <input id="templ-edit-textinput" style="margin-left: 10px" type="text" minlength="2" maxlength="18" oninput="TcUser.templInputName(this);">
-                <button id="templ-edit-save" style="margin-left: 20px" onclick="TcUser.templSaveOption();">Save</button>
-                <button id="templ-edit-delete" style="margin-left: 5px" onclick="TcUser.templDeleteOption()">Delete</button>
-                <button id="templ-edit-cancel" style="margin-left: 5px" onclick="TcUser.hideTemplEdit();">Cancel</button>
-            </form>
-            <div id="db-status" style="color: #9a9a9a; margin-left: auto">Last modified: …</div>
-            <!-- save button for testing purposes -->
-            <button id="database-save" style="margin-left: auto" onclick="TcUser.saveToDatabase();">Save</button>
+            <button style="margin-left: auto" onclick="TcUser.save()">Save</button>
+            <!--<div>
+                <input style="margin-left: 10px" type="text" minlength="2" maxlength="18" oninput="">
+                <button style="margin-left: 20px" onclick="">Save</button>
+                <button style="margin-left: 5px" onclick="">Delete</button>
+                <button style="margin-left: 5px" onclick="">Cancel</button>
+            </div>-->
         </div>
     </div>
 
-    <div class="nav-container">
-        <div class="nav-content">
-            <button id="tc-nav-today" onclick="TcUser.currentWeek();">Today</button>
-            <button id="tc-nav-prev" onclick="TcUser.prevWeek();"></button>
-            <button id="tc-nav-next" onclick="TcUser.nextWeek();"></button>
-            <div id="tc-nav-range" style="margin-left: 20px">Jan 1 – 7, 2000</div>
-            <div id="tc-nav-total" style="margin-left: auto; font-weight: bold">Total Hours: 0.0</div>
+    <div class="content-container unselectable" ondragstart="return false" ondrop="return false">
+        <div class="content-content" style="position: relative">
+            <table id="tcTable" class="tc-table">
+                <thead id="tcHead">
+                    <tr>
+                        <th style="width: 20px"></th>
+                        {% for i in range(period_duration) %}
+                        <th id="tcHeader{{i}}" style="width: 70px">
+                            <div>Mon, Jan 1</div>
+                            <div>0.0 hours</div>
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <div class="content-container unselectable" ondragstart="return false;" ondrop="return false;">
-        <hr class="nav-shadow" />
-        <div class="content-content">
-            <div style="margin: 0 -20px 0 -20px">
-                <div class="tc-day-table">
-                    {% for d in days %} {% include 'day.html' %} {% endfor %}
-                </div>
-            </div>
-        </div>
-    </div>
+    <!--<div class="header-container">
+		<div class="header-content">
+			<a class="logo" href="{{ url_for('show_user') }}">
+				<img src="/static/img/logo.svg" height="30px">
+			</a>
+			<a class="tc-link" style="color: white; margin-left: auto" href="{{ url_for('cas.logout') }}">Log out {{ session['CAS_USERNAME'].lower() }}</a>
+		</div>
+	</div>
 
-    <script src="../static/js/user.js"></script>
+	<div class="tools-container">
+		<div class="tools-content">
+			<div>Template:</div>
+			<div id="templ-select-form">
+				<select id="templ-select" style="margin-left: 10px" onchange="TcUser.templSelectChanged(this);">
+					<option value="" selected>None</option>
+				</select>
+				<button id="templ-new" style="margin-left: 5px" onclick="TcUser.showTemplEdit();">New Template</button>
+			</div>
+			<form id="templ-edit-form" onsubmit="return false">
+				<input id="templ-edit-textinput" style="margin-left: 10px" type="text" minlength="2" maxlength="18" oninput="TcUser.templInputName(this);">
+				<button id="templ-edit-save" style="margin-left: 20px" onclick="TcUser.templSaveOption();">Save</button>
+				<button id="templ-edit-delete" style="margin-left: 5px" onclick="TcUser.templDeleteOption()">Delete</button>
+				<button id="templ-edit-cancel" style="margin-left: 5px" onclick="TcUser.hideTemplEdit();">Cancel</button>
+			</form>
+			<div id="db-status" style="color: #9a9a9a; margin-left: auto">Last modified: …</div>
+			<button id="database-save" style="margin-left: auto" onclick="TcUser.saveToDatabase();">Save</button>
+		</div>
+	</div>
+
+	<div class="nav-container">
+		<div class="nav-content">
+			<button id="tc-nav-today" onclick="TcUser.currentPeriod();">Today</button>
+			<button id="tc-nav-prev" onclick="TcUser.prevPeriod();"></button>
+			<button id="tc-nav-next" onclick="TcUser.nextPeriod();"></button>
+			<div id="tc-nav-range" style="margin-left: 20px">Jan 1 – 7, 2000</div>
+			<div id="tc-nav-total" style="margin-left: auto; font-weight: bold">Total Hours: 0.0</div>
+		</div>
+	</div>
+
+	<div class="content-container unselectable" ondragstart="return false;" ondrop="return false;">
+		<hr class="nav-shadow" />
+		<div class="content-content">
+			<div style="margin: 0 -20px 0 -20px">
+				<div class="tc-day-table">
+					{% for d in range(period_duration) %} {% include 'day.html' %} {% endfor %}
+				</div>
+			</div>
+		</div>
+	</div>-->
+
+    <script src="/static/js/user.js"></script>
     <script>
-        // TODO: Better way to pass server data on load?
-        TcUser.slotIncrement = "{{ slot_increment }}" / 60;
-        TcUser.slotFirstStart = moment("{{ slot_first_start }}", "HHmm");
         TcUser.initialDate = moment("{{ initial_date }}");
-        //TcUser.lockDate = 
+        TcUser.validPeriodStart = moment("{{ valid_period_start }}");
+        TcUser.periodDuration = "{{ period_duration }}";
+        TcUser.lockdate = 1483228800;
+        TcUser.slotIncrement = "{{ slot_increment }}";
+        TcUser.slotFirstStart = moment("{{ slot_first_start }}", "HHmm");
+        TcUser.slotLastStart = moment("{{ slot_last_start }}", "HHmm");
+
         TcUser.init();
     </script>
 

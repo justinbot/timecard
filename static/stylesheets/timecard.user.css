@@ -1,92 +1,109 @@
-.tc-day-table {
-    display: table;
-    table-layout: fixed;
+.tc-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tc-table thead tr {
     text-align: center;
-    border-collapse: separate;
-    border-spacing: 20px 0;
-    width: 100%;
+    font-family: 'Titillium Web', sans-serif;
+    background: #f8f9fb;
+    color: #273a61;
+    height: 50px;
 }
 
-.tc-day {
-    display: table-cell;
+.tc-table thead th {
+    border: 1px solid #959a9e;
+    //padding: 10px 5px;
+}
+
+.tc-table thead th:first-child {
     background: white;
-    border: 1px solid #444;
-    border-bottom: 0;
-    margin: 0 10px;
-    padding: 5px 0 0 0;
+    border: none;
 }
 
-.tc-hour-table {
-    width: 100%;
-    font-size: 12px;
-    margin: 5px 0 0 0;
-    border: 0;
-    border-top: 1px solid #444;
-    border-spacing: 0px;
+.tc-table tbody tr {
+    text-align: right;
+    background: white;
+    color: #666;
 }
 
-.tc-slot {
-    //transition: background 100ms ease-out;
-    background: #eaeaea;
-    border: 0;
-    border-bottom: 1px solid #444;
-    height: 24px;
+
+/*.tc-table tbody tr:nth-child(odd) {
+    border-bottom: 1px solid #e3e8eb;
+}*/
+
+.tc-table tbody td {
+    height: 576px;
+    background: white;
+    border: 1px solid #959a9e;
+    border-bottom: none;
     padding: 0;
+}
+
+.tc-table tbody td:first-child {
+    border: none;
+}
+
+div.slotstack {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+div.hourmark {
+    flex-grow: 2;
+    vertical-align: top;
+    color: #3b5ca0;
+    padding: 0 5px;
+}
+
+div.slot,
+div.slot-locked,
+div.slot-selected,
+div.slot-selected-locked {
+    position: relative;
+    flex-grow: 1;
+    border-bottom: 1px solid #d8d9db;
     cursor: cell;
 }
 
-.tc-slot:hover {
-    //transition: none;
-    background: white;
-    color: black;
+div.slot:nth-child(even) {
+    border-bottom: 1px solid #959a9e;
 }
 
-.tc-slot-locked {
-    //transition: background 100ms ease-out;
-    background: #f5f5f5;
-    color: #b8b8b8;
-    border: 0;
-    border-bottom: 1px solid #444;
-    height: 24px;
-    padding: 0;
-    cursor: default;
+div.slot:hover {
+    background: rgba(116, 116, 116, 0.1);
+    //outline: 1px solid blue;
 }
 
-.tc-slot-selected {
-    //transition: background 100ms ease-out;
-    background: #0cc980;
+div.slot-locked {
+    background: rgba(116, 116, 116, 0.1);
+    cursor: inherit;
+}
+
+
+/*.tc-table tbody tr:nth-child(odd) {
+    border: 1px solid black; //#c2c6c7;
+}*/
+
+div.slot-selected {
+    background: #678fd4; //#30c99a;
     color: white;
-    border: 0;
-    border-bottom: 1px solid #444;
-    height: 24px;
-    margin: 0;
-    padding: 0;
+    border-bottom: 1px solid #678fd4;
     cursor: cell;
+    /*outline: 1px solid #3b5ca0;*/
 }
 
-.tc-slot-selected:hover {
-    //transition: none;
-    background: #5bdeac;
+div.slot-selected:hover {
+    background: #779ad8;
 }
 
-.tc-slot-selected-locked {
-    //transition: background 100ms ease-out;
-    background: #5bdeac;
-    color: #f5f5f5;
-    border: 0;
-    border-bottom: 1px solid #444;
-    height: 24px;
-    margin: 0;
-    padding: 0;
-    cursor: default;
-}
-
-#templ-select-form {
-    display: inherit;
-    align-items: inherit;
-}
-
-#templ-edit-form {
-    display: inherit;
-    align-items: inherit;
+div.blocklabel {
+    z-index: 4;
+    position: absolute;
+    text-align: center;
+    font-size: 12px;
+    width: 100%;
+    padding: 5px 0;
+    pointer-events: none;
 }

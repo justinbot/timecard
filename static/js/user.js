@@ -2,9 +2,30 @@ var TcUser = (function () {
     var tc = {};
 
     /* DOM elements */
-    var weekdays = [];
+    var periodNavToday;
+    var periodRange;
 
-    var tcNavToday;
+    var tcTable,
+        tcHead,
+        tcHeaders = [],
+        tcDays = [];
+
+
+    /* local variables */
+    var focusDate;
+    var periodStart,
+        periodEnd;
+
+    var localSelectedTimestamps = new Set();
+    var localUnselectedTimestamps = new Set();
+    var selectedTimestamps = new Set();
+
+    //var dragTimestamps;
+
+    var slotDown;
+    var slotToggleTo;
+
+    /*var tcNavToday;
     var tcNavRange;
     var tcNavTotal;
 
@@ -19,14 +40,16 @@ var TcUser = (function () {
     var dbStatus;
     var dbSave;
 
+    var tcDays = [];*/
+
     /* local variables */
-    var currentTemplate = ""; // store template associated with each day? or just have a template if set
+    /*var currentTemplate = ""; // store template associated with each day? or just have a template if set
 
     var localSelectedTimestamps = new Set();
     var localUnselectedTimestamps = new Set();
     var selectedTimestamps = new Set();
     var focusDate;
-    var weekStart;
+    var periodStart;
     var lastModified;
 
     var changesMade = false;
@@ -35,48 +58,240 @@ var TcUser = (function () {
     var totalHours = 0.0;
 
     var slotDown = false;
-    var slotToggleTo = true;
+    var slotToggleTo = true;*/
 
     /* public variables */
-    // all values provided by server
+    tc.initialDate;
+    tc.validPeriodStart;
+    tc.periodDuration;
+    tc.lockDate;
     tc.slotIncrement;
     tc.slotFirstStart;
-    tc.initialDate;
-    tc.lockDate = 1483228800; // TODO: provided by server
-
+    tc.slotLastStart;
 
     tc.init = function () {
-        templSelectForm = document.getElementById("templ-select-form");
-        templSelect = document.getElementById("templ-select");
-        templNew = document.getElementById("templ-new");
-        templEditForm = document.getElementById("templ-edit-form");
-        templEditTextInput = document.getElementById("templ-edit-textinput");
-        templEditSave = document.getElementById("templ-edit-save");
-        templEditDelete = document.getElementById("templ-edit-delete");
+        periodNavToday = document.getElementById("periodNavToday");
+        periodRange = document.getElementById("periodRange");
+        /*templSelectForm = document.getElementById("templ-select-form");
+                templSelect = document.getElementById("templ-select");
+                templNew = document.getElementById("templ-new");
+                templEditForm = document.getElementById("templ-edit-form");
+                templEditTextInput = document.getElementById("templ-edit-textinput");
+                templEditSave = document.getElementById("templ-edit-save");
+                templEditDelete = document.getElementById("templ-edit-delete");
 
-        dbStatus = document.getElementById("db-status");
-        dbSave = document.getElementById("database-save");
+                dbStatus = document.getElementById("db-status");
+                dbSave = document.getElementById("database-save");
+        
+                tc.hideTemplEdit();*/
 
-        tcNavToday = document.getElementById("tc-nav-today");
-        tcNavRange = document.getElementById("tc-nav-range");
-        tcNavTotal = document.getElementById("tc-nav-total");
+        tcTable = document.getElementById("tcTable");
+        tcHead = document.getElementById("tcHead");
 
-        for (var i = 0; i < 7; i++) {
-            weekdays.push(document.getElementById("tc-day-" + i));
+        for (var i = 0; i < tc.periodDuration; i++) {
+            tcHeaders.push(document.getElementById("tcHeader" + i));
         }
 
-        tc.hideTemplEdit();
-
-        tc.currentWeek();
+        tc.currentPeriod();
     }
 
-    // fetch data from database in range of this week
-    function getFromDatabase() {
-        dbStatus.textContent = "Loading…";
+    function onTimestampsChanged() {
+        // Update day hour totals and cell selected statuses
+        updateTable();
+    }
 
-        // specify range of timestamps to select
-        var get_range = {
-            "range": [moment(focusDate).startOf("week").unix(), moment(focusDate).endOf("week").unix()]
+    function onLocalTimestampsChanged() {}
+
+    function onPeriodChanged() {
+        dbUpdate();
+        updateHeaderDates();
+        updatePeriod();
+    }
+
+    function updateHeaderDates() {
+        for (var i = 0; i < tcHeaders.length; i++) {
+            var header = tcHeaders[i];
+            var headerDate = moment(periodStart).add(i, "day");
+            header.dataset.start = headerDate.unix();
+            header.dataset.end = moment(headerDate).endOf("day").unix();
+            header.children[0].textContent = headerDate.format("ddd, MMM D");
+        }
+    }
+
+    function updateHeaderHours(d) {
+        var header = tcHeaders[d];
+        var hours = 0.0;
+        for (let elem of selectedTimestamps) {
+            if (elem >= header.dataset.start && elem <= header.dataset.end) {
+                if (!localUnselectedTimestamps.has(elem)) {
+                    hours += (tc.slotIncrement / 60);
+                }
+            }
+        }
+
+        for (let elem of localSelectedTimestamps) {
+            if (elem >= header.dataset.start && elem <= header.dataset.end) {
+                hours += (tc.slotIncrement / 60);
+            }
+        }
+
+        header.children[1].textContent = hours.toFixed(1) + " hours";
+    }
+
+    function updateDayBlocks(day) {
+        var blockStartTime;
+        var blockLabel;
+        for (var i = 0; i < day.children.length; i++) {
+            var slot = day.children[i];
+            slot.style.borderBottom = "";
+            slot.textContent = "";
+
+            var slotSelected = timestampSelected(slot.dataset.timestamp);
+            var prevSlotSelected = i > 0 && timestampSelected(day.children[i - 1].dataset.timestamp);
+
+            var blockStart = slotSelected && (i == 0 || !prevSlotSelected);
+            var blockEnd = (!slotSelected && prevSlotSelected) || (slotSelected && i == day.children.length - 1);
+
+            if (blockStart) {
+                if (i > 0) {
+                    day.children[i - 1].style.borderBottom = "1px solid #678fd4";
+                }
+
+                blockStartTime = moment.unix(slot.dataset.timestamp);
+                blocklabel = document.createElement("div");
+                blocklabel.setAttribute("class", "blocklabel");
+                blocklabel.textContent = "...";
+                slot.appendChild(blocklabel);
+            }
+
+            if (blockEnd) {
+                var blockEndTime = moment.unix(slot.dataset.timestamp);
+                if (i == day.children.length - 1) {
+                    blockEndTime.add(tc.slotIncrement, "minute");
+                }
+                // If start and end are same meridiem
+                if (blockStartTime.format("A") === blockEndTime.format("A")) {
+                    blocklabel.textContent = blockStartTime.format("h:mm") + "–" + blockEndTime.format("h:mmA");
+                } else {
+                    blocklabel.textContent = blockStartTime.format("h:mmA") + "–" + blockEndTime.format("h:mmA");
+                }
+            }
+        }
+    }
+
+    function updateTable() {
+        var oldTcBody = tcTable.getElementsByTagName("tbody")[0];
+        var newTcBody = document.createElement("tbody");
+
+        var tcRow = newTcBody.insertRow();
+
+        var slotTimes = [];
+        var slotTime = moment(tc.slotFirstStart).startOf("hour");
+        var endTime = moment(tc.slotLastStart).endOf("hour");
+        while (slotTime.isBefore(endTime)) {
+            slotTimes.push(moment(slotTime));
+            slotTime.add(tc.slotIncrement, "minute");
+        }
+
+        var hoursCell = tcRow.insertCell();
+        var hoursStack = document.createElement("div");
+        hoursStack.setAttribute("class", "slotstack");
+        hoursStack.dataset.day = i;
+
+        for (i = 0; i < slotTimes.length; i++) {
+            if (slotTimes[i].minute() == 0) {
+                var hourMark = document.createElement("div");
+                hourMark.setAttribute("class", "hourmark");
+                hourMark.textContent = slotTimes[i].format("hA");
+                hoursStack.appendChild(hourMark);
+            }
+        }
+        hoursCell.appendChild(hoursStack);
+
+        for (i = 0; i < tc.periodDuration; i++) {
+            var dayTime = moment(periodStart).add(i, "day");
+
+            var dayCell = tcRow.insertCell();
+            dayCell.setAttribute("onmouseleave", "TcUser.slotMouseUp()");
+            if (dayTime.isSame(tc.initialDate, "day")) {
+                dayCell.style.background = "#f8f9fb";
+            }
+
+            var dayStack = document.createElement("div");
+            dayStack.id = "tcDay" + i;
+            dayStack.setAttribute("class", "slotstack");
+            dayStack.dataset.day = i;
+            dayCell.appendChild(dayStack);
+
+            for (j = 0; j < slotTimes.length; j++) {
+                var slotTime = slotTimes[j];
+                var newSlot = document.createElement("div");
+                var newTime = moment(dayTime).hour(slotTime.hour()).minute(slotTime.minute()).second(0);
+                newSlot.dataset.timestamp = newTime.unix();
+
+                /*
+                TODO:
+                If period is locked:
+                    Set locked selected or unselected class
+                Else:
+                    Set selected or unselected class, unselected locked if before slot first start
+                */
+
+                // Slot is selected if: selected locally, or selected on server and not unselected locally
+                if (timestampSelected(newSlot.dataset.timestamp)) {
+                    newSlot.setAttribute("class", "slot-selected");
+                    newSlot.setAttribute("onmouseover", "TcUser.slotMouseOver(this)");
+                    newSlot.setAttribute("onmousedown", "TcUser.slotMouseDown(this)");
+                    newSlot.setAttribute("onmouseup", "TcUser.slotMouseUp(this)");
+                } else {
+                    // if slot time is before first start times, lock it
+                    if (slotTime.hour() < tc.slotFirstStart.hour() ||
+                        (slotTime.hour() == tc.slotFirstStart.hour() && slotTime.minute() < tc.slotFirstStart.minute())) {
+                        newSlot.setAttribute("class", "slot-locked");
+                    } else {
+                        newSlot.setAttribute("class", "slot");
+                        newSlot.setAttribute("onmouseover", "TcUser.slotMouseOver(this)");
+                        newSlot.setAttribute("onmousedown", "TcUser.slotMouseDown(this)");
+                        newSlot.setAttribute("onmouseup", "TcUser.slotMouseUp(this)");
+                    }
+                }
+
+                dayStack.appendChild(newSlot);
+            }
+        }
+
+        tcTable.replaceChild(newTcBody, oldTcBody);
+
+        for (var i = 0; i < tcHeaders.length; i++) {
+            updateHeaderHours(i);
+        }
+
+        for (var i = 0; i < tc.periodDuration; i++) {
+            updateDayBlocks(document.getElementById("tcDay" + i));
+        }
+
+        //onLocalTimestampsChanged();
+    }
+
+    function updatePeriod() {
+        periodNavToday.disabled = focusDate.isSame(tc.initialDate, "day");
+
+        var startDate = moment(periodStart);
+        var endDate = moment(periodEnd);
+        if (startDate.isSame(endDate, "year")) {
+            if (startDate.isSame(endDate, "month")) {
+                periodRange.textContent = startDate.format("MMM D") + "–" + endDate.format("D, YYYY");
+            } else {
+                periodRange.textContent = startDate.format("MMM D") + "–" + endDate.format("MMM D, YYYY");
+            }
+        } else {
+            periodRange.textContent = startDate.format("MMM D, YYYY") + "–" + endDate.format("MMM D, YYYY");
+        }
+    }
+
+    function dbUpdate() {
+        var updateDict = {
+            "range": [moment(periodStart).startOf("day").unix(), moment(periodEnd).endOf("day").unix()]
         };
 
         var xhr = new XMLHttpRequest();
@@ -85,46 +300,131 @@ var TcUser = (function () {
         // TODO: also set xhr.timeout and xhr.ontimeout?
         xhr.responseType = "json";
         xhr.onload = function () {
-            getOnload(xhr.status, xhr.response);
+            dbUpdateOnload(xhr.status, xhr.response);
         }
-        xhr.send(JSON.stringify(get_range));
-
-        // Potentially move this to methods calling getFromDatbase instead
-        for (var i = 0; i < weekdays.length; i++) {
-            dayUpdateHeader(i);
-        }
+        xhr.send(JSON.stringify(updateDict));
     }
 
-    function getOnload(status, response) {
+    function dbUpdateOnload(status, response) {
         if (status == 200) {
-            // week considered locked
-            locked = weekdays[weekdays.length - 1].dataset.date <= tc.lockDate;
-
             lastModified = moment(response["lastmodified"]);
-
-            navUpdateSave();
 
             selectedTimestamps = new Set();
             for (var i = 0; i < response["selected"].length; i++) {
                 selectedTimestamps.add(response["selected"][i]);
             }
-
-            totalHours = 0.0;
-            for (var i = 0; i < weekdays.length; i++) {
-                dayUpdateContent(i);
-            }
-
-            navUpdateTotal();
+            onTimestampsChanged();
         } else {
-            dbStatus.textContent = "Failed to load data (Error " + status + ")";
-            // TODO: Potentially store a persistent message for errors, last modified, etc.
-            // so message doesn't disappear on cell mouse over
+            // TODO: Display error regarding status
         }
+    }
+
+    function dbSave() {
+        var saveDict = {};
+        if (localSelectedTimestamps.size > 0) {
+            saveDict["selected"] = Array.from(localSelectedTimestamps);
+        }
+        if (localUnselectedTimestamps.size > 0) {
+            saveDict["unselected"] = Array.from(localUnselectedTimestamps);
+        }
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/save", true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        // TODO: also set xhr.timeout and xhr.ontimeout?
+        xhr.responseType = "json";
+        xhr.onload = function () {
+            dbSaveOnload(xhr.status, xhr.response);
+        }
+        xhr.send(JSON.stringify(saveDict));
+
+        for (let elem of localSelectedTimestamps) {
+            selectedTimestamps.add(elem);
+        }
+
+        for (let elem of localUnselectedTimestamps) {
+            selectedTimestamps.delete(elem);
+        }
+
+        localSelectedTimestamps = new Set();
+        localUnselectedTimestamps = new Set();
+    }
+
+    function dbSaveOnload(status, response) {
+        if (status == 200) {
+            // TODO
+        } else {
+            // TODO: Display error regarding status
+        }
+    }
+
+    tc.save = function () {
+        dbSave();
+    }
+
+    tc.slotMouseDown = function (slot) {
+        slotDown = true;
+        slotToggleTo = !timestampSelected(slot.dataset.timestamp); //(slot.className == "slot");
+        tc.slotMouseOver(slot);
+    }
+
+    tc.slotMouseOver = function (slot) {
+        if (!slotDown) {
+            return;
+        }
+        if (slotToggleTo) {
+            // changing slots to selected, only if not already selected
+            if (!timestampSelected(slot.dataset.timestamp)) { //(slot.className == "slot") {
+                slot.setAttribute("class", "slot-selected");
+                selectTimestamp(slot.dataset.timestamp);
+                updateHeaderHours(slot.parentElement.dataset.day);
+                updateDayBlocks(slot.parentElement);
+            }
+        } else {
+            // changing slots to unselected, only if already selected
+            if (timestampSelected(slot.dataset.timestamp)) { //(slot.className == "slot-selected") {
+                slot.setAttribute("class", "slot");
+                unselectTimestamp(slot.dataset.timestamp);
+                updateHeaderHours(slot.parentElement.dataset.day);
+                updateDayBlocks(slot.parentElement);
+            }
+        }
+    }
+
+    tc.slotMouseUp = function () {
+        slotDown = false;
+        // TODO: Apply selected cells
+    }
+
+    function selectTimestamp(ts) {
+        if (!selectedTimestamps.has(ts)) {
+            localSelectedTimestamps.add(ts);
+        }
+        if (localUnselectedTimestamps.has(ts)) {
+            localUnselectedTimestamps.delete(ts);
+        }
+
+        onLocalTimestampsChanged();
+    }
+
+    function unselectTimestamp(ts) {
+        if (selectedTimestamps.has(ts)) {
+            localUnselectedTimestamps.add(ts);
+        }
+        if (localSelectedTimestamps.has(ts)) {
+            localSelectedTimestamps.delete(ts);
+        }
+
+        onLocalTimestampsChanged();
+    }
+
+    function timestampSelected(ts) {
+        return (selectedTimestamps.has(ts) && !localUnselectedTimestamps.has(ts)) || localSelectedTimestamps.has(ts);
     }
 
     // write local timestamp changes to database
     // does not need to be public when save button is removed
-    tc.saveToDatabase = function () {
+    /*tc.saveToDatabase = function () {
         dbStatus.textContent = "Saving…";
 
         // TODO: Remove save button for release
@@ -135,10 +435,10 @@ var TcUser = (function () {
 
         var save_dict = {};
         if (localSelectedTimestamps.size > 0) {
-            save_dict['selected'] = Array.from(localSelectedTimestamps);
+            save_dict["selected"] = Array.from(localSelectedTimestamps);
         }
         if (localUnselectedTimestamps.size > 0) {
-            save_dict['unselected'] = Array.from(localUnselectedTimestamps);
+            save_dict["unselected"] = Array.from(localUnselectedTimestamps);
         }
 
         var xhr = new XMLHttpRequest();
@@ -167,22 +467,9 @@ var TcUser = (function () {
         } else {
             dbStatus.textContent = "Failed to save changes (Error " + status + ")";
         }
-    }
+    }*/
 
-    function navUpdate() {
-        tcNavToday.disabled = focusDate.isSame(tc.initialDate, "day");
-        tcNavRange.textContent = moment(focusDate).startOf("week").format("MMM D") + " – " + moment(focusDate).endOf("week").format("D, YYYY");
-    }
-
-    function navUpdateTotal() {
-        // TODO: Same precision issue as day hours
-        if (locked) {
-            tcNavTotal.textContent = "Locked | Total Hours: " + totalHours.toFixed(1);
-        } else {
-            tcNavTotal.textContent = "Total Hours: " + totalHours.toFixed(1);
-        }
-    }
-
+    /*
     function navUpdateSave() {
         if (localSelectedTimestamps.size == 0 && localUnselectedTimestamps.size == 0) {
             if (changesMade) {
@@ -203,37 +490,35 @@ var TcUser = (function () {
             // uncomment to enable autosave
             //saveToDatabase();
         }
-    }
+    }*/
 
-    // set focused date to current week
-    tc.currentWeek = function () {
+    tc.currentPeriod = function () {
         focusDate = moment(tc.initialDate);
-        weekStart = moment(focusDate).startOf("week");
-        navUpdate();
-        tc.hideTemplEdit();
-        getFromDatabase();
+        periodStart = moment(tc.validPeriodStart);
+        // Calculate start of the period the initialDate is in
+        periodStart.add(Math.floor((focusDate.unix() - periodStart.unix()) / 60 / 60 / 24 / tc.periodDuration) * tc.periodDuration, "day");
+        periodEnd = moment(periodStart).add(tc.periodDuration - 1, "day").endOf("day");
+
+        onPeriodChanged();
     }
 
-    // move focused date back one week
-    tc.prevWeek = function () {
-        focusDate.subtract(1, "week");
-        weekStart = moment(focusDate).startOf("week");
-        navUpdate();
-        tc.hideTemplEdit();
-        getFromDatabase();
+    tc.prevPeriod = function () {
+        focusDate.subtract(tc.periodDuration, "day");
+        periodStart.subtract(tc.periodDuration, "day");
+        periodEnd.subtract(tc.periodDuration, "day");
+
+        onPeriodChanged();
     }
 
-    // move focused date forward one week
-    tc.nextWeek = function () {
-        focusDate.add(1, "week");
-        weekStart = moment(focusDate).startOf("week");
-        navUpdate();
-        tc.hideTemplEdit();
-        getFromDatabase();
+    tc.nextPeriod = function () {
+        focusDate.add(tc.periodDuration, "day");
+        periodStart.add(tc.periodDuration, "day");
+        periodEnd.add(tc.periodDuration, "day");
 
+        onPeriodChanged();
     }
 
-    tc.showTemplEdit = function () {
+    /*tc.showTemplEdit = function () {
         templSelectForm.style.display = "none";
         templEditForm.style.display = "";
 
@@ -260,9 +545,9 @@ var TcUser = (function () {
 
     // called when contents of template name input change
     tc.templInputName = function (e) {
-        /* if (event.keyCode == 13) {
+        if (event.keyCode == 13) {
             saveNewTemplate();
-        }*/
+        }
         // Disable save button unless template name is unique
         templEditSave.disabled = false;
         for (var i = 0; i < templSelect.length; i++) {
@@ -305,148 +590,7 @@ var TcUser = (function () {
         }
 
         // Apply template to hours if not None
-    }
-
-    // update date info for this day
-    function dayUpdateHeader(weekday) {
-        var day = weekdays[weekday];
-
-        // date associated with day at time of first slot
-        var dayDate = moment(weekStart).add(weekday, "day");
-        dayDate.set({
-            "hour": tc.slotFirstStart.hour(),
-            "minute": tc.slotFirstStart.minute()
-        })
-        day.dataset.date = dayDate.unix();
-
-        // highlight header of current day
-        if (dayDate.isSame(tc.initialDate, "day")) {
-            day.style.background = "#f5f5f5";
-        } else {
-            day.style.background = "";
-        }
-
-        day.children[0].textContent = dayDate.format("dddd, MMM D");
-    }
-
-    // update slots of this day
-    function dayUpdateContent(weekday) {
-        var day = weekdays[weekday];
-        var slots = day.getElementsByTagName("td");
-
-        //var dayLocked = day.dataset.date <= tc.lockDate;//focusDate.isSameOrBefore(tc.lockDate);
-
-        dayHours[weekday] = 0.0;
-        for (var i = 0; i < slots.length; i++) {
-            // update timestamp of every slot by using its delta (seconds from first slot)
-            // dataset values are stored as strings and must be parsed
-            var ts = slots[i].dataset.timestamp = (parseInt(day.dataset.date) + parseInt(slots[i].dataset.timedelta)).toString();
-            // time is selected if it was selected locally, or was selected in the database and not unselected locally
-            if (localSelectedTimestamps.has(ts) || (selectedTimestamps.has(ts) && !localUnselectedTimestamps.has(ts))) {
-                if (locked) {
-                    slots[i].className = "tc-slot-selected-locked";
-                } else {
-                    slots[i].className = "tc-slot-selected";
-                }
-                dayHours[weekday] += tc.slotIncrement;
-            } else {
-                if (locked) {
-                    slots[i].className = "tc-slot-locked";
-                } else {
-                    slots[i].className = "tc-slot";
-                }
-            }
-        }
-
-        totalHours += dayHours[weekday];
-        day.children[1].textContent = "Hours: " + dayHours[weekday].toFixed(1);
-    }
-
-    function daySelectSlot(weekday) {
-        dayHours[weekday] += tc.slotIncrement;
-        weekdays[weekday].children[1].textContent = "Hours: " + dayHours[weekday].toFixed(1);
-
-        totalHours += tc.slotIncrement;
-        navUpdateTotal();
-    }
-
-    function dayUnselectSlot(weekday) {
-        dayHours[weekday] -= tc.slotIncrement;
-        weekdays[weekday].children[1].textContent = "Hours: " + dayHours[weekday].toFixed(1);
-
-        totalHours -= tc.slotIncrement;
-        navUpdateTotal();
-    }
-
-    function slotSelect(slot) {
-        // this check may not be necessary
-        if (slot.className == "tc-slot") {
-            slot.className = "tc-slot-selected";
-
-            if (!selectedTimestamps.has(slot.dataset.timestamp)) {
-                localSelectedTimestamps.add(slot.dataset.timestamp);
-            }
-
-            if (localUnselectedTimestamps.has(slot.dataset.timestamp)) {
-                localUnselectedTimestamps.delete(slot.dataset.timestamp);
-            }
-
-            // TODO: slot changes have been made, no longer template-valid
-
-            daySelectSlot(slot.dataset.weekday);
-        } else {
-            console.error("selecting already selected slot");
-        }
-    }
-
-    function slotUnselect(slot) {
-        if (slot.className == "tc-slot-selected") {
-            slot.className = "tc-slot";
-
-            if (localSelectedTimestamps.has(slot.dataset.timestamp)) {
-                localSelectedTimestamps.delete(slot.dataset.timestamp);
-            }
-
-            // if this was originally selected from the database, add it to be unselected
-            if (selectedTimestamps.has(slot.dataset.timestamp)) {
-                localUnselectedTimestamps.add(slot.dataset.timestamp);
-            }
-
-            // TODO: slot changes have been made, no longer template-valid
-
-            dayUnselectSlot(slot.dataset.weekday);
-        } else {
-            console.error("unselecting already unselected slot");
-        }
-    }
-
-    tc.slotMouseOver = function (slot) {
-        if (!slotDown) {
-            return;
-        }
-        if (slotToggleTo) {
-            // changing slots to selected, only if not already selected
-            if (slot.className == "tc-slot") {
-                slotSelect(slot);
-            }
-        } else {
-            // changing slots to unselected, only if already selected
-            if (slot.className == "tc-slot-selected") {
-                slotUnselect(slot);
-            }
-        }
-    }
-
-    tc.slotMouseDown = function (slot) {
-        slotDown = true;
-        slotToggleTo = slot.className == "tc-slot";
-        tc.slotMouseOver(slot);
-    }
-
-    tc.slotMouseUp = function () {
-        slotDown = false;
-        navUpdateSave();
-    }
+    }*/
 
     return tc;
 })();

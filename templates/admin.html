@@ -3,89 +3,114 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Timecard Admin - {{ session['CAS_USERNAME'] }}</title>
+    <title>Timecard Admin - {{ session['CAS_USERNAME'].lower() }}</title>
     <link href="http://www.rpi.edu/favicon.ico" type="image/ico" rel="icon">
-    <link href="../static/stylesheets/timecard.base.css" rel="stylesheet">
-    <link href="../static/stylesheets/timecard.admin.css" rel="stylesheet">
+    <link href="/static/stylesheets/timecard.base.css" rel="stylesheet">
+    <link href="/static/stylesheets/timecard.admin.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
-    <script src="../static/js/moment.min.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Titillium+Web:600" rel="stylesheet">
+    <script src="/static/js/moment.min.js"></script>
 </head>
 
 <body>
-    {% include 'leetbar.html' %}
+    {# include 'leetbar.html' #}
 
     <div class="header-container">
         <div class="header-content">
-            <a class="logo" href="{{ url_for('show_tc_admin') }}">
-                <img src="static/img/logo.svg" height="30px">
+            <a class="logo" href="{{ url_for('show_admin') }}">
+                <img src="/static/img/logo_admin.svg">
             </a>
-            <a class="tc-link" style="color: white; margin-left: auto" href="{{ url_for('cas.logout') }}">Logout {{ session['CAS_USERNAME'] }}</a>
+            <div class="nav-link-selected">
+                <a href="{{ url_for('show_admin') }}">Users</a>
+            </div>
+            <div class="nav-link">
+                <a href="{{ url_for('show_admin') }}">Settings</a>
+            </div>
+            <div id="dbStatus" style="color: #9a9a9a; margin-left: auto; margin-right: 20px">...</div>
+            <a style="color: white" href="{{ url_for('cas.logout') }}">Log out {{ session['CAS_USERNAME'].lower() }}</a>
         </div>
     </div>
 
-    <div class="tools-container">
-        <div class="tools-content">
-            <!--<button>New User</button>-->
-            <form style="display: inherit; align-items: inherit" onsubmit="return false">
-                <div style="font-weight: bold">New User</div>
-                <div style="margin-left: 20px">Name:</div>
-                <input style="width: 180px; margin-left: 10px" type="text" minlength="2" maxlength="64" oninput="">
-                <div style="margin-left: 20px">ID:</div>
-                <input style="width: 60px; margin-left: 10px" type="text" minlength="7" maxlength="7" oninput="">
-                <button style="margin-left: 20px">Submit</button>
-                <button style="margin-left: 5px">Cancel</button>
-            </form>
+    <div class="subheader-container">
+        <!--<div class="subheader-content">
+            Admin \ Users
+        </div>-->
+    </div>
+
+    <div class="row-container">
+        <div class="row-content" style="border-bottom: 1px solid #e3e8eb">
+            <div id="periodRange" class="title" style="color: #666">Jan 1 – 7, 2000</div>
+            <button class="arrow-nav-prev" style="margin-left: auto" onclick="TcAdmin.prevPeriod();"></button>
+            <button id="periodNavToday" class="arrow-nav-today" onclick="TcAdmin.currentPeriod();">Today</button>
+            <button class="arrow-nav-next" onclick="TcAdmin.nextPeriod();"></button>
         </div>
     </div>
 
-    <div id="nav-container">
-        <div class="nav-content">
-            <button id="tc-nav-today" onclick="TcAdmin.currentWeek();">Today</button>
-            <button id="tc-nav-prev" onclick="TcAdmin.prevWeek();"></button>
-            <button id="tc-nav-next" onclick="TcAdmin.nextWeek();"></button>
-            <div id="tc-nav-range" style="margin-left: 20px">Jan 1 – 7, 2000</div>
+    <div class="row-container">
+        <div class="row-content">
+            <div id="tableStatus" class="title" style="color: #959a9e">0 Users</div>
+            <a id="userViewasButton" class="anchor-icon" style="margin-left: 20px" target="_blank"><img src="/static/img/eye.svg">View As</a>
+            <a id="userEditButton" class="anchor-icon" style="margin-left: 20px" onclick="TcAdmin.userEditShow(this.dataset.userid)"><img src="/static/img/edit.svg">Edit</a>
+            <a id="userDeleteButton" class="anchor-icon" style="margin-left: 20px" onclick="TcAdmin.userDeleteSelected()"><img src="/static/img/delete.svg">Delete...</a>
+            <button id="userAddButton" class="button-solid" style="margin-left: auto">+ Add User</button>
+        </div>
+    </div>
+
+    <div id="userAddContainer" class="action-container">
+        <div class="action-content">
+            <div class="title-bold" style="color: #30c99a">Add User</div>
+            <div id="userAddStatus" style="color: #666; margin-left: 20px"></div>
+            <div style="display: flex; align-items: center; margin-left: auto">
+                <div>First Name:</div>
+                <input id="userAddInputFirstname" style="width: 140px; margin-left: 10px" type="text" maxlength="64" oninput="">
+                <div style="margin-left: 30px">Last Name:</div>
+                <input id="userAddInputLastname" style="width: 140px; margin-left: 10px" type="text" maxlength="64" oninput="">
+                <div style="margin-left: 30px">User ID:</div>
+                <input id="userAddInputId" style="width: 60px; margin-left: 10px" type="text" maxlength="12" oninput="">
+                <button class="button-solid button-solid-green" style="margin-left: 50px" onclick="TcAdmin.userAddSubmit()">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="infobannerContainer" class="infobanner-container">
+        <div class="infobanner-content">
+            <div style="margin-right: 140px">ICON?</div>
+            <div id="infobannerText" class="title" style="margin: 0 auto">...</div>
+            <button class="button-large-icon button-blue" style="margin-left: auto" onclick="TcAdmin.infoBannerHide()">&#10006;</button>
         </div>
     </div>
 
     <div class="content-container">
-        <hr class="nav-shadow" />
         <div class="content-content">
-            <table border="1" style="width: 100%">
-                <thead style="background: #eaeaea">
+            <table id="tsTable" class="ts-table">
+                <thead id="tsHead">
                     <tr>
-                        <th>Name</th>
-                        <th>User ID</th>
+                        <th>
+                            <input type="checkbox" id="tsHeadCheckbox" onchange="TcAdmin.tableSelectAll(this)">
+                        </th>
+                        <th>Name &or;</th>
+                        <th style="width: 70px">User ID</th>
                         <th>Last Modified</th>
-                        {% for i in range(14) %}
-                        <th>Jan 31</th>
+                        {% for i in range(period_duration) %}
+                        <th id="tsDay{{i}}" style="text-align: center; width: 70px" data-date="">Jan 1</th>
                         {% endfor %}
-                        <th>Total Hours</th>
+                        <th style="text-align: center; width: 120px">Total Hours</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for i in range(30) %}
-                    <tr>
-                        <!-- Name should link to 'view-as' page for user -->
-                        <td><a class="tc-link" href="{{ url_for('show_tc_user') }}" target="_blank">Lastname, Firstname</a></td>
-                        <td>lastnf1</td>
-                        <td>1/31/17</td>
-                        {% for i in range(14) %}
-                        <td>0.0</td>
-                        {% endfor %}
-                        <td>00.0</td>
-                    </tr>
-                    {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 
-    <script src="../static/js/admin.js"></script>
+    <script src="/static/js/admin.js"></script>
     <script>
-        // TODO: Better way to pass server data on load?
-        TcAdmin.slotIncrement = "{{ slot_increment }}" / 60;
         TcAdmin.initialDate = moment("{{ initial_date }}");
-        //TcAdmin.lockdate = 
+        TcAdmin.validPeriodStart = moment("{{ valid_period_start }}");
+        TcAdmin.periodDuration = "{{ period_duration }}";
+        TcAdmin.lockdate = "{{ lock_date }}";
+        TcAdmin.slotIncrement = "{{ slot_increment }}" / 60;
+
         TcAdmin.init();
     </script>
 
