@@ -58,7 +58,7 @@
                 <thead id="tcHead">
                     <tr>
                         <th style="width: 10px"></th>
-                        {% for i in range(period_duration) %}
+                        {% for i in range(view_days) %}
                         <th id="tcHeader{{i}}" style="width: 120px">
                             <div>Monday</div>
                             <div>Jan 1</div>
@@ -97,11 +97,11 @@
     <script>
         TcUser.initialDate = moment("{{ initial_date }}");
         TcUser.validPeriodStart = moment("{{ valid_period_start }}");
-        TcUser.periodDuration = "{{ period_duration }}";
-        TcUser.lockdate = "{{ lock_date }}";
+        TcUser.periodDuration = "{{ view_days }}";
         TcUser.slotIncrement = "{{ slot_increment }}";
         TcUser.slotFirstStart = moment("{{ slot_first_start }}", "HHmm");
         TcUser.slotLastStart = moment("{{ slot_last_start }}", "HHmm");
+        TcUser.lockDate = "{{ lock_date }}";
 
         TcUser.init();
     </script>

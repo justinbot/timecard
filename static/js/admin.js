@@ -41,7 +41,6 @@ var TcAdmin = (function () {
     tc.validPeriodStart;
     tc.periodDuration;
     tc.lockDate;
-    tc.slotIncrement;
 
     tc.init = function () {
         periodNavToday = document.getElementById("periodNavToday");
