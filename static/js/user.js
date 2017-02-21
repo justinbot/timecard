@@ -25,6 +25,10 @@ var TcUser = (function () {
     var slotDown;
     var slotToggleTo;
 
+    var templSelect;
+    var templNewButton;
+    var templNewForm;
+    var templNewTextInput;
     /*var tcNavToday;
     var tcNavRange;
     var tcNavTotal;
@@ -72,6 +76,10 @@ var TcUser = (function () {
     tc.init = function () {
         periodNavToday = document.getElementById("periodNavToday");
         periodRange = document.getElementById("periodRange");
+        templSelect = document.getElementById("templSelect");
+        templNewButton = document.getElementById("templNewButton");
+        templNewForm = document.getElementById("templNewForm");
+        templNewTextInput = document.getElementById("templNewTextInput");
         /*templSelectForm = document.getElementById("templ-select-form");
                 templSelect = document.getElementById("templ-select");
                 templNew = document.getElementById("templ-new");
@@ -82,7 +90,7 @@ var TcUser = (function () {
 
                 dbStatus = document.getElementById("db-status");
                 dbSave = document.getElementById("database-save");
-        
+
                 tc.hideTemplEdit();*/
 
         tcTable = document.getElementById("tcTable");
@@ -93,6 +101,7 @@ var TcUser = (function () {
         }
 
         tc.currentPeriod();
+        tc.updateTemplates();
     }
 
     function onTimestampsChanged() {
@@ -358,8 +367,66 @@ var TcUser = (function () {
         }
     }
 
+    function updateTemplates() {
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", "/update/template", true);
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.responseType = "json";
+      xhr.onload = function () {
+        // Clear list of options
+        while (templSelect.firstChild) {
+          templSelect.removeChild(templSelect.firstChild);
+        }
+        // Add new list of options
+        templateArray = xhr.response;
+        for (var i=0; i<templateArray.length; i++) {
+          var opt = templateArray[i];
+          var ele = document.createElement("option");
+          ele.textContent = opt;
+          ele.value = opt;
+          templSelect.appendChild(ele);
+        }
+      }
+      xhr.send();
+    }
+
+    function templateSave() {
+      var templDict = {};
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", "/save/template", true);
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.responseType = "json";
+      xhr.onload = function () {
+        // After template is saved, update list of templates
+        updateTemplates();
+      }
+      templDict["name"] = templNewTextInput.value;
+      xhr.send(JSON.stringify(templDict));
+
+      tc.newTemplateCancel();
+    }
+
     tc.save = function () {
         dbSave();
+    }
+
+    tc.newTemplate = function () {
+      templNewButton.style.display = "none";
+      templNewForm.style.display = "";
+    }
+
+    tc.newTemplateCancel = function () {
+      templNewButton.style.display = "";
+      templNewForm.style.display = "none";
+      templNewTextInput.value = "";
+    }
+
+    tc.saveTemplate = function () {
+      templateSave();
+    }
+
+    tc.updateTemplates = function () {
+      updateTemplates();
     }
 
     tc.slotMouseDown = function (slot) {

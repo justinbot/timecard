@@ -35,6 +35,8 @@ class User(db.Model):
                                 cascade='all, delete',
                                 backref='user')
                                 #lazy='dynamic')
+    templates = db.relationship('Template',
+                                backref='user')
 
 
 class Timeslot(db.Model):
@@ -44,11 +46,12 @@ class Timeslot(db.Model):
     user_id = db.Column(db.String, db.ForeignKey('user.id'))
 
 
-#class Template(db.Model):
+class Template(db.Model):
 #    __tablename__ = 'template'
 
     # name of the template
-#    name = db.column(db.String(32), primary_key=True)
+    name = db.Column(db.String(32), primary_key=True)
+    user_id = db.Column(db.String, db.ForeignKey('user.id'))
     # associated day slots (not a full timeslot, just time of day)
 #    slots = db.relationship('Timeslot', backref='user', cascade="all, delete-orphan", lazy='dynamic')
 
@@ -136,6 +139,45 @@ def user_update():
     #print response_dict
     # jsonfiy creates a complete Response
     return jsonify(response_dict)
+
+
+@app.route('/update/template', methods=['POST'])
+@login_required
+def template_update():
+    # Takes request and returns all templates associated with the user
+
+    templates = [templ.name for templ in Template.query.filter_by(user_id=session['CAS_USERNAME'])]
+    if not templates:
+        print 'ERROR: Failed to retrieve templates for user', session['CAS_USERNAME']
+        abort(400)
+
+    return jsonify(templates)
+
+
+@app.route('/save/template', methods=['POST'])
+@login_required
+def template_save():
+    # Takes in contents of selected timestamps
+    # Creates template of selected timestamps
+
+    # TODO: Handle templates of duplicate names
+
+    request_json = request.get_json(silent=True)
+
+    if not request_json or ('name' not in request_json):
+        # abort with error code 400 bad request
+        abort(400)
+
+    user = User.query.filter_by(id=session['CAS_USERNAME']).first()
+    if not user:
+        print 'ERROR: Failed to lookup user', session['CAS_USERNAME']
+        abort(400)
+
+    name = request_json['name']
+    user.templates.append(Template(name=name))
+    db.session.commit()
+
+    return Response()
 
 
 @app.route('/save', methods=['POST'])
