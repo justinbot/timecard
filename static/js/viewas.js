@@ -64,7 +64,7 @@ var TcUser = (function () {
             var headerDate = moment(periodStart).add(i, "day");
             header.dataset.start = headerDate.unix();
             header.dataset.end = moment(headerDate).endOf("day").unix();
-            header.children[0].textContent = headerDate.format("dddd");
+            header.children[0].textContent = headerDate.format("ddd");
             header.children[1].textContent = headerDate.format("MMM D");
         }
     }
@@ -204,11 +204,12 @@ var TcUser = (function () {
 
     function dbUpdate() {
         var updateDict = {
+            "id": tc.userId,
             "range": [moment(periodStart).startOf("day").unix(), moment(periodEnd).endOf("day").unix()]
         };
 
         var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/update", true);
+        xhr.open("POST", "/user/update", true);
         xhr.setRequestHeader("Content-Type", "application/json");
         // TODO: also set xhr.timeout and xhr.ontimeout?
         xhr.responseType = "json";

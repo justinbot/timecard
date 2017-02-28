@@ -122,7 +122,7 @@ var TcUser = (function () {
             var headerDate = moment(periodStart).add(i, "day");
             header.dataset.start = headerDate.unix();
             header.dataset.end = moment(headerDate).endOf("day").unix();
-            header.children[0].textContent = headerDate.format("dddd");
+            header.children[0].textContent = headerDate.format("ddd");
             header.children[1].textContent = headerDate.format("MMM D");
         }
     }

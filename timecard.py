@@ -214,11 +214,12 @@ def user_save():
 
 
 @app.route('/admin')
+@app.route('/admin/users')
 @login_required
 @admin_required
-def show_admin():
+def show_admin_users():
     return render_template(
-        'admin.html',
+        'admin_users.html',
         initial_date=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         valid_period_start=config['valid_period_start'],
         period_duration=config['period_duration'],
@@ -226,10 +227,10 @@ def show_admin():
     )
 
 
-@app.route('/admin/update', methods=['POST'])
+@app.route('/admin/users/update', methods=['POST'])
 @login_required
 @admin_required
-def admin_update():
+def admin_users_update():
     request_json = request.get_json(silent=True)
 
     if not request_json or 'days' not in request_json:
@@ -266,10 +267,10 @@ def admin_update():
     return jsonify(response_dict)
 
 
-@app.route('/admin/add', methods=['POST'])
+@app.route('/admin/users/add', methods=['POST'])
 @login_required
 @admin_required
-def admin_add_user():
+def admin_users_add_user():
     request_json = request.get_json(silent=True)
 
     if not request_json or 'firstname' not in request_json or 'lastname' not in request_json or 'id' not in request_json:
@@ -302,10 +303,10 @@ def admin_add_user():
     return Response()
 
 
-@app.route('/admin/edit', methods=['POST'])
+@app.route('/admin/users/edit', methods=['POST'])
 @login_required
 @admin_required
-def admin_edit_user():
+def admin_users_edit_user():
     request_json = request.get_json(silent=True)
 
     if not request_json or 'id' not in request_json:
@@ -356,10 +357,10 @@ def admin_edit_user():
     return Response()
 
 
-@app.route('/admin/delete', methods=['POST'])
+@app.route('/admin/users/delete', methods=['POST'])
 @login_required
 @admin_required
-def admin_delete_user():
+def admin_users_delete_user():
     request_json = request.get_json(silent=True)
 
     if not request_json or 'id' not in request_json:
@@ -374,6 +375,15 @@ def admin_delete_user():
     db.session.commit()
 
     return Response()
+
+
+@app.route('/admin/settings')
+@login_required
+@admin_required
+def show_admin_settings():
+    return render_template(
+        'admin_settings.html'
+    )
 
 
 @app.route('/user/<id>')

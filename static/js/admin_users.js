@@ -253,7 +253,7 @@ var TcAdmin = (function () {
         }
 
         var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/admin/update", true);
+        xhr.open("POST", "/admin/users/update", true);
         xhr.setRequestHeader("Content-Type", "application/json");
         // TODO: also set xhr.timeout and xhr.ontimeout?
         xhr.responseType = "json";
@@ -281,7 +281,7 @@ var TcAdmin = (function () {
         };
 
         var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/admin/add", true);
+        xhr.open("POST", "/admin/users/add", true);
         xhr.setRequestHeader("Content-Type", "application/json");
         // TODO: also set xhr.timeout and xhr.ontimeout?
         xhr.responseType = "json";
@@ -309,7 +309,7 @@ var TcAdmin = (function () {
         };
 
         var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/admin/edit", true);
+        xhr.open("POST", "/admin/users/edit", true);
         xhr.setRequestHeader("Content-Type", "application/json");
         // TODO: also set xhr.timeout and xhr.ontimeout?
         xhr.responseType = "json";
@@ -337,7 +337,7 @@ var TcAdmin = (function () {
         };
 
         var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/admin/delete", true);
+        xhr.open("POST", "/admin/users/delete", true);
         xhr.setRequestHeader("Content-Type", "application/json");
         // TODO: also set xhr.timeout and xhr.ontimeout?
         xhr.responseType = "json";

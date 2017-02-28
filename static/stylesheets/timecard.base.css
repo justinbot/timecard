@@ -81,7 +81,7 @@ select:focus {
     outline: 0;
 }
 
-input[type=text] {
+input {
     background: white;
     border: 1px solid #959a9e;
     border-radius: 2px;
@@ -91,7 +91,7 @@ input[type=text] {
     padding: 1px 4px;
 }
 
-input[type=text]:focus {
+input:focus {
     border: 1px solid #3b5ca0;
     outline: 0;
 }
@@ -405,13 +405,18 @@ button.outline:enabled:active {}
     height: 24px;
 }
 
-.title {
+div.title {
     font-size: 16px;
 }
 
-.title-bold {
+div.title-bold {
     font-size: 16px;
     font-weight: 700;
+}
+
+div.title-header {
+    font-size: 18px;
+    color: #666;
 }
 
 .anchor-icon {
