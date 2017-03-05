@@ -50,67 +50,67 @@
             </dl>
             <dl class="form-group">
                 <dt>
-                    <label for="input-administrators">Administrators</label>
+                    <label for="inputAdmins">Administrators</label>
                 </dt>
                 <dd>
-                    <input id="input-administrators" type="text">
+                    <input id="inputAdmins" type="text">
                 </dd>
             </dl>
             <dl class="form-group">
                 <dt>
-                    <label for="input-pay-period-durations">Pay Period Duration</label>
+                    <label for="inputPeriodDuration">Pay Period Duration</label>
                 </dt>
                 <dd>
-                    <input id="input-pay-period-durations" type="number">
+                    <input id="inputPeriodDuration" type="number" min="7" max="30">
                 </dd>
             </dl>
             <dl class="form-group">
                 <dt>
-                    <label for="">Valid Pay Period Start</label>
+                    <label for="inputValidPeriodStart">Valid Pay Period Start</label>
                 </dt>
                 <dd>
-                    <input type="date">
-                </dd>
-            </dl>
-            <dl>
-                <dt class="title">Timecard</dt>
-            </dl>
-            <dl class="form-group">
-                <dt>
-                    <label for="">Days Displayed</label>
-                </dt>
-                <dd>
-                    <input type="number">
+                    <input id="inputValidPeriodStart" type="date">
                 </dd>
             </dl>
             <dl class="form-group">
                 <dt>
-                    <label for="">Minutes Per Slot</label>
+                    <label for="inputViewDays">Days Displayed</label>
                 </dt>
                 <dd>
-                    <input type="number">
+                    <input id="inputViewDays" type="number" min="0" max="30">
                 </dd>
             </dl>
             <dl class="form-group">
                 <dt>
-                    <label for="">Start of First Slot</label>
+                    <label for="inputSlotIncrement">Minutes Per Slot</label>
                 </dt>
                 <dd>
-                    <input type="time">
+                    <input id="inputSlotIncrement" type="number" min="5" max="240">
                 </dd>
             </dl>
             <dl class="form-group">
                 <dt>
-                    <label for="">Start of Last Slot</label>
+                    <label for="inputSlotFirstStart">Start of First Slot</label>
                 </dt>
                 <dd>
-                    <input type="time">
+                    <input id="inputSlotFirstStart" type="time">
                 </dd>
+            </dl>
+            <dl class="form-group">
+                <dt>
+                    <label for="inputSlotLastStart">Start of Last Slot</label>
+                </dt>
+                <dd>
+                    <input id="inputSlotLastStart" type="time">
+                </dd>
+            </dl>
+            <dl class="form-group">
+                <button onclick="TcAdmin.saveSettings()">Apply Changes</button>
             </dl>
         </div>
     </div>
 
-    <script src="/static/js/admin_setings.js"></script>
+    <script src="/static/js/admin_settings.js"></script>
     <script>
         TcAdmin.init();
     </script>

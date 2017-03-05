@@ -1,10 +1,10 @@
 {
-	"admins": ["carlsj4"],
+	"admins": ["carlsj4", "shina2"],
 	"valid_period_start": "2016-12-01",
 	"period_duration": 14,
 	"view_days": 14,
 	"slot_increment": 30,
-	"slot_first_start": "0830",
-	"slot_last_start": "2130",
+	"slot_first_start": "08:30",
+	"slot_last_start": "21:30",
 	"lock_date": 1485925200
 }

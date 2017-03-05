@@ -44,7 +44,7 @@ with open('config.json') as config_file:
         app.logger.error(
             'Configuration: valid_period_start (%s) not a valid date' % custom_config['valid_period_start'])
 
-    if not 0 < custom_config['view_days'] <= 14:
+    if not 0 < custom_config['view_days'] <= 30:
         app.logger.warning(
             'Configuration: view_days (%s) not within expected range' % custom_config['view_days'])
 
@@ -52,7 +52,7 @@ with open('config.json') as config_file:
         app.logger.warning(
             'Configuration: slot_increment (%s) not within expected range' % custom_config['slot_increment'])
 
-    if not int(custom_config['slot_first_start']) < int(custom_config['slot_last_start']):
+    if not custom_config['slot_first_start'] < custom_config['slot_last_start']:
         app.logger.error(
             'Configuration: slot_first_start (%s) not before slot_last_start (%s)' % custom_config['slot_first_start'], custom_config['slot_last_start'])
 
@@ -386,6 +386,46 @@ def show_admin_settings():
     )
 
 
+@app.route('/admin/settings/update', methods=['POST'])
+@login_required
+@admin_required
+def admin_settings_update():
+    response_dict = {}
+    response_dict['admins'] = (', '.join(config['admins'])).lower()
+    response_dict['period_duration'] = config['period_duration']
+    response_dict['valid_period_start'] = config['valid_period_start']
+    response_dict['view_days'] = config['view_days']
+    response_dict['slot_increment'] = config['slot_increment']
+    response_dict['slot_first_start'] = config['slot_first_start']
+    response_dict['slot_last_start'] = config['slot_last_start']
+
+    #print config
+
+    return jsonify(response_dict)
+
+
+@app.route('/admin/settings/save', methods=['POST'])
+@login_required
+@admin_required
+def admin_settings_save():
+    request_json = request.get_json(silent=True)
+
+    if not request_json:
+        # abort with error code 400 bad request
+        abort(400)
+
+    # TODO: Validate values
+
+    config['admins'] = request_json['admins'].replace(',', '').split()
+    config['period_duration'] = int(request_json['period_duration'])
+    config['valid_period_start'] = request_json['valid_period_start']
+    config['view_days'] = int(request_json['view_days'])
+    config['slot_increment'] = int(request_json['slot_increment'])
+    config['slot_first_start'] = request_json['slot_first_start']
+    config['slot_last_start'] = request_json['slot_last_start']
+
+    return Response()
+
 @app.route('/user/<id>')
 @login_required
 @admin_required
@@ -403,7 +443,7 @@ def show_viewas(id):
                            slot_last_start=config['slot_last_start'],
                            lock_date=config['lock_date'],
                            user_id=user.id,
-                           user_name=user.name_first + " " + user.name_last)
+                           user_name=user.name_first + ' ' + user.name_last)
 
 
 @app.route('/user/update', methods=['POST'])
@@ -425,7 +465,7 @@ def viewas_update():
     upper_bound = request_json['range'][1]
 
     response_dict = {}
-    response_dict['lastmodified'] = user.last_modified.strftime("%Y-%m-%d %H:%M:%S")
+    response_dict['lastmodified'] = user.last_modified.strftime('%Y-%m-%d %H:%M:%S')
     response_dict['selected'] = [str(ts.timestamp) for ts in Timeslot.query.filter(
         Timeslot.user_id == user.id,
         Timeslot.timestamp >= lower_bound,
