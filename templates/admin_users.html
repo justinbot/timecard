@@ -1,89 +1,90 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+    <!-- Required meta tags -->
     <meta charset="utf-8">
-    <title>Timecard Admin - {{ session['CAS_USERNAME'].lower() }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
     <link href="http://www.rpi.edu/favicon.ico" type="image/ico" rel="icon">
-    <link href="/static/stylesheets/timecard.base.css" rel="stylesheet">
-    <link href="/static/stylesheets/timecard.admin.css" rel="stylesheet">
-    <link href="/static/stylesheets/timecard.admin.users.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Titillium+Web:600" rel="stylesheet">
+
+    <title>Timecard Admin - {{ session['CAS_USERNAME'].lower() }}</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+
+    <!-- Font Awesome -->
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+
+    <link href="/static/stylesheets/user.css" rel="stylesheet">
+    <!--<link href="https://fonts.googleapis.com/css?family=Roboto:400,700|Titillium+Web:600" rel="stylesheet">-->
     <script src="/static/js/moment.min.js"></script>
 </head>
 
 <body>
-    {# include 'leetbar.html' #}
-
-    <div class="header-container">
-        <div class="header-content">
-            <a class="logo" href="{{ url_for('tc_login') }}">
-                <img src="/static/img/logo_admin.svg">
-            </a>
-            <div class="nav-link-selected">
-                <a href="{{ url_for('show_admin_users') }}">Users</a>
-            </div>
-            <div class="nav-link">
-                <a href="{{ url_for('show_admin_settings') }}">Settings</a>
-            </div>
-            <div id="dbStatus" style="color: #9a9a9a; margin-left: auto; margin-right: 20px">...</div>
-            <a style="color: white" href="{{ url_for('cas.logout') }}">Log out {{ session['CAS_USERNAME'].lower() }}</a>
+    <div class="container-fluid" style="background-color: #273a61">
+        <div class="container">
+            <nav class="navbar navbar-toggleable-md navbar-inverse px-0" id="tcNavbar">
+                <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarNav">
+                    <i class="fa fa-bars" aria-hidden="true"></i>
+                </button>
+                <a class="navbar-brand" href="#">
+                    <img src="/static/img/logo_admin.svg" height="24" class="d-inline-block align-top" alt="">
+                </a>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <div class="navbar-nav">
+                        <a class="nav-link active" href="{{ url_for('show_admin_users') }}">Users</a>
+                        <a class="nav-link" href="{{ url_for('show_admin_settings') }}">Settings</a>
+                    </div>
+                    <form class="form-inline ml-auto">
+                        <a class="nav-link px-0" href="{{ url_for('cas.logout') }}">Logout {{ session['CAS_USERNAME'].lower() }} <i class="fa fa-sign-out" aria-hidden="true"></i></a>
+                    </form>
+                </div>
+            </nav>
         </div>
     </div>
 
-    <div class="subheader-container">
-        <!--<div class="subheader-content">
-            Admin \ Users
-        </div>-->
-    </div>
-
-    <div class="row-container">
-        <div class="row-content" style="border-bottom: 1px solid #e3e8eb">
-            <div id="periodRange" class="title" style="color: #666">Jan 1 – 7, 2000</div>
-            <button class="arrow-nav-prev" style="margin-left: auto" onclick="TcAdmin.prevPeriod();"></button>
-            <button id="periodNavToday" class="arrow-nav-today" onclick="TcAdmin.currentPeriod();">Today</button>
-            <button class="arrow-nav-next" onclick="TcAdmin.nextPeriod();"></button>
-        </div>
-    </div>
-
-    <div class="row-container">
-        <div class="row-content">
-            <div id="tableStatus" class="title" style="color: #959a9e">0 Users</div>
-            <a id="userViewasButton" class="anchor-icon" style="margin-left: 20px" target="_blank"><img src="/static/img/eye.svg">View As</a>
-            <a id="userEditButton" class="anchor-icon" style="margin-left: 20px" onclick="TcAdmin.userEditShow(this.dataset.userid)"><img src="/static/img/edit.svg">Edit</a>
-            <a id="userDeleteButton" class="anchor-icon" style="margin-left: 20px" onclick="TcAdmin.userDeleteSelected()"><img src="/static/img/delete.svg">Delete...</a>
-            <button id="userAddButton" class="solid" style="margin-left: auto">+ Add User</button>
-        </div>
-    </div>
-
-    <div id="userAddContainer" class="action-container">
-        <div class="action-content">
-            <div class="title-bold" style="color: #30c99a">Add User</div>
-            <div id="userAddStatus" style="color: #666; margin-left: 20px"></div>
-            <div style="display: flex; align-items: center; margin-left: auto">
-                <div>First Name:</div>
-                <input id="userAddInputFirstname" style="width: 140px; margin-left: 10px" type="text" maxlength="64" oninput="">
-                <div style="margin-left: 30px">Last Name:</div>
-                <input id="userAddInputLastname" style="width: 140px; margin-left: 10px" type="text" maxlength="64" oninput="">
-                <div style="margin-left: 30px">User ID:</div>
-                <input id="userAddInputId" style="width: 60px; margin-left: 10px" type="text" maxlength="12" oninput="">
-                <button class="solid solid-green" style="margin-left: 50px" onclick="TcAdmin.userAddSubmit()">Submit</button>
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center py-3" style="border-bottom: 1px solid #e3e8eb">
+            <span class="text-muted" id="periodRange">Jan 1 – 7, 2000</span>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-primary" onclick="TcAdmin.prevPeriod();"><i class="fa fa-chevron-left" aria-hidden="true"></i></button>
+                <button type="button" class="btn btn-outline-primary" id="periodNavToday" onclick="TcAdmin.currentPeriod();">Today</button>
+                <button type="button" class="btn btn-outline-primary" onclick="TcAdmin.nextPeriod();"><i class="fa fa-chevron-right" aria-hidden="true"></i></button>
             </div>
         </div>
-    </div>
-
-    <div id="infobannerContainer" class="infobanner-container">
-        <div class="infobanner-content">
-            <div style="margin-right: 140px">ICON?</div>
-            <div id="infobannerText" class="title" style="margin: 0 auto">...</div>
-            <button class="solid icon" style="margin-left: auto" onclick="TcAdmin.infoBannerHide()">&#10006;</button>
+        <div class="d-flex align-items-center py-3">
+            <span id="tableStatus">Users: 0</span>
+            <div class="btn-group ml-4">
+                <button type="button" class="btn btn-link text-primary px-1 mx-1"><i class="fa fa-eye" aria-hidden="true"></i> View As</button>
+                <button type="button" class="btn btn-link text-warning px-1 mx-1"><i class="fa fa-pencil" aria-hidden="true"></i> Edit</button>
+                <button type="button" class="btn btn-link text-danger px-1 mx-1"><i class="fa fa-trash" aria-hidden="true"></i> Delete</button>
+            </div>
+            <button type="button" class="btn btn-success ml-auto" data-toggle="collapse" data-target="#userAddForm"><i class="fa fa-plus" aria-hidden="true"></i> Add User</button>
         </div>
-    </div>
+        <div class="collapse" id="userAddForm">
+            <div class="card card-outline-success card-block justify-content-end py-2 px-3">
+                <form class="form-inline justify-content-end px-0">
+                    <label class="text-success mr-4"><strong>Add User</strong></label>
+                    <label class="form-control-sm mr-1" for="inlineFormCustomSelect">First Name</label>
+                    <input class="form-control form-control-sm mr-4" type="text" value="">
+                    <label class="form-control-sm mr-1" for="inlineFormCustomSelect">Last Name</label>
+                    <input class="form-control form-control-sm mr-4" type="text" value="">
+                    <label class="form-control-sm mr-1" for="inlineFormCustomSelect">User ID</label>
+                    <input class="form-control form-control-sm mr-5" type="text" value="">
+                    <button type="button" class="btn btn-success btn-sm ml-auto">Submit</button>
+                </form>
+            </div>
+        </div>
 
-    <div class="content-container">
-        <div class="content-content">
-            <table id="tsTable" class="ts-table">
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <strong>Holy guacamole!</strong> You should check in on some of those fields below.
+        </div>
+        <div class="d-flex mt-3">
+            <table class="table table-responsive" id="tsTable">
                 <thead id="tsHead">
                     <tr>
                         <th>
@@ -104,6 +105,11 @@
         </div>
     </div>
 
+    <!-- jQuery first, then Tether, then Bootstrap JS. -->
+    <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+
     <script src="/static/js/admin_users.js"></script>
     <script>
         TcAdmin.initialDate = moment("{{ initial_date }}");
@@ -113,8 +119,6 @@
 
         TcAdmin.init();
     </script>
-
-    {% include 'footer.html' %}
 </body>
 
 </html>

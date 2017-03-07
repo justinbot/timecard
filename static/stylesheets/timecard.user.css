@@ -91,7 +91,11 @@ div.slot:hover {
 div.slot-selected {
     background: #3b5ca0; //#678fd4; //#30c99a;
     color: white;
+<<<<<<< Updated upstream
     border-bottom: 1px solid #3b5ca0;
+=======
+    border-bottom: 1px solid #678fd4;
+>>>>>>> Stashed changes
     /* border-left: 1px solid white;
     border-right: 1px solid white; */
     cursor: cell;

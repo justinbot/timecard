@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Timecard - {{ session['CAS_USERNAME'].lower() }}</title>
+    <link href="http://www.rpi.edu/favicon.ico" type="image/ico" rel="icon">
+    <link href="/static/stylesheets/timecard.base.css" rel="stylesheet">
+    <link href="/static/stylesheets/timecard.user.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700|Titillium+Web:600" rel="stylesheet">
+    <script src="/static/js/moment.min.js"></script>
+</head>
+
+<body>
+    {# include 'leetbar.html' #}
+
+    <div class="header-container">
+        <div class="header-content">
+            <a class="logo" href="{{ url_for('tc_login') }}">
+                <img src="/static/img/logo.svg">
+            </a>
+            <div id="dbStatus" style="color: #9a9a9a; margin-left: auto; margin-right: 20px">...</div>
+            <a style="color: white" href="{{ url_for('cas.logout') }}">Log out {{ session['CAS_USERNAME'].lower() }}</a>
+        </div>
+    </div>
+
+    <div class="row-container">
+        <div class="row-content" style="border-bottom: 1px solid #e3e8eb">
+            <div id="periodRange" class="title" style="color: #666">Jan 1 – 7, 2000</div>
+            <button class="arrow-nav-prev" style="margin-left: auto" onclick="TcUser.prevPeriod();"></button>
+            <button id="periodNavToday" class="arrow-nav-today" onclick="TcUser.currentPeriod();">Today</button>
+            <button class="arrow-nav-next" onclick="TcUser.nextPeriod();"></button>
+        </div>
+    </div>
+
+    <div class="row-container">
+        <div class="row-content">
+            <div>Template:</div>
+            <div>
+                <select style="margin-left: 10px" onchange="">
+                    <option value="" selected>None</option>
+                </select>
+                <button class="solid" style="margin-left: 5px" onclick="">New Template</button>
+            </div>
+            <button class="outline" style="margin-left: auto" onclick="TcUser.save()">Save</button>
+            <!--<div>
+                <input style="margin-left: 10px" type="text" minlength="2" maxlength="18" oninput="">
+                <button style="margin-left: 20px" onclick="">Save</button>
+                <button style="margin-left: 5px" onclick="">Delete</button>
+                <button style="margin-left: 5px" onclick="">Cancel</button>
+            </div>-->
+        </div>
+    </div>
+
+    <div class="content-container unselectable" ondragstart="return false" ondrop="return false">
+        <div class="content-content" style="position: relative">
+            <table id="tcTable" class="tc-table">
+                <thead id="tcHead">
+                    <tr>
+                        <th style="width: 10px"></th>
+                        {% for i in range(view_days) %}
+                        <th id="tcHeader{{i}}" style="width: 120px">
+                            <div>Monday</div>
+                            <div>Jan 1</div>
+                            <div>0.0 hours</div>
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!--<div class="tools-container">
+		<div class="tools-content">
+			<div>Template:</div>
+			<div id="templ-select-form">
+				<select id="templ-select" style="margin-left: 10px" onchange="TcUser.templSelectChanged(this);">
+					<option value="" selected>None</option>
+				</select>
+				<button id="templ-new" style="margin-left: 5px" onclick="TcUser.showTemplEdit();">New Template</button>
+			</div>
+			<form id="templ-edit-form" onsubmit="return false">
+				<input id="templ-edit-textinput" style="margin-left: 10px" type="text" minlength="2" maxlength="18" oninput="TcUser.templInputName(this);">
+				<button id="templ-edit-save" style="margin-left: 20px" onclick="TcUser.templSaveOption();">Save</button>
+				<button id="templ-edit-delete" style="margin-left: 5px" onclick="TcUser.templDeleteOption()">Delete</button>
+				<button id="templ-edit-cancel" style="margin-left: 5px" onclick="TcUser.hideTemplEdit();">Cancel</button>
+			</form>
+			<div id="db-status" style="color: #9a9a9a; margin-left: auto">Last modified: …</div>
+			<button id="database-save" style="margin-left: auto" onclick="TcUser.saveToDatabase();">Save</button>
+		</div>
+	</div>-->
+
+    <script src="/static/js/user.js"></script>
+    <script>
+        TcUser.initialDate = moment("{{ initial_date }}");
+        TcUser.validPeriodStart = moment("{{ valid_period_start }}");
+        TcUser.periodDuration = "{{ view_days }}";
+        TcUser.slotIncrement = "{{ slot_increment }}";
+        TcUser.slotFirstStart = moment("{{ slot_first_start }}", "HH:mm");
+        TcUser.slotLastStart = moment("{{ slot_last_start }}", "HH:mm");
+        TcUser.lockDate = "{{ lock_date }}";
+
+        TcUser.init();
+    </script>
+
+    {% include 'footer.html' %}
+</body>
+
+</html>

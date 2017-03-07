@@ -73,8 +73,8 @@ var TcAdmin = (function () {
         tableStatus = document.getElementById("tableStatus");
 
         // TODO: Set up these values in HTML so page loads in correct state
-        tc.infoBannerHide();
-        tc.userAddCancel();
+        //tc.infoBannerHide();
+        //tc.userAddCancel();
 
         tc.currentPeriod();
     }
