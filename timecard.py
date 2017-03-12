@@ -1,4 +1,5 @@
 import datetime
+import json
 from flask import Flask, request, Response, session, redirect, url_for, render_template, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import exc
@@ -6,17 +7,56 @@ from flask_cas import CAS, login_required, logout
 from functools import wraps
 
 app = Flask(__name__)
-app.config.from_pyfile('timecard.cfg')
+app.config.from_pyfile('server.cfg')
 db = SQLAlchemy(app)
 cas = CAS(app)
 
-admins = None
-period_duration = None
-valid_period_start = None
-view_days = None
-slot_increment = None
-slot_first_start = None
-slot_last_start = None
+config = {
+    'admins': None,
+    'period_duration': None,
+    'valid_period_start': None,
+    'view_days': None,
+    'slot_increment': None,
+    'slot_first_start': None,
+    'slot_last_start': None
+}
+
+# load default configuration
+with open('config_default.json') as config_default_file:
+    config = json.load(config_default_file)
+
+# load valid values from custom configuration
+with open('config.json') as config_file:
+    custom_config = json.load(config_file)
+
+    if not len(custom_config['admins']) > 0:
+        app.logger.warning('Configuration: No admins specified')
+    custom_config['admins'] = [s.upper() for s in custom_config['admins']]
+
+    if not 7 <= custom_config['period_duration'] <= 30:
+        app.logger.warning(
+            'Configuration: period_duration (%s) not within expected range' % custom_config['period_duration'])
+
+    try:
+        if custom_config['valid_period_start'] != datetime.datetime.strptime(custom_config['valid_period_start'], '%Y-%m-%d').strftime('%Y-%m-%d'):
+            raise ValueError
+    except ValueError:
+        app.logger.error(
+            'Configuration: valid_period_start (%s) not a valid date' % custom_config['valid_period_start'])
+
+    if not 0 < custom_config['view_days'] <= 14:
+        app.logger.warning(
+            'Configuration: view_days (%s) not within expected range' % custom_config['view_days'])
+
+    if not 5 <= custom_config['slot_increment'] <= 240:
+        app.logger.warning(
+            'Configuration: slot_increment (%s) not within expected range' % custom_config['slot_increment'])
+
+    if not int(custom_config['slot_first_start']) < int(custom_config['slot_last_start']):
+        app.logger.error(
+            'Configuration: slot_first_start (%s) not before slot_last_start (%s)' % custom_config['slot_first_start'], custom_config['slot_last_start'])
+
+    config = custom_config
 
 
 class User(db.Model):
@@ -59,19 +99,10 @@ class Timeslot(db.Model):
     #time = db.Column(db.BigInteger, primary_key=True)
     #parent_id = db.Column(db.String(16), db.ForeignKey('user.id'))
 
-
-def hours_range(start_time, end_time, increment):
-    curr = start_time
-    increment_delta = datetime.timedelta(minutes=increment)
-    while curr <= end_time:
-        yield curr
-        curr = curr + increment_delta
-
-
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if session['CAS_USERNAME'] not in admins:
+        if session['CAS_USERNAME'] not in config['admins']:
             return abort(403)
         return f(*args, **kwargs)
     return decorated_function
@@ -84,19 +115,15 @@ def show_user():
     if not user:
         abort(403)
 
-    # times representing start of each cell eg. 8:30
-    #times = [slot for slot in hours_range(slot_first_start, slot_last_start, slot_increment)]
-
     # TODO: Cleaner way to pass data? Maybe store persistent values in session
     return render_template('user.html',
-                           initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                           valid_period_start=valid_period_start,
-                           period_duration=view_days,
-                           lock_date=1485925200,
-                           slot_increment=slot_increment,
-                           slot_first_start=slot_first_start.strftime("%H%M"),
-                           slot_last_start=slot_last_start.strftime("%H%M")
-                           )
+                           initial_date=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                           valid_period_start=config['valid_period_start'],
+                           view_days=config['view_days'],
+                           slot_increment=config['slot_increment'],
+                           slot_first_start=config['slot_first_start'],
+                           slot_last_start=config['slot_last_start'],
+                           lock_date=config['lock_date'])
 
 
 @app.route('/update', methods=['POST'])
@@ -108,7 +135,6 @@ def user_update():
     # TODO: Combine pages so every action doesn't require its own route?
 
     request_json = request.get_json(silent=True)
-    #print request_json
 
     if not request_json or 'range' not in request_json:
         abort(400)
@@ -124,16 +150,12 @@ def user_update():
     upper_bound = request_json['range'][1]
 
     response_dict = {}
-    response_dict['lastmodified'] = user.last_modified.strftime("%Y-%m-%d %H:%M:%S")
+    response_dict['lastmodified'] = user.last_modified.strftime('%Y-%m-%d %H:%M:%S')
     response_dict['selected'] = [str(ts.timestamp) for ts in Timeslot.query.filter(
         Timeslot.user_id == user.id,
         Timeslot.timestamp >= lower_bound,
         Timeslot.timestamp <= upper_bound)]
 
-    # print 'lastmodified:', response_dict['lastmodified']
-    # print 'selected:', response_dict['selected']
-
-    #print response_dict
     # jsonfiy creates a complete Response
     return jsonify(response_dict)
 
@@ -165,9 +187,7 @@ def user_save():
     # Add timestamps in 'selected'
     if 'selected' in request_json:
         selected = request_json['selected']
-        #print 'selected:', selected
 
-        #user.timeslots.extend([Timeslot(timestamp=t) for t in selected])
         for t in selected:
             # TODO: Find more efficient way to ignore duplicate timestamps in bulk add?
             # TODO: Ignore changes to timestamps before lock date (unless admin?)
@@ -185,7 +205,6 @@ def user_save():
     # Delete timestamps in 'unselected'
     if 'unselected' in request_json:
         unselected = request_json['unselected']
-        #print 'unselected:', unselected
 
         Timeslot.query.filter(Timeslot.user_id == user.id,
                               Timeslot.timestamp.in_(unselected)).delete(synchronize_session='fetch')
@@ -195,31 +214,30 @@ def user_save():
 
 
 @app.route('/admin')
+@app.route('/admin/users')
 @login_required
 @admin_required
-def show_admin():
-    # TODO: Require admin
+def show_admin_users():
     return render_template(
-        'admin.html',
-        initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        valid_period_start=valid_period_start,
-        period_duration=period_duration,
-        lock_date=1485925200,
-        slot_increment=slot_increment
+        'admin_users.html',
+        initial_date=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        valid_period_start=config['valid_period_start'],
+        period_duration=config['period_duration'],
+        lock_date=config['lock_date'],
     )
 
 
-@app.route('/admin/update', methods=['POST'])
+@app.route('/admin/users/update', methods=['POST'])
 @login_required
 @admin_required
-def admin_update():
+def admin_users_update():
     request_json = request.get_json(silent=True)
 
     if not request_json or 'days' not in request_json:
         abort(400)
 
     lower_bound = request_json['days']['ts-day-0'][0]
-    upper_bound = request_json['days']['ts-day-' + str(period_duration - 1)][1]
+    upper_bound = request_json['days']['ts-day-' + str(config['period_duration'] - 1)][1]
 
     response_dict = {}
     users = User.query.order_by(User.name_last, User.name_first)
@@ -231,7 +249,7 @@ def admin_update():
         user_dict = {}
         user_dict['firstname'] = user.name_first
         user_dict['lastname'] = user.name_last
-        user_dict['lastmodified'] = user.last_modified.strftime("%Y-%m-%d %H:%M:%S")
+        user_dict['lastmodified'] = user.last_modified.strftime('%Y-%m-%d %H:%M:%S')
         user_dict['total'] = 0
 
         for d in request_json['days']:
@@ -239,22 +257,20 @@ def admin_update():
             day_upper_bound = request_json['days'][d][1]
             day_times = [ts for ts in user_times if day_lower_bound <= ts <= day_upper_bound]
 
-            day_hours = (len(day_times) * slot_increment) / 60.0
+            day_hours = (len(day_times) * config['slot_increment']) / 60.0
 
             user_dict[d] = day_hours
             user_dict['total'] += day_hours
 
-        #print user_dict
         response_dict[user.id.lower()] = user_dict
 
-    # print response_dict
     return jsonify(response_dict)
 
 
-@app.route('/admin/add', methods=['POST'])
+@app.route('/admin/users/add', methods=['POST'])
 @login_required
 @admin_required
-def admin_add_user():
+def admin_users_add_user():
     request_json = request.get_json(silent=True)
 
     if not request_json or 'firstname' not in request_json or 'lastname' not in request_json or 'id' not in request_json:
@@ -267,6 +283,7 @@ def admin_add_user():
     if not (len(first) > 0 and len(last) > 0 and len(id) > 0):
         abort(400)
 
+    # TODO: Return user already exists?
     # For now, delete the user if it already exists
     User.query.filter_by(id=id).delete()
 
@@ -286,10 +303,10 @@ def admin_add_user():
     return Response()
 
 
-@app.route('/admin/edit', methods=['POST'])
+@app.route('/admin/users/edit', methods=['POST'])
 @login_required
 @admin_required
-def admin_edit_user():
+def admin_users_edit_user():
     request_json = request.get_json(silent=True)
 
     if not request_json or 'id' not in request_json:
@@ -340,10 +357,10 @@ def admin_edit_user():
     return Response()
 
 
-@app.route('/admin/delete', methods=['POST'])
+@app.route('/admin/users/delete', methods=['POST'])
 @login_required
 @admin_required
-def admin_delete_user():
+def admin_users_delete_user():
     request_json = request.get_json(silent=True)
 
     if not request_json or 'id' not in request_json:
@@ -360,26 +377,32 @@ def admin_delete_user():
     return Response()
 
 
+@app.route('/admin/settings')
+@login_required
+@admin_required
+def show_admin_settings():
+    return render_template(
+        'admin_settings.html'
+    )
+
+
 @app.route('/user/<id>')
 @login_required
 @admin_required
 def show_viewas(id):
-    id = id.upper()
-
-    user = User.query.filter_by(id=id).first()
+    user = User.query.filter_by(id=id.upper()).first()
     if not user:
         abort(404)
 
-    times = [slot for slot in hours_range(slot_first_start, slot_last_start, slot_increment)]
-
     return render_template('viewas.html',
-                           initial_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                           slot_increment=slot_increment,
-                           slot_first_start=times[0].strftime("%H%M"),
-                           period_duration=view_days,
-                           valid_period_start=valid_period_start,
-                           times=times,
-                           user_id=id,
+                           initial_date=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                           valid_period_start=config['valid_period_start'],
+                           view_days=config['view_days'],
+                           slot_increment=config['slot_increment'],
+                           slot_first_start=config['slot_first_start'],
+                           slot_last_start=config['slot_last_start'],
+                           lock_date=config['lock_date'],
+                           user_id=user.id,
                            user_name=user.name_first + " " + user.name_last)
 
 
@@ -429,7 +452,7 @@ def init_db():
     # for use with command line argument to reset database
     # remember to change db in config
 
-    print 'Reinitializing database, all information dropped'
+    app.logger.info('Reinitializing database, all information dropped')
 
     db.drop_all()
     db.create_all()
@@ -444,24 +467,6 @@ if __name__ == '__main__':
     # also add support for database export?
 
     #init_db()
-
-    # TODO: initialization logic and error checking
-    admins = app.config['ADMINS'].upper().replace(' ', '').split(',')
-    if not len(admins) > 0:
-        raise RuntimeError('cfg error: No admins specified')
-
-    period_duration = int(app.config['PERIOD_DURATION'])
-    valid_period_start = app.config['VALID_PERIOD_START']
-    view_days = int(app.config['VIEW_DAYS'])
-    slot_increment = int(app.config['SLOT_INCREMENT'])
-    slot_first_start = datetime.datetime.strptime(app.config['SLOT_FIRST_START'], '%H:%M')
-    slot_last_start = datetime.datetime.strptime(app.config['SLOT_LAST_START'], '%H:%M')
-
-    if None in (period_duration, valid_period_start, view_days, slot_increment, slot_first_start, slot_last_start):
-        raise RuntimeError('cfg error: None value')
-
-    if not slot_first_start < slot_last_start:
-        raise RuntimeError('cfg error: SLOT_FIRST_START must be before SLOT_LAST_START')
 
     app.run(threaded=True) # use different WSGI server for deployment
     # use app.run(threaded=True, host=app.config['HOST'], port=int(app.config['PORT']), debug=app.config['DEBUG']) for release

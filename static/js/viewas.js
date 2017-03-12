@@ -1,197 +1,264 @@
-var TcView = (function () {
-	var tc = {};
+var TcUser = (function () {
+    var tc = {};
 
-	/* DOM elements */
+    /* DOM elements */
+    var periodNavToday;
+    var periodRange;
 
-	var tcNavToday;
-	var tcNavRange;
-	var tcNavTotal;
+    var tcTable,
+        tcHead,
+        tcHeaders = [],
+        tcDays = [];
 
-	var dbStatus;
+    /* local variables */
+    var focusDate;
+    var periodStart,
+        periodEnd;
 
-	var tcDays = [];
+    var selectedTimestamps = new Set();
 
-	/* local variables */
-	var selectedTimestamps = new Set();
+    /* public variables */
+    tc.initialDate;
+    tc.validPeriodStart;
+    tc.periodDuration;
+    tc.lockDate;
+    tc.slotIncrement;
+    tc.slotFirstStart;
+    tc.slotLastStart;
 
-	var focusDate;
-	var periodStart;
+    tc.init = function () {
+        periodNavToday = document.getElementById("periodNavToday");
+        periodRange = document.getElementById("periodRange");
 
-	var dayHours = [];
-	var totalHours = 0.0;
+        tcTable = document.getElementById("tcTable");
+        tcHead = document.getElementById("tcHead");
 
-	var slotDown = false;
-	var slotToggleTo = true;
+        for (var i = 0; i < tc.periodDuration; i++) {
+            tcHeaders.push(document.getElementById("tcHeader" + i));
+        }
 
-	/* public variables */
-	tc.initialDate;
-	tc.lockDate;
-	tc.slotIncrement;
-	tc.slotFirstStart;
-	tc.periodDuration;
-	tc.validPeriodStart;
+        tc.currentPeriod();
+    }
 
-	tc.userID;
+    function onTimestampsChanged() {
+        updateTable();
 
+        for (var i = 0; i < tcHeaders.length; i++) {
+            updateHeaderHours(i);
+        }
 
-	tc.init = function () {
-		dbStatus = document.getElementById("db-status");
+        for (var i = 0; i < tc.periodDuration; i++) {
+            updateDayBlocks(document.getElementById("tcDay" + i));
+        }
+    }
 
-		tcNavToday = document.getElementById("tc-nav-today");
-		tcNavRange = document.getElementById("tc-nav-range");
-		tcNavTotal = document.getElementById("tc-nav-total");
+    function onPeriodChanged() {
+        dbUpdate();
+        updateHeaderDates();
+        updatePeriod();
+    }
 
-		for (var i = 0; i < tc.periodDuration; i++) {
-			tcDays.push(document.getElementById("tc-day-" + i));
-		}
+    function updateHeaderDates() {
+        for (var i = 0; i < tcHeaders.length; i++) {
+            var header = tcHeaders[i];
+            var headerDate = moment(periodStart).add(i, "day");
+            header.dataset.start = headerDate.unix();
+            header.dataset.end = moment(headerDate).endOf("day").unix();
+            header.children[0].textContent = headerDate.format("ddd");
+            header.children[1].textContent = headerDate.format("MMM D");
+        }
+    }
 
-		tc.currentPeriod();
-	}
+    function updateHeaderHours(d) {
+        var header = tcHeaders[d];
+        var hours = 0.0;
+        for (let elem of selectedTimestamps) {
+            if (elem >= header.dataset.start && elem <= header.dataset.end) {
+                hours += (tc.slotIncrement / 60);
+            }
+        }
 
-	// fetch data from database in range of this period
-	function getFromDatabase() {
-		dbStatus.textContent = "Loading…";
+        header.children[2].textContent = hours.toFixed(1) + " hours";
+    }
 
-		// specify range of timestamps to select
-		var get_dict = {
-			"id": tc.userID,
-			"range": [moment(periodStart).unix(), moment(periodStart).add(tc.periodDuration, "day").unix()]
-		};
+    function updateDayBlocks(day) {
+        var blockStartTime;
+        var blockLabel;
+        for (var i = 0; i < day.children.length; i++) {
+            var slot = day.children[i];
+            slot.style.borderBottom = "";
+            slot.textContent = "";
 
-		var xhr = new XMLHttpRequest();
-		xhr.open("POST", "/user/update", true);
-		xhr.setRequestHeader("Content-Type", "application/json");
-		// TODO: also set xhr.timeout and xhr.ontimeout?
-		xhr.responseType = "json";
-		xhr.onload = function () {
-			getOnload(xhr.status, xhr.response);
-		}
-		xhr.send(JSON.stringify(get_dict));
-	}
+            var slotSelected = selectedTimestamps.has(slot.dataset.timestamp);
+            var prevSlotSelected = i > 0 && selectedTimestamps.has(day.children[i - 1].dataset.timestamp);
 
-	function getOnload(status, response) {
-		if (status == 200) {
-			dbStatus.textContent = "Last modified: " + moment(response["lastmodified"]).fromNow();
+            var blockStart = slotSelected && (i == 0 || !prevSlotSelected);
+            var blockEnd = (!slotSelected && prevSlotSelected) || (slotSelected && i == day.children.length - 1);
 
-			selectedTimestamps = new Set();
-			for (var i = 0; i < response["selected"].length; i++) {
-				selectedTimestamps.add(response["selected"][i]);
-			}
+            if (blockStart) {
+                if (i > 0) {
+                    day.children[i - 1].style.borderBottom = "1px solid #526faa";
+                }
 
-			totalHours = 0.0;
-			for (var i = 0; i < tcDays.length; i++) {
-				dayUpdateContent(i);
-			}
+                blockStartTime = moment.unix(slot.dataset.timestamp);
+                blocklabel = document.createElement("div");
+                blocklabel.setAttribute("class", "blocklabel");
+                blocklabel.textContent = "...";
+                slot.appendChild(blocklabel);
+            }
 
-			navUpdateTotal();
-		} else {
-			dbStatus.textContent = "Failed to load data (Error " + status + ")";
-		}
-	}
+            if (blockEnd) {
+                var blockEndTime = moment.unix(slot.dataset.timestamp);
+                if (i == day.children.length - 1) {
+                    blockEndTime.add(tc.slotIncrement, "minute");
+                }
+                // If start and end are same meridiem
+                if (blockStartTime.format("a") === blockEndTime.format("a")) {
+                    blocklabel.textContent = blockStartTime.format("h:mm") + "–" + blockEndTime.format("h:mma");
+                } else {
+                    blocklabel.textContent = blockStartTime.format("h:mma") + "–" + blockEndTime.format("h:mma");
+                }
+            }
+        }
+    }
 
-	function navUpdate() {
-		tcNavToday.disabled = focusDate.isSame(tc.initialDate, "day");
+    function updateTable() {
+        var oldTcBody = tcTable.getElementsByTagName("tbody")[0];
+        var newTcBody = document.createElement("tbody");
 
-		var startDate = moment.unix(tcDays[0].dataset.date)
-		var endDate = moment.unix(tcDays[tcDays.length - 1].dataset.date)
-		if (startDate.isSame(endDate, "month")) {
-			tcNavRange.textContent = startDate.format("MMM D") + " – " + endDate.format("D, YYYY");
-		} else {
-			tcNavRange.textContent = startDate.format("MMM D") + " – " + endDate.format("MMM D, YYYY");
-		}
-	}
+        var tcRow = newTcBody.insertRow();
 
-	function navUpdateTotal() {
-		// TODO: Same precision issue as day hours
-		tcNavTotal.textContent = "Total Hours: " + totalHours.toFixed(1);
-	}
+        var slotTimes = [];
+        var slotTime = moment(tc.slotFirstStart).startOf("hour");
+        var endTime = moment(tc.slotLastStart).endOf("hour");
+        while (slotTime.isBefore(endTime)) {
+            slotTimes.push(moment(slotTime));
+            slotTime.add(tc.slotIncrement, "minute");
+        }
 
-	// set focused date to current period
-	tc.currentPeriod = function () {
-		focusDate = moment(tc.initialDate);
-		periodStart = moment(tc.validPeriodStart);
-		// Calculate start of the period the initialDate is in
-		periodStart.add(Math.floor((focusDate.unix() - periodStart.unix()) / 60 / 60 / 24 / tc.periodDuration) * tc.periodDuration, "day");
+        console.log(slotTimes);
 
-		for (var i = 0; i < tcDays.length; i++) {
-			dayUpdateHeader(i);
-		}
+        var hoursCell = tcRow.insertCell();
+        var hoursStack = document.createElement("div");
+        hoursStack.setAttribute("class", "slotstack");
 
-		navUpdate();
+        for (i = 0; i < slotTimes.length; i++) {
+            if (slotTimes[i].minute() == 0) {
+                var hourMark = document.createElement("div");
+                hourMark.setAttribute("class", "hourmark");
+                hourMark.textContent = slotTimes[i].format("ha");
+                hoursStack.appendChild(hourMark);
+            }
+        }
+        hoursCell.appendChild(hoursStack);
 
-		getFromDatabase();
-	}
+        for (i = 0; i < tc.periodDuration; i++) {
+            var dayTime = moment(periodStart).add(i, "day");
 
-	// move focused date back one period
-	tc.prevPeriod = function () {
-		focusDate.subtract(tc.periodDuration, "day");
-		periodStart.subtract(tc.periodDuration, "day");
+            var dayCell = tcRow.insertCell();
+            // Highlight current day
+            if (dayTime.isSame(tc.initialDate, "day")) {
+                dayCell.style.background = "#f1f2f4";
+            }
 
-		for (var i = 0; i < tcDays.length; i++) {
-			dayUpdateHeader(i);
-		}
+            var dayStack = document.createElement("div");
+            dayStack.id = "tcDay" + i;
+            dayStack.setAttribute("class", "slotstack");
+            dayStack.dataset.day = i;
+            dayCell.appendChild(dayStack);
 
-		navUpdate();
+            for (j = 0; j < slotTimes.length; j++) {
+                var slotTime = slotTimes[j];
+                var newSlot = document.createElement("div");
+                var newTime = moment(dayTime).hour(slotTime.hour()).minute(slotTime.minute()).second(0);
+                newSlot.dataset.timestamp = newTime.unix();
 
-		getFromDatabase();
-	}
+                if (selectedTimestamps.has(newSlot.dataset.timestamp)) {
+                    newSlot.setAttribute("class", "slot-selected locked");
+                } else {
+                    newSlot.setAttribute("class", "slot locked");
+                }
 
-	// move focused date forward one period
-	tc.nextPeriod = function () {
-		focusDate.add(tc.periodDuration, "day");
-		periodStart.add(tc.periodDuration, "day");
+                dayStack.appendChild(newSlot);
+            }
+        }
 
-		for (var i = 0; i < tcDays.length; i++) {
-			dayUpdateHeader(i);
-		}
+        tcTable.replaceChild(newTcBody, oldTcBody);
+    }
 
-		navUpdate();
+    function updatePeriod() {
+        periodNavToday.disabled = focusDate.isSame(tc.initialDate, "day");
 
-		getFromDatabase();
-	}
+        var startDate = moment(periodStart);
+        var endDate = moment(periodEnd);
+        if (startDate.isSame(endDate, "year")) {
+            if (startDate.isSame(endDate, "month")) {
+                periodRange.textContent = startDate.format("MMM D") + "–" + endDate.format("D, YYYY");
+            } else {
+                periodRange.textContent = startDate.format("MMM D") + "–" + endDate.format("MMM D, YYYY");
+            }
+        } else {
+            periodRange.textContent = startDate.format("MMM D, YYYY") + "–" + endDate.format("MMM D, YYYY");
+        }
+    }
 
-	// update date info for this day
-	function dayUpdateHeader(d) {
-		var day = tcDays[d];
+    function dbUpdate() {
+        var updateDict = {
+            "id": tc.userId,
+            "range": [moment(periodStart).startOf("day").unix(), moment(periodEnd).endOf("day").unix()]
+        };
 
-		// date associated with day at time of first slot
-		var dayDate = moment(periodStart).add(d, "day");
-		dayDate.set({
-			"hour": tc.slotFirstStart.hour(),
-			"minute": tc.slotFirstStart.minute()
-		})
-		day.dataset.date = dayDate.unix();
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/user/update", true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        // TODO: also set xhr.timeout and xhr.ontimeout?
+        xhr.responseType = "json";
+        xhr.onload = function () {
+            dbUpdateOnload(xhr.status, xhr.response);
+        }
+        xhr.send(JSON.stringify(updateDict));
+    }
 
-		// highlight header of current day
-		if (dayDate.isSame(tc.initialDate, "day")) {
-			day.style.background = "#f5f5f5";
-		} else {
-			day.style.background = "";
-		}
+    function dbUpdateOnload(status, response) {
+        if (status == 200) {
+            lastModified = moment(response["lastmodified"]);
 
-		day.children[0].textContent = dayDate.format("dddd, MMM D");
-	}
+            selectedTimestamps = new Set();
+            for (var i = 0; i < response["selected"].length; i++) {
+                selectedTimestamps.add(response["selected"][i]);
+            }
+            onTimestampsChanged();
+        } else {
+            // TODO: Display error regarding status
+        }
+    }
 
-	// update slots of this day
-	function dayUpdateContent(d) {
-		var day = tcDays[d];
-		var slots = day.getElementsByTagName("td");
+    tc.currentPeriod = function () {
+        focusDate = moment(tc.initialDate);
+        periodStart = moment(tc.validPeriodStart);
+        // Calculate start of the period the initialDate is in
+        periodStart.add(Math.floor((focusDate.unix() - periodStart.unix()) / 60 / 60 / 24 / tc.periodDuration) * tc.periodDuration, "day");
+        periodEnd = moment(periodStart).add(tc.periodDuration - 1, "day").endOf("day");
 
-		dayHours[d] = 0.0;
-		for (var i = 0; i < slots.length; i++) {
-			var ts = slots[i].dataset.timestamp = (parseInt(day.dataset.date) + parseInt(slots[i].dataset.timedelta)).toString();
-			if (selectedTimestamps.has(ts)) {
-				slots[i].className = "tc-slot-selected-locked";
-				dayHours[d] += tc.slotIncrement;
-			} else {
-				slots[i].className = "tc-slot-locked";
-			}
-		}
+        onPeriodChanged();
+    }
 
-		totalHours += dayHours[d];
-		day.children[1].textContent = "Hours: " + dayHours[d].toFixed(1);
-	}
+    tc.prevPeriod = function () {
+        focusDate.subtract(tc.periodDuration, "day");
+        periodStart.subtract(tc.periodDuration, "day");
+        periodEnd.subtract(tc.periodDuration, "day");
 
-	return tc;
+        onPeriodChanged();
+    }
+
+    tc.nextPeriod = function () {
+        focusDate.add(tc.periodDuration, "day");
+        periodStart.add(tc.periodDuration, "day");
+        periodEnd.add(tc.periodDuration, "day");
+
+        onPeriodChanged();
+    }
+
+    return tc;
 })();
 // Justin Carlson
