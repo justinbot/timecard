@@ -175,7 +175,6 @@ def template_load():
         abort(400)
 
     times = []
-    epoch = datetime.datetime(1970,1,1)
     current_day = datetime.datetime.strptime(date_range[0], "%Y-%m-%d")
     for dcount, day in enumerate(template.start_times):
         for tcount, start_time in enumerate(day):
@@ -186,14 +185,15 @@ def template_load():
 
             # Handle every slot between the start and end
             while(current_dt != end_dt):
-                current_epoch = (current_dt-epoch).total_seconds()
-                times.append(current_epoch)
+                current_ts = current_dt.strftime("%Y%m%dT%H%M")
+                times.append(current_ts)
                 current_dt = current_dt + datetime.timedelta(minutes=int(slot_increment))
             # Handle last slot
-            current_epoch = (current_dt-epoch).total_seconds()
-            times.append(current_epoch)
+            current_ts = current_dt.strftime("%Y%m%dT%H%M")
+            times.append(current_ts)
         current_day = current_day + datetime.timedelta(days=1)
 
+    print(times)
     return jsonify(times)
 
 

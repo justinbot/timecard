@@ -473,15 +473,16 @@
       var slots = document.getElementsByClassName('slot-selected');
       for (i=0; i<slots.length; i++) {
         var slot = slots[i];
+
+        // Clear all timeslots
         slot.setAttribute("class", "slot");
-        selectTimestamp(slot.dataset.timestamp);
+        unselectTimestamp(slot.dataset.timestamp);
         updateHeaderHours(slot.parentElement.dataset.day);
         updateDayBlocks(slot.parentElement);
       }
 
-      var offset = moment().utcOffset() * -1;
       for (i=0; i<response.length; i++) {
-        var epoch = moment.unix(response[i]).utcOffset(offset)._d.valueOf();
+        var epoch = moment(response[i]).valueOf();
         epoch = epoch/1000;
         var slot = document.querySelectorAll('[data-timestamp="' + epoch + '"]')[0];
         slot.setAttribute("class", "slot-selected");
