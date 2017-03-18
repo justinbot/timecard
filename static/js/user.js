@@ -470,7 +470,7 @@
     }
 
     function templateSetTimeslots(status, response) {
-      var slots = document.getElementsByClassName('slot-selected');
+      var slots = document.querySelectorAll('.slot-selected');
       for (i=0; i<slots.length; i++) {
         var slot = slots[i];
 

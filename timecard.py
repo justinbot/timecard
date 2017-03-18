@@ -193,7 +193,6 @@ def template_load():
             times.append(current_ts)
         current_day = current_day + datetime.timedelta(days=1)
 
-    print(times)
     return jsonify(times)
 
 
