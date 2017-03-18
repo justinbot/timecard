@@ -109,6 +109,14 @@
     function onTimestampsChanged() {
         // Update day hour totals and cell selected statuses
         updateTable();
+
+        for (var i = 0; i < tcHeaders.length; i++) {
+            updateHeaderHours(i);
+        }
+
+        for (var i = 0; i < tc.periodDuration; i++) {
+            updateDayBlocks(document.getElementById("tcDay" + i));
+        }
     }
 
     function onLocalTimestampsChanged() {}
@@ -125,7 +133,8 @@
             var headerDate = moment(periodStart).add(i, "day");
             header.dataset.start = headerDate.unix();
             header.dataset.end = moment(headerDate).endOf("day").unix();
-            header.children[0].textContent = headerDate.format("ddd, MMM D");
+            header.children[0].textContent = headerDate.format("ddd");
+            header.children[1].textContent = headerDate.format("MMM D");
         }
     }
 
@@ -146,7 +155,7 @@
             }
         }
 
-        header.children[1].textContent = hours.toFixed(1) + " hours";
+        header.children[2].textContent = hours.toFixed(1) + " hours";
     }
 
     function updateDayBlocks(day) {
@@ -165,7 +174,7 @@
 
             if (blockStart) {
                 if (i > 0) {
-                    day.children[i - 1].style.borderBottom = "1px solid #678fd4";
+                    day.children[i - 1].style.borderBottom = "1px solid #3b5ca0";
                 }
 
                 blockStartTime = moment.unix(slot.dataset.timestamp);
@@ -181,10 +190,10 @@
                     blockEndTime.add(tc.slotIncrement, "minute");
                 }
                 // If start and end are same meridiem
-                if (blockStartTime.format("A") === blockEndTime.format("A")) {
-                    blocklabel.textContent = blockStartTime.format("h:mm") + "–" + blockEndTime.format("h:mmA");
+                if (blockStartTime.format("a") === blockEndTime.format("a")) {
+                    blocklabel.textContent = blockStartTime.format("h:mm") + "–" + blockEndTime.format("h:mma");
                 } else {
-                    blocklabel.textContent = blockStartTime.format("h:mmA") + "–" + blockEndTime.format("h:mmA");
+                    blocklabel.textContent = blockStartTime.format("h:mma") + "–" + blockEndTime.format("h:mma");
                 }
             }
         }
@@ -207,13 +216,12 @@
         var hoursCell = tcRow.insertCell();
         var hoursStack = document.createElement("div");
         hoursStack.setAttribute("class", "slotstack");
-        hoursStack.dataset.day = i;
 
         for (i = 0; i < slotTimes.length; i++) {
             if (slotTimes[i].minute() == 0) {
                 var hourMark = document.createElement("div");
                 hourMark.setAttribute("class", "hourmark");
-                hourMark.textContent = slotTimes[i].format("hA");
+                hourMark.textContent = slotTimes[i].format("ha");
                 hoursStack.appendChild(hourMark);
             }
         }
@@ -224,8 +232,9 @@
 
             var dayCell = tcRow.insertCell();
             dayCell.setAttribute("onmouseleave", "TcUser.slotMouseUp()");
+            // Highlight current day
             if (dayTime.isSame(tc.initialDate, "day")) {
-                dayCell.style.background = "#f8f9fb";
+                dayCell.style.background = "#f1f2f4";
             }
 
             var dayStack = document.createElement("div");
@@ -258,7 +267,7 @@
                     // if slot time is before first start times, lock it
                     if (slotTime.hour() < tc.slotFirstStart.hour() ||
                         (slotTime.hour() == tc.slotFirstStart.hour() && slotTime.minute() < tc.slotFirstStart.minute())) {
-                        newSlot.setAttribute("class", "slot-locked");
+                        newSlot.setAttribute("class", "slot locked");
                     } else {
                         newSlot.setAttribute("class", "slot");
                         newSlot.setAttribute("onmouseover", "TcUser.slotMouseOver(this)");
@@ -272,16 +281,6 @@
         }
 
         tcTable.replaceChild(newTcBody, oldTcBody);
-
-        for (var i = 0; i < tcHeaders.length; i++) {
-            updateHeaderHours(i);
-        }
-
-        for (var i = 0; i < tc.periodDuration; i++) {
-            updateDayBlocks(document.getElementById("tcDay" + i));
-        }
-
-        //onLocalTimestampsChanged();
     }
 
     function updatePeriod() {
@@ -578,76 +577,6 @@
     function timestampSelected(ts) {
         return (selectedTimestamps.has(ts) && !localUnselectedTimestamps.has(ts)) || localSelectedTimestamps.has(ts);
     }
-
-    // write local timestamp changes to database
-    // does not need to be public when save button is removed
-    /*tc.saveToDatabase = function () {
-        dbStatus.textContent = "Saving…";
-
-        // TODO: Remove save button for release
-        dbSave.disabled = true;
-        dbSave.textContent = "Saved";
-
-        changesMade = true;
-
-        var save_dict = {};
-        if (localSelectedTimestamps.size > 0) {
-            save_dict["selected"] = Array.from(localSelectedTimestamps);
-        }
-        if (localUnselectedTimestamps.size > 0) {
-            save_dict["unselected"] = Array.from(localUnselectedTimestamps);
-        }
-
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/save", true);
-        xhr.setRequestHeader("Content-Type", "application/json");
-        xhr.onload = function () {
-            saveOnload(xhr.status, xhr.response);
-        }
-        xhr.send(JSON.stringify(save_dict));
-
-        for (let elem of localSelectedTimestamps) {
-            selectedTimestamps.add(elem);
-        }
-
-        for (let elem of localUnselectedTimestamps) {
-            selectedTimestamps.delete(elem);
-        }
-
-        localSelectedTimestamps = new Set();
-        localUnselectedTimestamps = new Set();
-    }
-
-    function saveOnload(status, response) {
-        if (status == 200) {
-            dbStatus.textContent = "All changes saved";
-        } else {
-            dbStatus.textContent = "Failed to save changes (Error " + status + ")";
-        }
-    }*/
-
-    /*
-    function navUpdateSave() {
-        if (localSelectedTimestamps.size == 0 && localUnselectedTimestamps.size == 0) {
-            if (changesMade) {
-                dbStatus.textContent = "All changes saved";
-            } else {
-                dbStatus.textContent = "Last modified: " + moment(lastModified).fromNow();
-            }
-
-            // TODO: Remove save button for release
-            dbSave.disabled = true;
-            dbSave.textContent = "Saved";
-        } else {
-            dbStatus.textContent = "Unsaved changes";
-
-            // TODO: Remove save button for release
-            dbSave.disabled = false;
-            dbSave.textContent = "Save";
-            // uncomment to enable autosave
-            //saveToDatabase();
-        }
-    }*/
 
     tc.currentPeriod = function () {
         focusDate = moment(tc.initialDate);

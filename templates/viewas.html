@@ -2,84 +2,73 @@
 <html>
 
 <head>
-	<meta charset="utf-8">
-	<title>Timecard - View As {{ session['CAS_USERNAME'].lower() }}</title>
-	<link href="http://www.rpi.edu/favicon.ico" type="image/ico" rel="icon">
-	<link href="/static/stylesheets/timecard.base.css" rel="stylesheet">
-	<link href="/static/stylesheets/timecard.user.css" rel="stylesheet">
-	<link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
-	<script src="/static/js/moment.min.js"></script>
+    <meta charset="utf-8">
+    <title>Timecard - View As {{ user_name }}</title>
+    <link href="http://www.rpi.edu/favicon.ico" type="image/ico" rel="icon">
+    <link href="/static/stylesheets/timecard.base.css" rel="stylesheet">
+    <link href="/static/stylesheets/timecard.user.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700|Titillium+Web:600" rel="stylesheet">
+    <script src="/static/js/moment.min.js"></script>
 </head>
 
 <body>
-	{% include 'leetbar.html' %}
+    <!--{% include 'leetbar.html' %}-->
 
-	<div class="header-container">
-		<div class="header-content">
-			<a class="logo" href="{{ url_for('show_user') }}">
-				<img src="/static/img/logo.svg" height="30px">
-			</a>
-			<!--<a class="tc-link" style="color: white; margin-left: auto">Viewing as {{ user_id.lower() }}</a>-->
-		</div>
-	</div>
+    <div class="header-container">
+        <div class="header-content">
+            <a class="logo" href="{{ url_for('show_user') }}">
+                <img src="/static/img/logo.svg">
+            </a>
+            <div id="dbStatus" style="color: #9a9a9a; margin-left: auto; margin-right: 20px">...</div>
+            <a style="color: white">Viewing as {{ user_name }}</a>
+        </div>
+    </div>
 
-	<div class="tools-container">
-		<div class="tools-content">
-			<div style="color: #9a9a9a">Viewing as {{ user_name }}</div>
-			<div id="db-status" style="color: #9a9a9a; margin-left: auto">Last modified: …</div>
-		</div>
-	</div>
+    <div class="row-container">
+        <div class="row-content">
+            <div id="periodRange" class="title" style="color: #666">Jan 1 – 7, 2000</div>
+            <button class="arrow-nav-prev" style="margin-left: auto" onclick="TcUser.prevPeriod();"></button>
+            <button id="periodNavToday" class="arrow-nav-today" onclick="TcUser.currentPeriod();">Today</button>
+            <button class="arrow-nav-next" onclick="TcUser.nextPeriod();"></button>
+        </div>
+    </div>
 
-	<div class="nav-container">
-		<div class="nav-content">
-			<button id="tc-nav-today" onclick="TcView.currentPeriod();">Today</button>
-			<button id="tc-nav-prev" onclick="TcView.prevPeriod();"></button>
-			<button id="tc-nav-next" onclick="TcView.nextPeriod();"></button>
-			<div id="tc-nav-range" style="margin-left: 20px">Jan 1 – 7, 2000</div>
-			<div id="tc-nav-total" style="margin-left: auto; font-weight: bold">Total Hours: 0.0</div>
-		</div>
-	</div>
+    <div class="content-container unselectable" ondragstart="return false" ondrop="return false">
+        <div class="content-content" style="position: relative">
+            <table id="tcTable" class="tc-table">
+                <thead id="tcHead">
+                    <tr>
+                        <th style="width: 10px"></th>
+                        {% for i in range(view_days) %}
+                        <th id="tcHeader{{i}}" style="width: 120px">
+                            <div>Monday</div>
+                            <div>Jan 1</div>
+                            <div>0.0 hours</div>
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-	<div class="content-container unselectable" ondragstart="return false;" ondrop="return false;">
-		<hr class="nav-shadow" />
-		<div class="content-content">
-			<div style="margin: 0 -20px 0 -20px">
-				<div class="tc-day-table">
-					{% for d in range(period_duration) %}
-					<div id="tc-day-{{ d }}" class="tc-day" data-date="">
-						<div style="font-weight: bold; margin-bottom: 5px">Monday, Jan 1</div>
-						<div style="font-weight: bold">Hours: 0.0</div>
-						<table class="tc-hour-table">
-							{% for t in range(times|length) %}
-							<tr>
-								<td class="tc-slot" data-day="{{ d }}" data-timedelta="{{ t*slot_increment*60 }}" data-timestamp="">
-									{{ times[t].strftime('%I:%M %p') }}
-								</td>
-							</tr>
-							{% endfor %}
-						</table>
-					</div>
-					{% endfor %}
-				</div>
-			</div>
-		</div>
-	</div>
+    <script src="/static/js/viewas.js"></script>
+    <script>
+        TcUser.initialDate = moment("{{ initial_date }}");
+        TcUser.validPeriodStart = moment("{{ valid_period_start }}");
+        TcUser.periodDuration = "{{ view_days }}";
+        TcUser.slotIncrement = "{{ slot_increment }}";
+        TcUser.slotFirstStart = moment("{{ slot_first_start }}", "HHmm");
+        TcUser.slotLastStart = moment("{{ slot_last_start }}", "HHmm");
+        TcUser.lockDate = "{{ lock_date }}";
+        TcUser.userId = "{{ user_id }}"
 
-	<script src="/static/js/viewas.js"></script>
-	<script>
-		TcView.initialDate = moment("{{ initial_date }}");
-		TcView.lockdate = 1483228800;
-		TcView.slotIncrement = "{{ slot_increment }}" / 60;
-		TcView.slotFirstStart = moment("{{ slot_first_start }}", "HHmm");
-		TcView.periodDuration = "{{ period_duration }}";
-		TcView.validPeriodStart = moment("{{ valid_period_start }}");
+        TcUser.init();
+    </script>
 
-		TcView.userID = "{{ user_id }}";
-
-		TcView.init();
-	</script>
-
-	{% include 'footer.html' %}
+    {% include 'footer.html' %}
 </body>
 
 </html>

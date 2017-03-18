@@ -6,13 +6,16 @@
 .tc-table thead tr {
     text-align: center;
     font-family: 'Titillium Web', sans-serif;
-    background: #f8f9fb;
+    font-size: 16px;
+    background: #f1f2f4;
     color: #273a61;
     height: 50px;
 }
 
 .tc-table thead th {
-    border: 1px solid #959a9e;
+    border: 1px solid #1f305d;
+    white-space: nowrap;
+    /*border: 1px solid #959a9e;*/
     //padding: 10px 5px;
 }
 
@@ -35,8 +38,8 @@
 .tc-table tbody td {
     height: 576px;
     background: white;
-    border: 1px solid #959a9e;
-    border-bottom: none;
+    border: 1px solid #1f305d;
+    /*border: 1px solid #959a9e;*/
     padding: 0;
 }
 
@@ -52,33 +55,32 @@ div.slotstack {
 
 div.hourmark {
     flex-grow: 2;
+    font-size: 14px;
     vertical-align: top;
     color: #3b5ca0;
-    padding: 0 5px;
+    padding-right: 5px;
 }
 
 div.slot,
-div.slot-locked,
-div.slot-selected,
-div.slot-selected-locked {
+div.slot-selected {
     position: relative;
     flex-grow: 1;
-    border-bottom: 1px solid #d8d9db;
+    border-bottom: 1px solid #e3e8eb;
     cursor: cell;
 }
 
 div.slot:nth-child(even) {
-    border-bottom: 1px solid #959a9e;
+    border-bottom: 1px solid #8496b4;
 }
+
+
+/*div.slot:nth-child(odd) {
+    background: rgba(128, 128, 128, 0.04);
+}*/
 
 div.slot:hover {
-    background: rgba(116, 116, 116, 0.1);
+    background: rgba(128, 128, 128, 0.2);
     //outline: 1px solid blue;
-}
-
-div.slot-locked {
-    background: rgba(116, 116, 116, 0.1);
-    cursor: inherit;
 }
 
 
@@ -87,23 +89,52 @@ div.slot-locked {
 }*/
 
 div.slot-selected {
-    background: #678fd4; //#30c99a;
+    background: #3b5ca0; //#678fd4; //#30c99a;
     color: white;
-    border-bottom: 1px solid #678fd4;
+    border-bottom: 1px solid #3b5ca0;
+    /* border-left: 1px solid white;
+    border-right: 1px solid white; */
     cursor: cell;
     /*outline: 1px solid #3b5ca0;*/
 }
 
 div.slot-selected:hover {
-    background: #779ad8;
+    background: #678fd4;
+}
+
+div.slot:last-child,
+div.slot-selected:last-child {
+    border-bottom: none;
+}
+
+div.slot.locked {
+    background: rgba(128, 128, 128, 0.1);
+    cursor: default;
+    /*pointer-events: none;*/
+}
+
+div.slot.locked:hover {
+    background: rgba(128, 128, 128, 0.1);
+}
+
+div.slot-selected.locked {
+    background: #526faa;
+    border-bottom: 1px solid #526faa;
+    cursor: default;
+    /*pointer-events: none;*/
+}
+
+div.slot-selected.locked:hover {
+    background: #526faa;
 }
 
 div.blocklabel {
     z-index: 4;
     position: absolute;
     text-align: center;
-    font-size: 12px;
+    font-size: 14px;
+    color: white;
     width: 100%;
-    padding: 5px 0;
+    padding: 2px 0;
     pointer-events: none;
 }

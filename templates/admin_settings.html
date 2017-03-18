@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Timecard Admin - {{ session['CAS_USERNAME'].lower() }}</title>
+    <link href="http://www.rpi.edu/favicon.ico" type="image/ico" rel="icon">
+    <link href="/static/stylesheets/timecard.base.css" rel="stylesheet">
+    <link href="/static/stylesheets/timecard.admin.css" rel="stylesheet">
+    <link href="/static/stylesheets/timecard.admin.settings.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Titillium+Web:600" rel="stylesheet">
+    <script src="/static/js/moment.min.js"></script>
+</head>
+
+<body>
+    {# include 'leetbar.html' #}
+
+    <div class="header-container">
+        <div class="header-content">
+            <a class="logo" href="{{ url_for('tc_login') }}">
+                <img src="/static/img/logo_admin.svg">
+            </a>
+            <div class="nav-link">
+                <a href="{{ url_for('show_admin_users') }}">Users</a>
+            </div>
+            <div class="nav-link-selected">
+                <a href="{{ url_for('show_admin_settings') }}">Settings</a>
+            </div>
+            <div id="dbStatus" style="color: #9a9a9a; margin-left: auto; margin-right: 20px">...</div>
+            <a style="color: white" href="{{ url_for('cas.logout') }}">Log out {{ session['CAS_USERNAME'].lower() }}</a>
+        </div>
+    </div>
+
+    <div class="subheader-container">
+        <!--<div class="subheader-content">
+            Admin \ Users
+        </div>-->
+    </div>
+
+    <div class="row-container" style="border-bottom: 1px solid #e3e8eb">
+        <div class="row-content">
+            <div class="title-header">Configuration</div>
+        </div>
+    </div>
+    <div class="row-container">
+        <div class="row-content" style="display: block; padding: 0">
+            <dl>
+                <dt class="title">Timecard</dt>
+            </dl>
+            <dl class="form-group">
+                <dt>
+                    <label for="input-administrators">Administrators</label>
+                </dt>
+                <dd>
+                    <input id="input-administrators" type="text">
+                </dd>
+            </dl>
+            <dl class="form-group">
+                <dt>
+                    <label for="input-pay-period-durations">Pay Period Duration</label>
+                </dt>
+                <dd>
+                    <input id="input-pay-period-durations" type="number">
+                </dd>
+            </dl>
+            <dl class="form-group">
+                <dt>
+                    <label for="">Valid Pay Period Start</label>
+                </dt>
+                <dd>
+                    <input type="date">
+                </dd>
+            </dl>
+            <dl>
+                <dt class="title">Timecard</dt>
+            </dl>
+            <dl class="form-group">
+                <dt>
+                    <label for="">Days Displayed</label>
+                </dt>
+                <dd>
+                    <input type="number">
+                </dd>
+            </dl>
+            <dl class="form-group">
+                <dt>
+                    <label for="">Minutes Per Slot</label>
+                </dt>
+                <dd>
+                    <input type="number">
+                </dd>
+            </dl>
+            <dl class="form-group">
+                <dt>
+                    <label for="">Start of First Slot</label>
+                </dt>
+                <dd>
+                    <input type="time">
+                </dd>
+            </dl>
+            <dl class="form-group">
+                <dt>
+                    <label for="">Start of Last Slot</label>
+                </dt>
+                <dd>
+                    <input type="time">
+                </dd>
+            </dl>
+        </div>
+    </div>
+
+    <script src="/static/js/admin_setings.js"></script>
+    <script>
+        TcAdmin.init();
+    </script>
+
+    {% include 'footer.html' %}
+</body>
+
+</html>

@@ -7,6 +7,7 @@
     <link href="http://www.rpi.edu/favicon.ico" type="image/ico" rel="icon">
     <link href="/static/stylesheets/timecard.base.css" rel="stylesheet">
     <link href="/static/stylesheets/timecard.admin.css" rel="stylesheet">
+    <link href="/static/stylesheets/timecard.admin.users.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Titillium+Web:600" rel="stylesheet">
     <script src="/static/js/moment.min.js"></script>
@@ -17,14 +18,14 @@
 
     <div class="header-container">
         <div class="header-content">
-            <a class="logo" href="{{ url_for('show_admin') }}">
+            <a class="logo" href="{{ url_for('tc_login') }}">
                 <img src="/static/img/logo_admin.svg">
             </a>
             <div class="nav-link-selected">
-                <a href="{{ url_for('show_admin') }}">Users</a>
+                <a href="{{ url_for('show_admin_users') }}">Users</a>
             </div>
             <div class="nav-link">
-                <a href="{{ url_for('show_admin') }}">Settings</a>
+                <a href="{{ url_for('show_admin_settings') }}">Settings</a>
             </div>
             <div id="dbStatus" style="color: #9a9a9a; margin-left: auto; margin-right: 20px">...</div>
             <a style="color: white" href="{{ url_for('cas.logout') }}">Log out {{ session['CAS_USERNAME'].lower() }}</a>
@@ -52,7 +53,7 @@
             <a id="userViewasButton" class="anchor-icon" style="margin-left: 20px" target="_blank"><img src="/static/img/eye.svg">View As</a>
             <a id="userEditButton" class="anchor-icon" style="margin-left: 20px" onclick="TcAdmin.userEditShow(this.dataset.userid)"><img src="/static/img/edit.svg">Edit</a>
             <a id="userDeleteButton" class="anchor-icon" style="margin-left: 20px" onclick="TcAdmin.userDeleteSelected()"><img src="/static/img/delete.svg">Delete...</a>
-            <button id="userAddButton" class="button-solid" style="margin-left: auto">+ Add User</button>
+            <button id="userAddButton" class="solid" style="margin-left: auto">+ Add User</button>
         </div>
     </div>
 
@@ -67,7 +68,7 @@
                 <input id="userAddInputLastname" style="width: 140px; margin-left: 10px" type="text" maxlength="64" oninput="">
                 <div style="margin-left: 30px">User ID:</div>
                 <input id="userAddInputId" style="width: 60px; margin-left: 10px" type="text" maxlength="12" oninput="">
-                <button class="button-solid button-solid-green" style="margin-left: 50px" onclick="TcAdmin.userAddSubmit()">Submit</button>
+                <button class="solid solid-green" style="margin-left: 50px" onclick="TcAdmin.userAddSubmit()">Submit</button>
             </div>
         </div>
     </div>
@@ -76,7 +77,7 @@
         <div class="infobanner-content">
             <div style="margin-right: 140px">ICON?</div>
             <div id="infobannerText" class="title" style="margin: 0 auto">...</div>
-            <button class="button-large-icon button-blue" style="margin-left: auto" onclick="TcAdmin.infoBannerHide()">&#10006;</button>
+            <button class="solid icon" style="margin-left: auto" onclick="TcAdmin.infoBannerHide()">&#10006;</button>
         </div>
     </div>
 
@@ -103,13 +104,12 @@
         </div>
     </div>
 
-    <script src="/static/js/admin.js"></script>
+    <script src="/static/js/admin_users.js"></script>
     <script>
         TcAdmin.initialDate = moment("{{ initial_date }}");
         TcAdmin.validPeriodStart = moment("{{ valid_period_start }}");
         TcAdmin.periodDuration = "{{ period_duration }}";
-        TcAdmin.lockdate = "{{ lock_date }}";
-        TcAdmin.slotIncrement = "{{ slot_increment }}" / 60;
+        TcAdmin.lockDate = "{{ lock_date }}";
 
         TcAdmin.init();
     </script>
