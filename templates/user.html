@@ -38,18 +38,18 @@
         <div class="row-content">
             <div>Template:</div>
             <div>
-                <select style="margin-left: 10px" onchange="">
+                <select id="templSelect" style="margin-left: 10px" onchange="">
                     <option value="" selected>None</option>
                 </select>
-                <button style="margin-left: 5px" onclick="">New Template</button>
+                <button id="templLoadButton" style="margin-left: 5px" onclick="TcUser.loadTemplate()">Load Template</button>
+                <button id="templNewButton" style="margin-left: 5px" onclick="TcUser.newTemplate()">New Template</button>
+            </div>
+            <div style="display:none;" id="templNewForm">
+                <input id="templNewTextInput" style="margin-left: 10px" type="text" minlength="2" maxlength="18" oninput="">
+                <button style="margin-left: 20px" onclick="TcUser.saveTemplate()">Save</button>
+                <button style="margin-left: 5px" onclick="TcUser.newTemplateCancel()">Cancel</button>
             </div>
             <button style="margin-left: auto" onclick="TcUser.save()">Save</button>
-            <!--<div>
-                <input style="margin-left: 10px" type="text" minlength="2" maxlength="18" oninput="">
-                <button style="margin-left: 20px" onclick="">Save</button>
-                <button style="margin-left: 5px" onclick="">Delete</button>
-                <button style="margin-left: 5px" onclick="">Cancel</button>
-            </div>-->
         </div>
     </div>
 

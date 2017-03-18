@@ -2,6 +2,7 @@ import datetime
 from flask import Flask, request, Response, session, redirect, url_for, render_template, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import exc
+from sqlalchemy.types import PickleType
 from flask_cas import CAS, login_required, logout
 from functools import wraps
 
@@ -35,6 +36,8 @@ class User(db.Model):
                                 cascade='all, delete',
                                 backref='user')
                                 #lazy='dynamic')
+    templates = db.relationship('Template',
+                                backref='user')
 
 
 class Timeslot(db.Model):
@@ -44,11 +47,16 @@ class Timeslot(db.Model):
     user_id = db.Column(db.String, db.ForeignKey('user.id'))
 
 
-#class Template(db.Model):
+class Template(db.Model):
 #    __tablename__ = 'template'
 
     # name of the template
-#    name = db.column(db.String(32), primary_key=True)
+    name = db.Column(db.String(32), primary_key=True)
+    start_times = db.Column(PickleType)
+    end_times = db.Column(PickleType)
+    period_duration = db.Column(db.Integer)
+    slot_increment = db.Column(db.Integer)
+    user_id = db.Column(db.String, db.ForeignKey('user.id'))
     # associated day slots (not a full timeslot, just time of day)
 #    slots = db.relationship('Timeslot', backref='user', cascade="all, delete-orphan", lazy='dynamic')
 
@@ -136,6 +144,94 @@ def user_update():
     #print response_dict
     # jsonfiy creates a complete Response
     return jsonify(response_dict)
+
+
+@app.route('/update/template', methods=['POST'])
+@login_required
+def template_update():
+    # Takes request and returns all templates associated with the user
+
+    templates = [templ.name for templ in Template.query.filter_by(user_id=session['CAS_USERNAME'])]
+    if not templates:
+        print 'ERROR: Failed to retrieve templates for user', session['CAS_USERNAME']
+        abort(400)
+
+    return jsonify(templates)
+
+
+@app.route('/load/template', methods=['POST'])
+@login_required
+def template_load():
+    request_json = request.get_json(silent=True)
+
+    if not request_json or ('range' not in request_json):
+        abort(400)
+
+    name = request_json['name']
+    date_range = request_json['range']
+
+    template = Template.query.filter_by(name=name).first()
+    if not template:
+        abort(400)
+
+    times = []
+    current_day = datetime.datetime.strptime(date_range[0], "%Y-%m-%d")
+    for dcount, day in enumerate(template.start_times):
+        for tcount, start_time in enumerate(day):
+            current_time = datetime.datetime.strptime(start_time, '%H:%M').time()
+            end_time = datetime.datetime.strptime(template.end_times[dcount][tcount], '%H:%M').time()
+            current_dt = datetime.datetime.combine(current_day.date(), current_time)
+            end_dt = datetime.datetime.combine(current_day.date(), end_time)
+
+            # Handle every slot between the start and end
+            while(current_dt != end_dt):
+                current_ts = current_dt.strftime("%Y%m%dT%H%M")
+                times.append(current_ts)
+                current_dt = current_dt + datetime.timedelta(minutes=int(slot_increment))
+            # Handle last slot
+            current_ts = current_dt.strftime("%Y%m%dT%H%M")
+            times.append(current_ts)
+        current_day = current_day + datetime.timedelta(days=1)
+
+    return jsonify(times)
+
+
+@app.route('/save/template', methods=['POST'])
+@login_required
+def template_save():
+    # Takes in contents of selected timestamps
+    # Creates template of selected timestamps
+
+    # TODO: Handle templates of duplicate names
+
+    request_json = request.get_json(silent=True)
+
+    if not request_json or ('name' not in request_json):
+        # abort with error code 400 bad request
+        abort(400)
+
+    user = User.query.filter_by(id=session['CAS_USERNAME']).first()
+    if not user:
+        print 'ERROR: Failed to lookup user', session['CAS_USERNAME']
+        abort(400)
+
+    name = request_json['name']
+    start_times = request_json['startTimes']
+    end_times = request_json['endTimes']
+
+    start_times = [[datetime.datetime.fromtimestamp(int(time)).strftime('%-H:%M') for time in day] for day in start_times]
+    end_times = [[datetime.datetime.fromtimestamp(int(time)).strftime('%-H:%M') for time in day] for day in end_times]
+
+    print start_times
+    print end_times
+
+    user.templates.append(Template(name=name, start_times=start_times,
+                                   end_times=end_times,
+                                   period_duration=period_duration,
+                                   slot_increment=slot_increment))
+    db.session.commit()
+
+    return Response()
 
 
 @app.route('/save', methods=['POST'])
