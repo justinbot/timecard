@@ -11,12 +11,13 @@
     <title>Timecard - {{ session['CAS_USERNAME'].lower() }}</title>
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css">
 
     <!-- Font Awesome -->
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
 
-    <link href="/static/stylesheets/user.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/stylesheets/base.css">
+    <link rel="stylesheet" href="/static/stylesheets/user.css">
     <!--<link href="https://fonts.googleapis.com/css?family=Roboto:400,700|Titillium+Web:600" rel="stylesheet">-->
     <script src="/static/js/moment.min.js"></script>
 </head>
@@ -35,7 +36,7 @@
                     <div class="navbar-nav">
                     </div>
                     <form class="form-inline ml-auto">
-                        <a class="nav-link px-0" href="{{ url_for('cas.logout') }}">Logout {{ session['CAS_USERNAME'].lower() }} <i class="fa fa-sign-out" aria-hidden="true"></i></a>
+                        <a class="nav-link text-white px-0" href="{{ url_for('cas.logout') }}">Logout {{ session['CAS_USERNAME'].lower() }} <i class="fa fa-sign-out" aria-hidden="true"></i></a>
                     </form>
                 </div>
             </nav>
@@ -46,18 +47,18 @@
         <div class="d-flex justify-content-between align-items-center py-3" style="border-bottom: 1px solid #e3e8eb">
             <span class="text-muted" id="periodRange">Jan 1 – 7, 2000</span>
             <div class="btn-group" role="group">
-                <button type="button" class="btn btn-outline-primary" onclick="TcAdmin.prevPeriod();"><i class="fa fa-chevron-left" aria-hidden="true"></i></button>
-                <button type="button" class="btn btn-outline-primary" id="periodNavToday" onclick="TcAdmin.currentPeriod();">Today</button>
-                <button type="button" class="btn btn-outline-primary" onclick="TcAdmin.nextPeriod();"><i class="fa fa-chevron-right" aria-hidden="true"></i></button>
+                <button type="button" class="btn btn-outline-primary" onclick="TcUser.prevPeriod();"><i class="fa fa-chevron-left" aria-hidden="true"></i></button>
+                <button type="button" class="btn btn-outline-primary" id="periodNavToday" onclick="TcUser.currentPeriod();">Today</button>
+                <button type="button" class="btn btn-outline-primary" onclick="TcUser.nextPeriod();"><i class="fa fa-chevron-right" aria-hidden="true"></i></button>
             </div>
         </div>
         <div class="d-flex justify-content-between py-3" role="toolbar">
             <div class="form-inline">
-                <button type="button" class="btn btn-primary mr-2">New Template</button>
+                <button type="button" class="btn btn-sm btn-primary mr-2">New Template</button>
                 <!--<input class="form-control" type="text" value="Artisanal kale">-->
 
                 <div class="dropdown">
-                    <button id="" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown">
+                    <button id="" type="button" class="btn btn-sm btn-secondary dropdown-toggle" data-toggle="dropdown">
                         None
                     </button>
                     <div class="dropdown-menu">
@@ -68,7 +69,26 @@
                     </div>
                 </div>
             </div>
-            <button type="button" class="btn btn-outline-success">Save</button>
+            <button type="button" class="btn btn-sm btn-outline-success" onclick="TcUser.save()">Save</button>
+        </div>
+        <div class="d-flex unselectable">
+            <table id="tcTable" class="table table-sm table-bordered tc-table">
+                <thead id="tcHead">
+                    <tr>
+                        <th></th>
+                        {% for i in range(view_days) %}
+                        <th class="text-center" id="tcHeader{{i}}">
+                            <!-- style="width: 120px">-->
+                            <div>Monday</div>
+                            <div>Jan 1</div>
+                            <div class="font-weight-normal">0.0 hours</div>
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -76,6 +96,19 @@
     <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+
+    <script src="/static/js/user.js"></script>
+    <script>
+        TcUser.initialDate = moment("{{ initial_date }}");
+        TcUser.validPeriodStart = moment("{{ valid_period_start }}");
+        TcUser.periodDuration = "{{ view_days }}";
+        TcUser.slotIncrement = "{{ slot_increment }}";
+        TcUser.slotFirstStart = moment("{{ slot_first_start }}", "HH:mm");
+        TcUser.slotLastStart = moment("{{ slot_last_start }}", "HH:mm");
+        TcUser.lockDate = "{{ lock_date }}";
+
+        TcUser.init();
+    </script>
 </body>
 
 </html>

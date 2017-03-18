@@ -1,32 +1,29 @@
 var TcAdmin = (function () {
     var tc = {};
 
-    /* DOM elements */
-    var periodNavToday;
-    var periodRange;
+    /* cached queries */
+    var tsDays = [];
 
-    var tsTable,
-        tsHead,
-        tsHeadCheckbox,
-        tsHeadButton,
-        tsDays = [];
+    var $periodNavPrev = $("#periodNavPrev"),
+        $periodNavToday = $("#periodNavToday"),
+        $periodNavNext = $("#periodNavNext");
 
-    var userAddButton,
-        userAddContainer,
-        userAddStatus,
-        userAddInputFirstname,
-        userAddInputLastname,
-        userAddInputId;
+    var $userAddButton = $("#userAddButton"),
+        $userAddForm = $("#userAddForm"),
+        $userAddStatus = $("#userAddStatus"),
+        $userAddFormFirstname = $("#userAddFormFirstname"),
+        $userAddFormLastname = $("#userAddFormLastname"),
+        $userAddFormId = $("#userAddFormId"),
+        $userAddFormSubmit = $("#userAddFormSubmit");
 
-    var userViewAsButton,
-        userEditButton,
-        userDeleteButton;
+    var $userViewAsButton = $("#userViewAsButton"),
+        $userEditButton = $("#userEditButton"),
+        $userDeleteButton = $("#userDeleteButton");
 
-    var infoBannerContainer,
-        infoBannerText;
+    var $alertBanner = $("#alertBanner");
 
-    var dbStatus;
-    var tableStatus;
+    var $tableStatus = $("#tableStatus");
+    var $tsHeadCheckbox = $("#tsHeadCheckbox");
 
     /* local variables */
     var focusDate;
@@ -43,40 +40,11 @@ var TcAdmin = (function () {
     tc.lockDate;
 
     tc.init = function () {
-        periodNavToday = document.getElementById("periodNavToday");
-        periodRange = document.getElementById("periodRange");
-
-        tsTable = document.getElementById("tsTable");
-        tsHead = document.getElementById("tsHead");
-        tsHeadCheckbox = document.getElementById("tsHeadCheckbox");
-        tsHeadButton = document.getElementById("tsHeadButton");
-
         for (var i = 0; i < tc.periodDuration; i++) {
-            tsDays.push(document.getElementById("tsDay" + i));
+            tsDays.push($("#tsDay" + i)[0]);
         }
 
-        userAddButton = document.getElementById("userAddButton");
-        userAddContainer = document.getElementById("userAddContainer");
-        userAddStatus = document.getElementById("userAddStatus");
-        userAddInputFirstname = document.getElementById("userAddInputFirstname");
-        userAddInputLastname = document.getElementById("userAddInputLastname");
-        userAddInputId = document.getElementById("userAddInputId");
-
-        userViewAsButton = document.getElementById("userViewasButton");
-        userEditButton = document.getElementById("userEditButton");
-        userDeleteButton = document.getElementById("userDeleteButton");
-
-        infoBannerContainer = document.getElementById("infobannerContainer");
-        infoBannerText = document.getElementById("infobannerText");
-
-        dbStatus = document.getElementById("dbStatus");
-        tableStatus = document.getElementById("tableStatus");
-
-        // TODO: Set up these values in HTML so page loads in correct state
-        //tc.infoBannerHide();
-        //tc.userAddCancel();
-
-        tc.currentPeriod();
+        currentPeriod();
     }
 
     function onUserDataChanged() {
@@ -95,68 +63,66 @@ var TcAdmin = (function () {
     }
 
     function updateTable() {
-        var oldTsBody = tsTable.getElementsByTagName("tbody")[0];
-        var newTsBody = document.createElement("tbody");
+        var $oldTsBody = $("#tsBody");
+        var $newTsBody = $("<tbody>", {
+            id: "tsBody"
+        });
+        
         for (var elem in userData) {
             var userId = elem;
             var userFirst = userData[elem]["firstname"];
             var userLast = userData[elem]["lastname"];
 
-            var newRow = newTsBody.insertRow();
-            newRow.dataset.userid = userId;
-            newRow.setAttribute("id", "tsRow" + userId);
-            //newRow.setAttribute("onclick", "TcAdmin.tableSelectRow(this.dataset.userid)");
+            var $newRow = $("<tr>", {
+                "id": "tsRow" + userId,
+                "data-userid": userId
+            });
+            $newTsBody.append($newRow);
 
-            var checkCell = newRow.insertCell();
-            var checkbox = document.createElement("input");
-            checkbox.dataset.userid = userId;
-            checkbox.setAttribute("id", "tsRow" + userId + "Checkbox");
-            checkbox.setAttribute("type", "checkbox");
-            checkbox.setAttribute("onchange", "TcAdmin.tableSelectRow(this.dataset.userid)");
-            if (selectedUsers.has(userId)) {
-                checkbox.checked = true;
-            }
-            checkCell.appendChild(checkbox);
+            var $checkboxCell = $("<td>");
+            $newRow.append($checkboxCell);
 
-            var nameCell = newRow.insertCell();
-            nameCell.style.color = "#3b5ca0";
-            // TODO: nameInput should submit when enter pressed
-            var nameInput = document.createElement("input");
-            nameInput.dataset.userid = userId;
-            nameInput.dataset.userfirst = userFirst;
-            nameInput.dataset.userlast = userLast;
-            nameInput.setAttribute("id", "tsRow" + userId + "NameInput");
-            nameInput.setAttribute("type", "text");
-            nameInput.setAttribute("onblur", "TcAdmin.userEditCancel(this.dataset.userid)")
-            nameInput.style.display = "none";
-            nameCell.appendChild(nameInput);
-            var nameLabel = document.createElement("a");
-            nameLabel.setAttribute("id", "tsRow" + userId + "NameLabel");
-            nameLabel.setAttribute("href", "/user/" + userId);
-            nameLabel.setAttribute("target", "_blank");
-            nameLabel.textContent = userLast + ", " + userFirst;
-            nameCell.appendChild(nameLabel);
+            var $checkbox = $("<label>", {
+                class: "custom-control custom-checkbox"
+            });
+            $checkboxCell.append($checkbox);
 
-            var idCell = newRow.insertCell();
-            idCell.textContent = userId;
+            $checkbox.append($("<input>", {
+                "type": "checkbox",
+                "class": "custom-control-input",
+                "data-userid": userId
+            }));
 
-            var lastModifiedCell = newRow.insertCell();
-            // TODO: Keep initialDate up to date to prevent last modified appearing in future
-            lastModifiedCell.textContent = moment(userData[elem]["lastmodified"]).fromNow(); //(tc.initialDate);
+            $checkbox.append($("<span>", {
+                "class": "custom-control-indicator"
+            }));
+
+            $newRow.append($("<td>", {
+                html: userLast + ", " + userFirst
+            }));
+
+            $newRow.append($("<td>", {
+                html: userId
+            }));
+
+            $newRow.append($("<td>", {
+                html: moment(userData[elem]["lastmodified"]).from(tc.initialDate)
+                    // TODO: Need to update this value periodically
+            }));
 
             for (var i = 0; i < tc.periodDuration; i++) {
-                var dayCell = newRow.insertCell();
-                dayCell.style.textAlign = "center";
-                // TODO: Same rounding error as everywhere else
-                dayCell.textContent = userData[elem]["ts-day-" + i].toFixed(1);;
+                $newRow.append($("<td>", {
+                    html: userData[elem]["ts-day-" + i].toFixed(1)
+                }));
             }
 
-            var totalCell = newRow.insertCell();
-            totalCell.style.textAlign = "center";
-            totalCell.textContent = userData[elem]["total"].toFixed(1);
+            $newRow.append($("<td>", {
+                html: userData[elem]["total"].toFixed(1),
+                style: "text-align: center"
+            }));
         }
-        tsTable.replaceChild(newTsBody, oldTsBody);
 
+        $oldTsBody.replaceWith($newTsBody);
         onSelectedUsersChanged();
     }
 
@@ -173,53 +139,47 @@ var TcAdmin = (function () {
         var userCount = Object.keys(userData).length;
 
         if (selectedUsers.size == userCount) {
-            tsHeadCheckbox.indeterminate = false;
+            $tsHeadCheckbox.prop("indeterminate", false);
             if (userCount == 0) {
-                tsHeadCheckbox.checked = false;
+                $tsHeadCheckbox.prop("checked", false);
             } else {
-                tsHeadCheckbox.checked = true;
+                $tsHeadCheckbox.prop("checked", true);
             }
         } else if (selectedUsers.size == 0) {
-            tsHeadCheckbox.indeterminate = false;
-            tsHeadCheckbox.checked = false;
+            $tsHeadCheckbox.prop("indeterminate", false);
+            $tsHeadCheckbox.prop("checked", false);
         } else {
-            tsHeadCheckbox.indeterminate = true;
+            $tsHeadCheckbox.prop("indeterminate", true);
         }
 
-        var tsBody = tsTable.getElementsByTagName("tbody")[0];
-        var rows = tsBody.getElementsByTagName("tr");
-
-        for (var i = 0; i < rows.length; i++) {
-            var rowCheckbox = rows[i].children[0].children[0];
-            if (selectedUsers.has(rows[i].dataset.userid)) {
-                rowCheckbox.checked = true;
-                rows[i].setAttribute("class", "tr-selected");
+        $("#tsBody [type='checkbox']").each(function (index) {
+            if (selectedUsers.has($(this).data("userid").toString())) {
+                $(this).prop("checked", true);
             } else {
-                rowCheckbox.checked = false;
-                rows[i].setAttribute("class", "");
+                $(this).prop("checked", false);
             }
-        }
+        });
     }
 
     function updateEdit() {
         if (selectedUsers.size == 0) {
-            tableStatus.textContent = "Users: " + Object.keys(userData).length;
-            userViewAsButton.style.display = "none";
-            userEditButton.style.display = "none";
-            userDeleteButton.style.display = "none";
+            $tableStatus.html("Users: " + Object.keys(userData).length);
+            $userViewAsButton.css("display", "none");
+            $userEditButton.css("display", "none");
+            $userDeleteButton.css("display", "none");
         } else if (selectedUsers.size == 1) {
             var user = selectedUsers.values().next().value;
-            tableStatus.textContent = userData[user]["firstname"] + " " + userData[user]["lastname"];
-            userViewAsButton.href = "/user/" + user;
-            userViewAsButton.style.display = "";
-            userEditButton.style.display = "";
-            userEditButton.dataset.userid = user;
-            userDeleteButton.style.display = "";
+            $tableStatus.html(userData[user]["firstname"] + " " + userData[user]["lastname"]);
+            $userViewAsButton.href = "/user/" + user;
+            $userViewAsButton.css("display", "");
+            $userEditButton.css("display", "");
+            $userEditButton.data("userid", user);
+            $userDeleteButton.css("display", "");
         } else {
-            tableStatus.textContent = selectedUsers.size + " users";
-            userViewAsButton.style.display = "none";
-            userEditButton.style.display = "none";
-            userDeleteButton.style.display = "";
+            $tableStatus.html(selectedUsers.size + " users");
+            $userViewAsButton.css("display", "none");
+            $userEditButton.css("display", "none");
+            $userDeleteButton.css("display", "");
         }
     }
 
@@ -268,7 +228,7 @@ var TcAdmin = (function () {
             userData = response;
             onUserDataChanged();
         } else {
-            // TODO: Display error regarding status
+            // TODO: Display error regarding status (spinner icon?)
         }
     }
 
@@ -293,9 +253,9 @@ var TcAdmin = (function () {
 
     function dbAddUserOnload(status, response) {
         if (status == 200) {
-            tc.infoBannerShow("User successfully added");
+            showAlert("success", "", "Successfully added user")
         } else {
-            tc.infoBannerShow("Failed to add user (Error " + status + ")");
+            showAlert("danger", "Error", "Failed to add user (Error " + status + ")");
         }
         dbUpdateUsers();
     }
@@ -349,51 +309,73 @@ var TcAdmin = (function () {
 
     function dbDeleteUserOnload(status, response) {
         if (status == 200) {
-            // TODO: Display undo banner with "Deleted [x] users" or "Deleted user [name]"
-            tc.infoBannerShow("User successfully deleted");
+            showAlert("success", "", "Successfully deleted user")
         } else {
-            tc.infoBannerShow("Failed to delete user (Error " + status + ")");
+            showAlert("danger", "Error", "Failed to delete user (Error " + status + ")");
         }
         dbUpdateUsers();
     }
 
-    tc.userAddShow = function () {
-        userAddButton.style.width = "32px";
-        userAddButton.setAttribute("class", "solid solid-green icon");
-        userAddButton.setAttribute("onclick", "TcAdmin.userAddCancel()");
-        userAddButton.innerHTML = "&#10006;";
-
-        userAddContainer.style.display = "";
-        userAddContainer.setAttribute("class", "action-container");
-    }
-
-    tc.userAddCancel = function () {
-        userAddButton.style.width = "120px";
-        userAddButton.setAttribute("class", "solid solid-green");
-        userAddButton.setAttribute("onclick", "TcAdmin.userAddShow()");
-        userAddButton.innerHTML = "+ Add User";
-
-        userAddContainer.setAttribute("class", "action-container-hidden");
-
-        userAddStatus.textContent = "";
-        userAddInputFirstname.value = "";
-        userAddInputLastname.value = "";
-        userAddInputId.value = "";
-    }
-
-    tc.userAddSubmit = function () {
-        // TODO: Also validate server-side
-        if (userAddInputFirstname.value.length > 0 &&
-            userAddInputLastname.value.length > 0 &&
-            userAddInputId.value.length > 0) {
-            dbAddUser(userAddInputFirstname.value, userAddInputLastname.value, userAddInputId.value);
-            tc.userAddCancel();
+    $("#tsTable").on("change", "[type='checkbox']", function () {
+        if ($(this).is($tsHeadCheckbox)) {
+            if (this.checked) {
+                for (var elem in userData) {
+                    selectedUsers.add(elem);
+                }
+            } else {
+                selectedUsers.clear();
+            }
         } else {
-            userAddStatus.textContent = "Required fields: First Name, Last Name, and ID";
-        }
-    }
+            var userId = $(this).data("userid").toString();
 
-    tc.userEditShow = function (id) {
+            if (this.checked) {
+                selectedUsers.add(userId);
+            } else {
+                selectedUsers.delete(userId);
+            }
+        }
+
+        onSelectedUsersChanged();
+    });
+
+    $userAddForm.on("show.bs.collapse", function () {
+        $userAddButton.html("<i class='fa fa-times'></i>");
+    });
+
+    $userAddForm.on("hide.bs.collapse", function () {
+        $userAddButton.html("<i class='fa fa-plus'></i> Add User");
+
+        $userAddStatus.html("");
+        $userAddFormFirstname.val("");
+        $userAddFormLastname.val("");
+        $userAddFormId.val("");
+    });
+
+    $userAddFormSubmit.on("click", function (e) {
+        if (userAddFormFirstname.value.length > 0 &&
+            userAddFormLastname.value.length > 0 &&
+            userAddFormId.value.length > 0) {
+            dbAddUser($userAddFormFirstname.val(), $userAddFormLastname.val(), $userAddFormId.val());
+            $userAddForm.collapse("hide");
+        } else {
+            $userAddStatus.textContent = "Please fill required fields.";
+        }
+    });
+
+    $userViewAsButton.on("click", function (e) {
+        window.location.href = "/user/" + selectedUsers.values().next().value;
+    });
+
+    $userEditButton.on("click", function (e) {
+        userEditShow();
+        // TODO: Implement user editing
+    });
+
+    $userDeleteButton.on("click", function (e) {
+        userDeleteSelected();
+    });
+
+    /*function userEditShow(id) {
         var nameInput = document.getElementById("tsRow" + id + "NameInput");
         nameInput.style.display = "";
         nameInput.value = userData[id]["firstname"] + " " + userData[id]["lastname"];
@@ -404,65 +386,69 @@ var TcAdmin = (function () {
         nameLabel.style.display = "none";
     }
 
-    tc.userEditCancel = function (id) {
+    function userEditCancel (id) {
         var nameInput = document.getElementById("tsRow" + id + "NameInput");
         nameInput.style.display = "none";
         if (nameInput.value != (userData[id]["firstname"] + " " + userData[id]["lastname"])) {
             // TODO: Revise functionality. Maybe go back to combined first and last name split serverside?
             // Also validate length and other criteria, display message if not valid
             var name = nameInput.value.split(" ", 2);
-            console.log(name);
             dbEditUser(id, id, name[0], name[1]);
         }
 
         var nameLabel = document.getElementById("tsRow" + id + "NameLabel");
         nameLabel.style.display = "";
-    }
+    }*/
 
     // TODO: Modify to use dbDeleteUsers to batch delete
-    tc.userDeleteSelected = function () {
+    function userDeleteSelected() {
         for (var elem of selectedUsers) {
             dbDeleteUser(elem);
         }
     }
 
-    tc.tableSelectAll = function (checkbox) {
-        var checkboxes = tsTable.getElementsByTagName("tbody")[0].getElementsByTagName("input");
-        for (var i = 0; i < checkboxes.length; i++) {
-            checkboxes[i].checked = checkbox.checked;
-            if (checkbox.checked) {
-                selectedUsers.add(checkboxes[i].dataset.userid);
-            }
-        }
-        if (!checkbox.checked) {
-            selectedUsers.clear();
-        }
-
-        onSelectedUsersChanged();
-    }
-
-    tc.tableSelectRow = function (id) {
-        console.log(id);
-        if (selectedUsers.has(id)) {
-            selectedUsers.delete(id);
+    function showAlert(type, title, content) {
+        // success, info, warning, danger
+        if (type == "success") {
+            $alertBanner.html(
+                "<div class='alert alert-success alert-dismissible fade show' role='alert'><button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button><strong>" + title + "</strong> " + content + "</div>"
+            );
+        } else if (type == "warning") {
+            $alertBanner.html(
+                "<div class='alert alert-warning alert-dismissible fade show' role='alert'><button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button><strong>" + title + "</strong> " + content + "</div>"
+            );
+        } else if (type == "danger") {
+            $alertBanner.html(
+                "<div class='alert alert-danger alert-dismissible fade show' role='alert'><button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button><strong>" + title + "</strong> " + content + "</div>"
+            );
         } else {
-            selectedUsers.add(id);
+            $alertBanner.html(
+                "<div class='alert alert-info alert-dismissible fade show' role='alert'><button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button><strong>" + title + "</strong> " + content + "</div>"
+            );
         }
-
-        onSelectedUsersChanged();
     }
 
-    tc.infoBannerShow = function (text) {
-        tc.infoBannerHide();
-        infoBannerText.textContent = text;
-        infoBannerContainer.setAttribute("class", "infobanner-container");
+    $periodNavPrev.on("click", function () {
+        prevPeriod();
+    });
+
+    $periodNavToday.on("click", function () {
+        currentPeriod();
+    });
+
+    $periodNavNext.on("click", function () {
+        nextPeriod();
+    });
+
+    function prevPeriod() {
+        focusDate.subtract(tc.periodDuration, "day");
+        periodStart.subtract(tc.periodDuration, "day");
+        periodEnd.subtract(tc.periodDuration, "day");
+
+        onPeriodChanged();
     }
 
-    tc.infoBannerHide = function () {
-        infoBannerContainer.setAttribute("class", "infobanner-container-hidden");
-    }
-
-    tc.currentPeriod = function () {
+    function currentPeriod() {
         focusDate = moment(tc.initialDate);
         periodStart = moment(tc.validPeriodStart);
         // Calculate start of the period the initialDate is in
@@ -472,15 +458,7 @@ var TcAdmin = (function () {
         onPeriodChanged();
     }
 
-    tc.prevPeriod = function () {
-        focusDate.subtract(tc.periodDuration, "day");
-        periodStart.subtract(tc.periodDuration, "day");
-        periodEnd.subtract(tc.periodDuration, "day");
-
-        onPeriodChanged();
-    }
-
-    tc.nextPeriod = function () {
+    function nextPeriod() {
         focusDate.add(tc.periodDuration, "day");
         periodStart.add(tc.periodDuration, "day");
         periodEnd.add(tc.periodDuration, "day");

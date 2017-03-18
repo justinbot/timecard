@@ -130,7 +130,7 @@ var TcUser = (function () {
     function updateHeaderHours(d) {
         var header = tcHeaders[d];
         var hours = 0.0;
-        for (let elem of selectedTimestamps) {
+        for (var elem in selectedTimestamps) {
             if (elem >= header.dataset.start && elem <= header.dataset.end) {
                 if (!localUnselectedTimestamps.has(elem)) {
                     hours += (tc.slotIncrement / 60);
@@ -138,7 +138,7 @@ var TcUser = (function () {
             }
         }
 
-        for (let elem of localSelectedTimestamps) {
+        for (var elem in localSelectedTimestamps) {
             if (elem >= header.dataset.start && elem <= header.dataset.end) {
                 hours += (tc.slotIncrement / 60);
             }
@@ -152,7 +152,7 @@ var TcUser = (function () {
         var blockLabel;
         for (var i = 0; i < day.children.length; i++) {
             var slot = day.children[i];
-            slot.style.borderBottom = "";
+            //slot.style.borderBottom = "";
             slot.textContent = "";
 
             var slotSelected = timestampSelected(slot.dataset.timestamp);
@@ -163,13 +163,13 @@ var TcUser = (function () {
 
             if (blockStart) {
                 if (i > 0) {
-                    day.children[i - 1].style.borderBottom = "1px solid #3b5ca0";
+                    //day.children[i - 1].style.borderBottom = "1px solid #3b5ca0";
                 }
 
                 blockStartTime = moment.unix(slot.dataset.timestamp);
                 blocklabel = document.createElement("div");
                 blocklabel.setAttribute("class", "blocklabel");
-                blocklabel.textContent = "...";
+                blocklabel.textContent = "";
                 slot.appendChild(blocklabel);
             }
 
@@ -178,11 +178,16 @@ var TcUser = (function () {
                 if (i == day.children.length - 1) {
                     blockEndTime.add(tc.slotIncrement, "minute");
                 }
-                // If start and end are same meridiem
-                if (blockStartTime.format("a") === blockEndTime.format("a")) {
-                    blocklabel.textContent = blockStartTime.format("h:mm") + "–" + blockEndTime.format("h:mma");
-                } else {
-                    blocklabel.textContent = blockStartTime.format("h:mma") + "–" + blockEndTime.format("h:mma");
+                var blockDuration = moment.duration(blockEndTime.diff(blockStartTime));
+
+                // Show duration label for blocks of an hour or more
+                if (blockDuration.asHours() >= 1) {
+                    // If start and end are same meridiem
+                    if (blockStartTime.format("a") === blockEndTime.format("a")) {
+                        blocklabel.textContent = blockStartTime.format("h:mm") + "– " + blockEndTime.format("h:mma");
+                    } else {
+                        blocklabel.textContent = blockStartTime.format("h:mma") + "– " + blockEndTime.format("h:mma");
+                    }
                 }
             }
         }
@@ -209,7 +214,7 @@ var TcUser = (function () {
         for (i = 0; i < slotTimes.length; i++) {
             if (slotTimes[i].minute() == 0) {
                 var hourMark = document.createElement("div");
-                hourMark.setAttribute("class", "hourmark");
+                hourMark.setAttribute("class", "text-muted hourmark");
                 hourMark.textContent = slotTimes[i].format("ha");
                 hoursStack.appendChild(hourMark);
             }
@@ -337,11 +342,11 @@ var TcUser = (function () {
         }
         xhr.send(JSON.stringify(saveDict));
 
-        for (let elem of localSelectedTimestamps) {
+        for (var elem in localSelectedTimestamps) {
             selectedTimestamps.add(elem);
         }
 
-        for (let elem of localUnselectedTimestamps) {
+        for (var elem in localUnselectedTimestamps) {
             selectedTimestamps.delete(elem);
         }
 

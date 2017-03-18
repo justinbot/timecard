@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-    <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
@@ -11,12 +10,14 @@
     <title>Timecard Admin - {{ session['CAS_USERNAME'].lower() }}</title>
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css">
 
     <!-- Font Awesome -->
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
 
-    <link href="/static/stylesheets/user.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="/static/stylesheets/base.css">
+    <link rel="stylesheet" href="/static/stylesheets/user.css">
     <!--<link href="https://fonts.googleapis.com/css?family=Roboto:400,700|Titillium+Web:600" rel="stylesheet">-->
     <script src="/static/js/moment.min.js"></script>
 </head>
@@ -37,7 +38,7 @@
                         <a class="nav-link" href="{{ url_for('show_admin_settings') }}">Settings</a>
                     </div>
                     <form class="form-inline ml-auto">
-                        <a class="nav-link px-0" href="{{ url_for('cas.logout') }}">Logout {{ session['CAS_USERNAME'].lower() }} <i class="fa fa-sign-out" aria-hidden="true"></i></a>
+                        <a class="nav-link text-white px-0" href="{{ url_for('cas.logout') }}">Logout {{ session['CAS_USERNAME'].lower() }} <i class="fa fa-sign-out" aria-hidden="true"></i></a>
                     </form>
                 </div>
             </nav>
@@ -48,68 +49,64 @@
         <div class="d-flex justify-content-between align-items-center py-3" style="border-bottom: 1px solid #e3e8eb">
             <span class="text-muted" id="periodRange">Jan 1 – 7, 2000</span>
             <div class="btn-group" role="group">
-                <button type="button" class="btn btn-outline-primary" onclick="TcAdmin.prevPeriod();"><i class="fa fa-chevron-left" aria-hidden="true"></i></button>
-                <button type="button" class="btn btn-outline-primary" id="periodNavToday" onclick="TcAdmin.currentPeriod();">Today</button>
-                <button type="button" class="btn btn-outline-primary" onclick="TcAdmin.nextPeriod();"><i class="fa fa-chevron-right" aria-hidden="true"></i></button>
+                <button type="button" class="btn btn-outline-primary" id="periodNavPrev"><i class="fa fa-chevron-left" aria-hidden="true"></i></button>
+                <button type="button" class="btn btn-outline-primary" id="periodNavToday">Today</button>
+                <button type="button" class="btn btn-outline-primary" id="periodNavNext"><i class="fa fa-chevron-right" aria-hidden="true"></i></button>
             </div>
         </div>
         <div class="d-flex align-items-center py-3">
             <span id="tableStatus">Users: 0</span>
             <div class="btn-group ml-4">
-                <button type="button" class="btn btn-link text-primary px-1 mx-1"><i class="fa fa-eye" aria-hidden="true"></i> View As</button>
-                <button type="button" class="btn btn-link text-warning px-1 mx-1"><i class="fa fa-pencil" aria-hidden="true"></i> Edit</button>
-                <button type="button" class="btn btn-link text-danger px-1 mx-1"><i class="fa fa-trash" aria-hidden="true"></i> Delete</button>
+                <button type="button" class="btn btn-link text-primary px-1 mx-1" id="userViewAsButton"><i class="fa fa-eye mr-1" aria-hidden="true"></i>View As</button>
+                <button type="button" class="btn btn-link text-warning px-1 mx-1" id="userEditButton"><i class="fa fa-pencil mr-1" aria-hidden="true"></i>Edit</button>
+                <button type="button" class="btn btn-link text-danger px-1 mx-1" id="userDeleteButton"><i class="fa fa-trash mr-1" aria-hidden="true"></i>Delete</button>
             </div>
-            <button type="button" class="btn btn-success ml-auto" data-toggle="collapse" data-target="#userAddForm"><i class="fa fa-plus" aria-hidden="true"></i> Add User</button>
+            <button type="button" class="btn btn-success btn-sm ml-auto" id="userAddButton" data-toggle="collapse" data-target="#userAddForm"><i class="fa fa-plus" aria-hidden="true"></i> Add User</button>
         </div>
         <div class="collapse" id="userAddForm">
-            <div class="card card-outline-success card-block justify-content-end py-2 px-3">
+            <div class="card card-outline-success card-block py-2 px-3">
                 <form class="form-inline justify-content-end px-0">
-                    <label class="text-success mr-4"><strong>Add User</strong></label>
-                    <label class="form-control-sm mr-1" for="inlineFormCustomSelect">First Name</label>
-                    <input class="form-control form-control-sm mr-4" type="text" value="">
-                    <label class="form-control-sm mr-1" for="inlineFormCustomSelect">Last Name</label>
-                    <input class="form-control form-control-sm mr-4" type="text" value="">
-                    <label class="form-control-sm mr-1" for="inlineFormCustomSelect">User ID</label>
-                    <input class="form-control form-control-sm mr-5" type="text" value="">
-                    <button type="button" class="btn btn-success btn-sm ml-auto">Submit</button>
+                    <label class="text-success"><strong>Add User</strong></label>
+                    <span class="text-muted ml-2" id="userAddStatus"></span>
+                    <label class="form-control-sm ml-auto" for="inlineFormCustomSelect">First Name</label>
+                    <input class="form-control form-control-sm" id="userAddFormFirstname" type="text" maxlength="64" value="">
+                    <label class="form-control-sm ml-2" for="inlineFormCustomSelect">Last Name</label>
+                    <input class="form-control form-control-sm" id="userAddFormLastname" type="text" maxlength="64" value="">
+                    <label class="form-control-sm ml-2" for="inlineFormCustomSelect">User ID</label>
+                    <input class="form-control form-control-sm" id="userAddFormId" type="text" maxlength="16" value="" style="width: 120px;">
+                    <button type="button" class="btn btn-success btn-sm ml-4" id="userAddFormSubmit">Submit</button>
                 </form>
             </div>
         </div>
-
-        <div class="alert alert-info alert-dismissible fade show" role="alert">
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-            <strong>Holy guacamole!</strong> You should check in on some of those fields below.
-        </div>
+        <div id="alertBanner"></div>
         <div class="d-flex mt-3">
-            <table class="table table-responsive" id="tsTable">
+            <table class="table" id="tsTable">
                 <thead id="tsHead">
                     <tr>
                         <th>
-                            <input type="checkbox" id="tsHeadCheckbox" onchange="TcAdmin.tableSelectAll(this)">
+                            <label class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="tsHeadCheckbox">
+                                <span class="custom-control-indicator"></span>
+                            </label>
                         </th>
                         <th>Name &or;</th>
-                        <th style="width: 70px">User ID</th>
+                        <th>User ID</th>
                         <th>Last Modified</th>
                         {% for i in range(period_duration) %}
-                        <th id="tsDay{{i}}" style="text-align: center; width: 70px" data-date="">Jan 1</th>
+                        <th id="tsDay{{i}}" data-date="">Jan 1</th>
                         {% endfor %}
-                        <th style="text-align: center; width: 120px">Total Hours</th>
+                        <th>Total Hours</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="tsBody">
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- jQuery first, then Tether, then Bootstrap JS. -->
     <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
-
     <script src="/static/js/admin_users.js"></script>
     <script>
         TcAdmin.initialDate = moment("{{ initial_date }}");
