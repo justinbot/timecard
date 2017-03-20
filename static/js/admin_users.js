@@ -2,11 +2,16 @@ var TcAdmin = (function () {
     var tc = {};
 
     /* cached queries */
-    var tsDays = [];
+    var $tsDays;
+
+    var $loadingSpinner = $("#loadingSpinner"),
+        $loadingCheck = $("#loadingCheck"),
+        $loadingError = $("#loadingError");
 
     var $periodNavPrev = $("#periodNavPrev"),
         $periodNavToday = $("#periodNavToday"),
-        $periodNavNext = $("#periodNavNext");
+        $periodNavNext = $("#periodNavNext"),
+        $periodRange = $("#periodRange");
 
     var $userAddButton = $("#userAddButton"),
         $userAddForm = $("#userAddForm"),
@@ -40,9 +45,11 @@ var TcAdmin = (function () {
     tc.lockDate;
 
     tc.init = function () {
+        var tsDays = [];
         for (var i = 0; i < tc.periodDuration; i++) {
             tsDays.push($("#tsDay" + i)[0]);
         }
+        $tsDays = $(tsDays);
 
         currentPeriod();
     }
@@ -67,7 +74,7 @@ var TcAdmin = (function () {
         var $newTsBody = $("<tbody>", {
             id: "tsBody"
         });
-        
+
         for (var elem in userData) {
             var userId = elem;
             var userFirst = userData[elem]["firstname"];
@@ -98,7 +105,10 @@ var TcAdmin = (function () {
             }));
 
             $newRow.append($("<td>", {
-                html: userLast + ", " + userFirst
+                html: $("<a>", {
+                    html: userLast + ", " + userFirst,
+                    "href": "/user/" + userId
+                })
             }));
 
             $newRow.append($("<td>", {
@@ -107,7 +117,7 @@ var TcAdmin = (function () {
 
             $newRow.append($("<td>", {
                 html: moment(userData[elem]["lastmodified"]).from(tc.initialDate)
-                    // TODO: Need to update this value periodically
+                // TODO: Need to update this value periodically
             }));
 
             for (var i = 0; i < tc.periodDuration; i++) {
@@ -127,8 +137,8 @@ var TcAdmin = (function () {
     }
 
     function updateDays() {
-        for (var i = 0; i < tsDays.length; i++) {
-            var day = tsDays[i];
+        for (var i = 0; i < $tsDays.length; i++) {
+            var day = $tsDays[i];
             var dayDate = moment(periodStart).add(i, "day");
             day.textContent = dayDate.format("MMM D"); //format("dddd, MMM D");
             //day.dataset.date = dayDate.format("YYYY-MM-DD")
@@ -152,11 +162,11 @@ var TcAdmin = (function () {
             $tsHeadCheckbox.prop("indeterminate", true);
         }
 
-        $("#tsBody [type='checkbox']").each(function (index) {
-            if (selectedUsers.has($(this).data("userid").toString())) {
-                $(this).prop("checked", true);
+        $("#tsBody [type='checkbox']").each(function (index, element) {
+            if (selectedUsers.has($(element).data("userid").toString())) {
+                $(element).prop("checked", true);
             } else {
-                $(this).prop("checked", false);
+                $(element).prop("checked", false);
             }
         });
     }
@@ -164,47 +174,51 @@ var TcAdmin = (function () {
     function updateEdit() {
         if (selectedUsers.size == 0) {
             $tableStatus.html("Users: " + Object.keys(userData).length);
-            $userViewAsButton.css("display", "none");
-            $userEditButton.css("display", "none");
-            $userDeleteButton.css("display", "none");
+            $userViewAsButton.hide();
+            $userEditButton.hide();
+            $userDeleteButton.hide();
         } else if (selectedUsers.size == 1) {
             var user = selectedUsers.values().next().value;
             $tableStatus.html(userData[user]["firstname"] + " " + userData[user]["lastname"]);
             $userViewAsButton.href = "/user/" + user;
-            $userViewAsButton.css("display", "");
-            $userEditButton.css("display", "");
+            $userViewAsButton.show();
+            $userEditButton.show();
             $userEditButton.data("userid", user);
-            $userDeleteButton.css("display", "");
+            $userDeleteButton.show();
         } else {
             $tableStatus.html(selectedUsers.size + " users");
-            $userViewAsButton.css("display", "none");
-            $userEditButton.css("display", "none");
-            $userDeleteButton.css("display", "");
+            $userViewAsButton.hide();
+            $userEditButton.hide();
+            $userDeleteButton.show();
         }
     }
 
     function updatePeriod() {
-        periodNavToday.disabled = focusDate.isSame(tc.initialDate, "day");
+        $periodNavToday.prop("disabled", focusDate.isSame(tc.initialDate, "day"));
 
         var startDate = moment(periodStart);
         var endDate = moment(periodEnd);
         if (startDate.isSame(endDate, "year")) {
             if (startDate.isSame(endDate, "month")) {
-                periodRange.textContent = startDate.format("MMM D") + "–" + endDate.format("D, YYYY");
+                $periodRange.html(startDate.format("MMM D") + "–" + endDate.format("D, YYYY"));
             } else {
-                periodRange.textContent = startDate.format("MMM D") + "–" + endDate.format("MMM D, YYYY");
+                $periodRange.html(startDate.format("MMM D") + "–" + endDate.format("MMM D, YYYY"));
             }
         } else {
-            periodRange.textContent = startDate.format("MMM D, YYYY") + "–" + endDate.format("MMM D, YYYY");
+            $periodRange.html(startDate.format("MMM D, YYYY") + "–" + endDate.format("MMM D, YYYY"));
         }
     }
 
     function dbUpdateUsers() {
+        $loadingSpinner.show();
+        $loadingCheck.hide();
+        $loadingError.hide();
+
         var updateDict = {
             "days": {}
         };
 
-        for (var i = 0; i < tsDays.length; i++) {
+        for (var i = 0; i < $tsDays.length; i++) {
             var lower = moment(periodStart).add(i, "day").startOf("day").unix();
             var upper = moment(periodStart).add(i, "day").endOf("day").unix();
 
@@ -224,11 +238,16 @@ var TcAdmin = (function () {
     }
 
     function dbUpdateUsersOnload(status, response) {
+        $loadingSpinner.hide();
+        $loadingCheck.hide();
+        $loadingError.hide();
+
         if (status == 200) {
+            $loadingCheck.show();
             userData = response;
             onUserDataChanged();
         } else {
-            // TODO: Display error regarding status (spinner icon?)
+            $loadingError.show();
         }
     }
 

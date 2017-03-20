@@ -6,60 +6,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <link href="http://www.rpi.edu/favicon.ico" type="image/ico" rel="icon">
-
     <title>Timecard Admin - {{ session['CAS_USERNAME'].lower() }}</title>
 
-    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css">
 
     <!-- Font Awesome -->
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
 
-
     <link rel="stylesheet" href="/static/stylesheets/base.css">
-    <link rel="stylesheet" href="/static/stylesheets/user.css">
+    <link rel="stylesheet" href="/static/stylesheets/admin_users.css">
     <!--<link href="https://fonts.googleapis.com/css?family=Roboto:400,700|Titillium+Web:600" rel="stylesheet">-->
     <script src="/static/js/moment.min.js"></script>
 </head>
 
 <body>
-    <div class="container-fluid" style="background-color: #273a61">
+    <nav class="navbar navbar-toggleable-md navbar-inverse px-0" id="tcNavbar" style="background-color: #273a61">
         <div class="container">
-            <nav class="navbar navbar-toggleable-md navbar-inverse px-0" id="tcNavbar">
-                <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarNav">
+            <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarNav">
                     <i class="fa fa-bars" aria-hidden="true"></i>
                 </button>
-                <a class="navbar-brand" href="#">
-                    <img src="/static/img/logo_admin.svg" height="24" class="d-inline-block align-top" alt="">
-                </a>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <div class="navbar-nav">
-                        <a class="nav-link active" href="{{ url_for('show_admin_users') }}">Users</a>
-                        <a class="nav-link" href="{{ url_for('show_admin_settings') }}">Settings</a>
-                    </div>
-                    <form class="form-inline ml-auto">
-                        <a class="nav-link text-white px-0" href="{{ url_for('cas.logout') }}">Logout {{ session['CAS_USERNAME'].lower() }} <i class="fa fa-sign-out" aria-hidden="true"></i></a>
-                    </form>
+            <a class="navbar-brand" href="#">
+                <img src="/static/img/logo_admin.svg" height="24" class="d-inline-block align-top" alt="">
+            </a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="navbar-nav">
+                    <a class="nav-link active" href="{{ url_for('show_admin_users') }}">Users</a>
+                    <a class="nav-link" href="{{ url_for('show_admin_settings') }}">Settings</a>
                 </div>
-            </nav>
+                <span class="navbar-text text-white ml-auto">
+                    <i class="fa fa-refresh fa-spin" id="loadingSpinner" aria-hidden="true"></i>
+                    <i class="fa fa-check" id="loadingCheck" aria-hidden="true"></i>
+                    <i class="fa fa-exclamation" id="loadingError" aria-hidden="true"></i>
+                </span>
+                <form class="form-inline ml-3">
+                    <a class="nav-link text-white px-0" href="{{ url_for('cas.logout') }}">Logout {{ session['CAS_USERNAME'].lower() }} <i class="fa fa-sign-out" aria-hidden="true"></i></a>
+                </form>
+            </div>
         </div>
-    </div>
+    </nav>
 
     <div class="container">
         <div class="d-flex justify-content-between align-items-center py-3" style="border-bottom: 1px solid #e3e8eb">
             <span class="text-muted" id="periodRange">Jan 1 – 7, 2000</span>
             <div class="btn-group" role="group">
-                <button type="button" class="btn btn-outline-primary" id="periodNavPrev"><i class="fa fa-chevron-left" aria-hidden="true"></i></button>
-                <button type="button" class="btn btn-outline-primary" id="periodNavToday">Today</button>
-                <button type="button" class="btn btn-outline-primary" id="periodNavNext"><i class="fa fa-chevron-right" aria-hidden="true"></i></button>
+                <button type="button" class="btn btn-primary btn-period-nav" id="periodNavPrev"><i class="fa fa-chevron-left" aria-hidden="true"></i></button>
+                <button type="button" class="btn btn-primary btn-period-nav" id="periodNavToday">Today</button>
+                <button type="button" class="btn btn-primary btn-period-nav" id="periodNavNext"><i class="fa fa-chevron-right" aria-hidden="true"></i></button>
             </div>
         </div>
         <div class="d-flex align-items-center py-3">
             <span id="tableStatus">Users: 0</span>
             <div class="btn-group ml-4">
-                <button type="button" class="btn btn-link text-primary px-1 mx-1" id="userViewAsButton"><i class="fa fa-eye mr-1" aria-hidden="true"></i>View As</button>
-                <button type="button" class="btn btn-link text-warning px-1 mx-1" id="userEditButton"><i class="fa fa-pencil mr-1" aria-hidden="true"></i>Edit</button>
-                <button type="button" class="btn btn-link text-danger px-1 mx-1" id="userDeleteButton"><i class="fa fa-trash mr-1" aria-hidden="true"></i>Delete</button>
+                <button type="button" class="btn btn-link text-primary p-0 mx-1" id="userViewAsButton"><i class="fa fa-eye mr-1" aria-hidden="true"></i>View As</button>
+                <button type="button" class="btn btn-link text-warning p-0 mx-1" id="userEditButton"><i class="fa fa-pencil mr-1" aria-hidden="true"></i>Edit</button>
+                <button type="button" class="btn btn-link text-danger p-0 mx-1" id="userDeleteButton"><i class="fa fa-trash mr-1" aria-hidden="true"></i>Delete</button>
             </div>
             <button type="button" class="btn btn-success btn-sm ml-auto" id="userAddButton" data-toggle="collapse" data-target="#userAddForm"><i class="fa fa-plus" aria-hidden="true"></i> Add User</button>
         </div>
@@ -79,29 +79,29 @@
             </div>
         </div>
         <div id="alertBanner"></div>
-        <div class="d-flex mt-3">
-            <table class="table" id="tsTable">
+        <!--<div class="d-flex">-->
+            <table class="table table-hover" id="tsTable">
                 <thead id="tsHead">
-                    <tr>
-                        <th>
+                    <tr class="">
+                        <th class="">
                             <label class="custom-control custom-checkbox">
                                 <input type="checkbox" class="custom-control-input" id="tsHeadCheckbox">
                                 <span class="custom-control-indicator"></span>
                             </label>
                         </th>
-                        <th>Name &or;</th>
-                        <th>User ID</th>
-                        <th>Last Modified</th>
+                        <th class="">Name &or;</th>
+                        <th class="">User ID</th>
+                        <th class="">Last Modified</th>
                         {% for i in range(period_duration) %}
-                        <th id="tsDay{{i}}" data-date="">Jan 1</th>
+                        <th class="" id="tsDay{{i}}" data-date="">Jan 1</th>
                         {% endfor %}
-                        <th>Total Hours</th>
+                        <th class="">Total Hours</th>
                     </tr>
                 </thead>
                 <tbody id="tsBody">
                 </tbody>
             </table>
-        </div>
+        <!--</div>-->
     </div>
 
     <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
@@ -115,6 +115,7 @@
         TcAdmin.lockDate = "{{ lock_date }}";
 
         TcAdmin.init();
+
     </script>
 </body>
 

@@ -6,3 +6,28 @@
     -ms-user-select: none;
     user-select: none;
 }
+
+.btn-period-nav {
+    background-color: #3b5ca0;
+    border-color: #3b5ca0;
+}
+
+.btn-period-nav:active {
+    background-color: #183e8d;
+    border-color: #183e8d;
+}
+
+.btn-period-nav:hover {
+    background-color: #4c71be;
+    border-color: #4c71be;
+}
+
+.btn-period-nav:focus {
+    box-shadow: none;
+}
+
+.btn-period-nav:disabled {
+    background-color: #183e8d;
+    border-color: #183e8d;
+    cursor: default;
+}
