@@ -67,8 +67,8 @@ var TcUser = (function () {
             var headerDate = moment(periodStart).add(index, "day");
             $(element).data("start", headerDate.unix());
             $(element).data("end", moment(headerDate).endOf("day").unix());
-            $(element).children().eq(0).html(headerDate.format("ddd"));
-            $(element).children().eq(1).html(headerDate.format("MMM D"));
+            $(element).children().eq(0).text(headerDate.format("ddd"));
+            $(element).children().eq(1).text(headerDate.format("MMM D"));
         })
     }
 
@@ -92,7 +92,7 @@ var TcUser = (function () {
                 }
             }
 
-            $(element).children().eq(2).html(hours.toFixed(1) + " hours");
+            $(element).children().eq(2).text(hours.toFixed(1) + " hours");
 
             /*$.each(selectedTimestamps, function (ind, value) {
                 if (value >= $(element).data("start") && value <= $(element).data("end")) {
@@ -108,30 +108,32 @@ var TcUser = (function () {
                 }
             });
 
-            $(element).children().eq(2).html(hours.toFixed(1) + " hours");*/
+            $(element).children().eq(2).text(hours.toFixed(1) + " hours");*/
         });
     }
 
     function updateDayBlocks(index) {
         var day = $("#tcDay" + index);
+
         var blockStartTime;
-        var blockLabel;
 
         day.children().each(function (index, element) {
             var slot = $(element);
 
-            slot.html("");
+            slot.text("");
+            slot.removeClass("rounded-top");
+            slot.removeClass("rounded-bottom");
 
-            var slotSelected = timestampSelected(slot.data("timestamp"));
+            var lastSlot = (index == day.children().length - 1);
             var prevSlotSelected = index > 0 && timestampSelected(day.children().eq(index - 1).data("timestamp"));
+            var slotSelected = timestampSelected(slot.data("timestamp"));
+            var nextSlotSelected = !lastSlot && timestampSelected(day.children().eq(index + 1).data("timestamp"));
 
-            var blockStart = slotSelected && (index == 0 || !prevSlotSelected);
-            var blockEnd = (!slotSelected && prevSlotSelected) || (slotSelected && index == day.children().length - 1);
+            var blockStart = slotSelected && !prevSlotSelected;
+            var blockEnd = slotSelected && !nextSlotSelected;
 
             if (blockStart) {
-                if (index > 0) {
-                    //day.children[i - 1].style.borderBottom = "1px solid #3b5ca0";
-                }
+                slot.addClass("rounded-top");
 
                 blockStartTime = moment.unix(slot.data("timestamp"));
 
@@ -143,19 +145,18 @@ var TcUser = (function () {
             }
 
             if (blockEnd) {
-                var blockEndTime = moment.unix(slot.data("timestamp"));
-                if (index == day.children().length - 1) {
-                    blockEndTime.add(tc.slotIncrement, "minute");
-                }
+                slot.addClass("rounded-bottom");
+
+                var blockEndTime = moment.unix(slot.data("timestamp")).add(tc.slotIncrement, "minute");
                 var blockDuration = moment.duration(blockEndTime.diff(blockStartTime));
 
                 // Show duration label for blocks of an hour or more
                 if (blockDuration.asHours() >= 1) {
                     // If start and end are same meridiem
                     if (blockStartTime.format("a") === blockEndTime.format("a")) {
-                        blockLabel.html(blockStartTime.format("h:mm") + "– " + blockEndTime.format("h:mma"));
+                        blockLabel.text(blockStartTime.format("h:mm") + "– " + blockEndTime.format("h:mma"));
                     } else {
-                        blockLabel.html(blockStartTime.format("h:mma") + "– " + blockEndTime.format("h:mma"));
+                        blockLabel.text(blockStartTime.format("h:mma") + "– " + blockEndTime.format("h:mma"));
                     }
                 }
             }
@@ -201,7 +202,6 @@ var TcUser = (function () {
 
             var $dayCell = $("<td>", {
                 class: "day-cell"
-                //"onmouseleave": "TcUser.slotMouseUp()",
             });
             $tcRow.append($dayCell);
 
@@ -222,10 +222,7 @@ var TcUser = (function () {
                 var newTime = moment(dayTime).hour(slotTime.hour()).minute(slotTime.minute()).second(0);
 
                 var $newSlot = $("<div>", {
-                    "data-timestamp": newTime.unix(),
-                    //"onmouseover": "TcUser.slotMouseOver(this)",
-                    //"onmousedown": "TcUser.slotMouseDown(this)",
-                    //"onmouseup": "TcUser.slotMouseUp(this)"
+                    "data-timestamp": newTime.unix()
                 });
 
                 // Slot is selected if: selected locally, or selected on server and not unselected locally
@@ -254,12 +251,12 @@ var TcUser = (function () {
         var endDate = moment(periodEnd);
         if (startDate.isSame(endDate, "year")) {
             if (startDate.isSame(endDate, "month")) {
-                $periodRange.html(startDate.format("MMM D") + "–" + endDate.format("D, YYYY"));
+                $periodRange.text(startDate.format("MMM D") + "–" + endDate.format("D, YYYY"));
             } else {
-                $periodRange.html(startDate.format("MMM D") + "–" + endDate.format("MMM D, YYYY"));
+                $periodRange.text(startDate.format("MMM D") + "–" + endDate.format("MMM D, YYYY"));
             }
         } else {
-            $periodRange.html(startDate.format("MMM D, YYYY") + "–" + endDate.format("MMM D, YYYY"));
+            $periodRange.text(startDate.format("MMM D, YYYY") + "–" + endDate.format("MMM D, YYYY"));
         }
     }
 
@@ -279,13 +276,10 @@ var TcUser = (function () {
         xhr.responseType = "json";
         xhr.onload = function () {
             $loadingSpinner.hide();
-            $loadingCheck.hide();
-            $loadingError.hide();
 
             if (xhr.status == 200) {
                 $loadingCheck.show();
-                //lastModified = moment(xhr.response["lastmodified"]);
-                $tcStatus.html("Last modified " + moment(xhr.response["lastmodified"]).from(tc.initialDate));
+                $tcStatus.text("Last modified " + moment(xhr.response["lastmodified"]).from(tc.initialDate));
 
                 selectedTimestamps = new Set();
                 for (var i = 0; i < xhr.response["selected"].length; i++) {
@@ -306,6 +300,8 @@ var TcUser = (function () {
             return;
         }
 
+        $tcStatus.text("Saving...");
+
         var saveDict = {};
         if (localSelectedTimestamps.size > 0) {
             saveDict["selected"] = Array.from(localSelectedTimestamps);
@@ -321,9 +317,9 @@ var TcUser = (function () {
         xhr.responseType = "json";
         xhr.onload = function () {
             if (xhr.status == 200) {
-                $tcStatus.html("All changes saved");
+                $tcStatus.text("All changes saved");
             } else {
-                $tcStatus.html("Failed to save changes");
+                $tcStatus.text("Failed to save changes");
             }
         }
         xhr.send(JSON.stringify(saveDict));
@@ -450,6 +446,7 @@ var TcUser = (function () {
         focusDate.add(tc.periodDuration, "day");
         periodStart.add(tc.periodDuration, "day");
         periodEnd.add(tc.periodDuration, "day");
+        
         onPeriodChanged();
     }
 

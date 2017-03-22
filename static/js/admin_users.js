@@ -30,6 +30,11 @@ var TcAdmin = (function () {
     var $tableStatus = $("#tableStatus");
     var $tsHeadCheckbox = $("#tsHeadCheckbox");
 
+    var $tsHeaderName = $("#tsHeaderName"),
+        $tsHeaderId = $("#tsHeaderId"),
+        $tsHeaderModified = $("#tsHeaderModified"),
+        $tsHeaderTotal = $("#tsHeaderTotal");
+
     /* local variables */
     var focusDate;
     var periodStart,
@@ -47,7 +52,7 @@ var TcAdmin = (function () {
     tc.init = function () {
         var tsDays = [];
         for (var i = 0; i < tc.periodDuration; i++) {
-            tsDays.push($("#tsDay" + i)[0]);
+            tsDays.push($("#tsDay" + i));
         }
         $tsDays = $(tsDays);
 
@@ -117,7 +122,7 @@ var TcAdmin = (function () {
 
             $newRow.append($("<td>", {
                 html: moment(userData[elem]["lastmodified"]).from(tc.initialDate)
-                // TODO: Need to update this value periodically
+                    // TODO: Need to update this value periodically
             }));
 
             for (var i = 0; i < tc.periodDuration; i++) {
@@ -140,7 +145,7 @@ var TcAdmin = (function () {
         for (var i = 0; i < $tsDays.length; i++) {
             var day = $tsDays[i];
             var dayDate = moment(periodStart).add(i, "day");
-            day.textContent = dayDate.format("MMM D"); //format("dddd, MMM D");
+            day.text(dayDate.format("MMM D")); //format("dddd, MMM D");
             //day.dataset.date = dayDate.format("YYYY-MM-DD")
         }
     }
@@ -173,20 +178,20 @@ var TcAdmin = (function () {
 
     function updateEdit() {
         if (selectedUsers.size == 0) {
-            $tableStatus.html("Users: " + Object.keys(userData).length);
+            $tableStatus.text("Users: " + Object.keys(userData).length);
             $userViewAsButton.hide();
             $userEditButton.hide();
             $userDeleteButton.hide();
         } else if (selectedUsers.size == 1) {
             var user = selectedUsers.values().next().value;
-            $tableStatus.html(userData[user]["firstname"] + " " + userData[user]["lastname"]);
+            $tableStatus.text(userData[user]["firstname"] + " " + userData[user]["lastname"]);
             $userViewAsButton.href = "/user/" + user;
             $userViewAsButton.show();
             $userEditButton.show();
             $userEditButton.data("userid", user);
             $userDeleteButton.show();
         } else {
-            $tableStatus.html(selectedUsers.size + " users");
+            $tableStatus.text(selectedUsers.size + " users");
             $userViewAsButton.hide();
             $userEditButton.hide();
             $userDeleteButton.show();
@@ -200,12 +205,12 @@ var TcAdmin = (function () {
         var endDate = moment(periodEnd);
         if (startDate.isSame(endDate, "year")) {
             if (startDate.isSame(endDate, "month")) {
-                $periodRange.html(startDate.format("MMM D") + "–" + endDate.format("D, YYYY"));
+                $periodRange.text(startDate.format("MMM D") + "–" + endDate.format("D, YYYY"));
             } else {
-                $periodRange.html(startDate.format("MMM D") + "–" + endDate.format("MMM D, YYYY"));
+                $periodRange.text(startDate.format("MMM D") + "–" + endDate.format("MMM D, YYYY"));
             }
         } else {
-            $periodRange.html(startDate.format("MMM D, YYYY") + "–" + endDate.format("MMM D, YYYY"));
+            $periodRange.text(startDate.format("MMM D, YYYY") + "–" + endDate.format("MMM D, YYYY"));
         }
     }
 
@@ -222,7 +227,6 @@ var TcAdmin = (function () {
             var lower = moment(periodStart).add(i, "day").startOf("day").unix();
             var upper = moment(periodStart).add(i, "day").endOf("day").unix();
 
-
             updateDict["days"]["ts-day-" + i] = [lower, upper];
         }
 
@@ -232,23 +236,17 @@ var TcAdmin = (function () {
         // TODO: also set xhr.timeout and xhr.ontimeout?
         xhr.responseType = "json";
         xhr.onload = function () {
-            dbUpdateUsersOnload(xhr.status, xhr.response);
+            $loadingSpinner.hide();
+
+            if (xhr.status == 200) {
+                $loadingCheck.show();
+                userData = xhr.response;
+                onUserDataChanged();
+            } else {
+                $loadingError.show();
+            }
         }
         xhr.send(JSON.stringify(updateDict));
-    }
-
-    function dbUpdateUsersOnload(status, response) {
-        $loadingSpinner.hide();
-        $loadingCheck.hide();
-        $loadingError.hide();
-
-        if (status == 200) {
-            $loadingCheck.show();
-            userData = response;
-            onUserDataChanged();
-        } else {
-            $loadingError.show();
-        }
     }
 
     // TODO: Convert to dbAddUsers to take dict of ids to firstnames and lastnames
@@ -265,18 +263,14 @@ var TcAdmin = (function () {
         // TODO: also set xhr.timeout and xhr.ontimeout?
         xhr.responseType = "json";
         xhr.onload = function () {
-            dbAddUserOnload(xhr.status, xhr.response);
+            if (xhr.status == 200) {
+                showAlert("success", "", "Successfully added user")
+            } else {
+                showAlert("danger", "Error", "Failed to add user (Error " + xhr.status + ")");
+            }
+            dbUpdateUsers();
         }
         xhr.send(JSON.stringify(addDict));
-    }
-
-    function dbAddUserOnload(status, response) {
-        if (status == 200) {
-            showAlert("success", "", "Successfully added user")
-        } else {
-            showAlert("danger", "Error", "Failed to add user (Error " + status + ")");
-        }
-        dbUpdateUsers();
     }
 
     function dbEditUser(id, newId, newFirst, newLast) {
@@ -293,18 +287,14 @@ var TcAdmin = (function () {
         // TODO: also set xhr.timeout and xhr.ontimeout?
         xhr.responseType = "json";
         xhr.onload = function () {
-            dbEditUserOnload(xhr.status, xhr.response);
+            if (xhr.status == 200) {
+                showAlert("User successfully edited");
+            } else {
+                showAlert("Failed to edit user (Error " + xhr.status + ")");
+            }
+            dbUpdateUsers();
         }
         xhr.send(JSON.stringify(editDict));
-    }
-
-    function dbEditUserOnload(status, response) {
-        if (status == 200) {
-            tc.infoBannerShow("User successfully edited");
-        } else {
-            tc.infoBannerShow("Failed to edit user (Error " + status + ")");
-        }
-        dbUpdateUsers();
     }
 
     // TODO: Convert to DeleteUsers and take array of ids
@@ -321,18 +311,14 @@ var TcAdmin = (function () {
         // TODO: also set xhr.timeout and xhr.ontimeout?
         xhr.responseType = "json";
         xhr.onload = function () {
-            dbDeleteUserOnload(xhr.status, xhr.response);
+            if (xhr.status == 200) {
+                showAlert("success", "", "Successfully deleted user")
+            } else {
+                showAlert("danger", "Error", "Failed to delete user (Error " + xhr.status + ")");
+            }
+            dbUpdateUsers();
         }
         xhr.send(JSON.stringify(deleteDict));
-    }
-
-    function dbDeleteUserOnload(status, response) {
-        if (status == 200) {
-            showAlert("success", "", "Successfully deleted user")
-        } else {
-            showAlert("danger", "Error", "Failed to delete user (Error " + status + ")");
-        }
-        dbUpdateUsers();
     }
 
     $("#tsTable").on("change", "[type='checkbox']", function () {
@@ -357,6 +343,21 @@ var TcAdmin = (function () {
         onSelectedUsersChanged();
     });
 
+    $tsHeaderName.click(function () {
+        console.log("TODO: Sort by name");
+    });
+    $tsHeaderId.click(function () {
+        console.log("TODO: Sort by Id");
+    });
+
+    $tsHeaderModified.click(function () {
+        console.log("TODO: Sort by Modified");
+    });
+
+    $tsHeaderTotal.click(function () {
+        console.log("TODO: Sort by Total");
+    });
+
     $userAddForm.on("show.bs.collapse", function () {
         $userAddButton.html("<i class='fa fa-times'></i>");
     });
@@ -364,7 +365,7 @@ var TcAdmin = (function () {
     $userAddForm.on("hide.bs.collapse", function () {
         $userAddButton.html("<i class='fa fa-plus'></i> Add User");
 
-        $userAddStatus.html("");
+        $userAddStatus.text("");
         $userAddFormFirstname.val("");
         $userAddFormLastname.val("");
         $userAddFormId.val("");
@@ -377,7 +378,7 @@ var TcAdmin = (function () {
             dbAddUser($userAddFormFirstname.val(), $userAddFormLastname.val(), $userAddFormId.val());
             $userAddForm.collapse("hide");
         } else {
-            $userAddStatus.textContent = "Please fill required fields.";
+            $userAddStatus.text("Please fill required fields.");
         }
     });
 
@@ -481,6 +482,7 @@ var TcAdmin = (function () {
         focusDate.add(tc.periodDuration, "day");
         periodStart.add(tc.periodDuration, "day");
         periodEnd.add(tc.periodDuration, "day");
+        
         onPeriodChanged();
     }
 

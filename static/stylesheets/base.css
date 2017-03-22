@@ -7,6 +7,11 @@
     user-select: none;
 }
 
+.spin {
+    -webkit-animation: fa-spin 2s infinite linear;
+    animation: fa-spin 2s infinite linear;
+}
+
 .btn-period-nav {
     background-color: #3b5ca0;
     border-color: #3b5ca0;

@@ -141,7 +141,7 @@ def user_update():
 
     user = User.query.filter_by(id=session['CAS_USERNAME']).first()
     if not user:
-        print 'ERROR: Failed to lookup user', session['CAS_USERNAME']
+        app.logger.error('ERROR: Failed to lookup user', session['CAS_USERNAME'])
         abort(400)
 
     # we only want timestamps inside these bounds
@@ -179,7 +179,7 @@ def user_save():
 
     user = User.query.filter_by(id=session['CAS_USERNAME']).first()
     if not user:
-        print 'ERROR: Failed to lookup user', session['CAS_USERNAME']
+        app.logger.error('ERROR: Failed to lookup user', session['CAS_USERNAME'])
         abort(400)
 
     # can check if an item exists with session.query(q.exists())
@@ -197,7 +197,7 @@ def user_save():
             except exc.IntegrityError as err:
                 db.session.rollback()
                 # Will probably be a duplicate entry
-                print 'DEBUG: Timeslot insertion integrity error'
+                app.logger.error('DEBUG: Timeslot insertion integrity error')
 
         user.last_modified = datetime.datetime.now()
         db.session.commit()
@@ -391,15 +391,13 @@ def show_admin_settings():
 @admin_required
 def admin_settings_update():
     response_dict = {}
-    response_dict['admins'] = (', '.join(config['admins'])).lower()
+    response_dict['admins'] = [a.lower() for a in config['admins']]#(', '.join(config['admins'])).lower()
     response_dict['period_duration'] = config['period_duration']
     response_dict['valid_period_start'] = config['valid_period_start']
     response_dict['view_days'] = config['view_days']
     response_dict['slot_increment'] = config['slot_increment']
     response_dict['slot_first_start'] = config['slot_first_start']
     response_dict['slot_last_start'] = config['slot_last_start']
-
-    #print config
 
     return jsonify(response_dict)
 
@@ -413,18 +411,33 @@ def admin_settings_save():
     if not request_json:
         # abort with error code 400 bad request
         abort(400)
-
+    
     # TODO: Validate values
-
-    config['admins'] = request_json['admins'].replace(',', '').split()
-    config['period_duration'] = int(request_json['period_duration'])
-    config['valid_period_start'] = request_json['valid_period_start']
-    config['view_days'] = int(request_json['view_days'])
-    config['slot_increment'] = int(request_json['slot_increment'])
-    config['slot_first_start'] = request_json['slot_first_start']
-    config['slot_last_start'] = request_json['slot_last_start']
+    if 'admins' in request_json:
+        config['admins'] = [a.upper() for a in request_json['admins']]
+    
+    if 'period_duration' in request_json:
+        config['period_duration'] = int(request_json['period_duration'])
+    
+    if 'valid_period_start' in request_json:
+        config['valid_period_start'] = request_json['valid_period_start']
+    
+    if 'view_days' in request_json:
+        config['view_days'] = int(request_json['view_days'])
+    
+    if 'slot_increment' in request_json:
+        config['slot_increment'] = int(request_json['slot_increment'])
+    
+    if 'slot_first_start' in request_json:
+        config['slot_first_start'] = request_json['slot_first_start']
+    
+    if 'slot_last_start' in request_json:
+        config['slot_last_start'] = request_json['slot_last_start']
+    
+    # TODO: Write configuration to file
 
     return Response()
+
 
 @app.route('/user/<id>')
 @login_required
@@ -479,7 +492,7 @@ def viewas_update():
 def tc_login():
     # This endpoint is for redirecting the user after login
 
-    print 'Logged in', cas.username
+    app.logger.info('Logged in', cas.username)
     # username is automatically stored in session CAS_USERNAME
 
     # TODO: redirect to admin panel if user is an admin

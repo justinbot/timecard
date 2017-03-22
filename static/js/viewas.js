@@ -6,11 +6,13 @@ var TcUser = (function () {
         $loadingCheck = $("#loadingCheck"),
         $loadingError = $("#loadingError");
 
+    var $periodRange = $("#periodRange");
+
     var $tcTable = $("#tcTable"),
         $tcHead = $("#tcHead"),
         $tcHeaders;
 
-    var $periodRange = $("#periodRange");
+    var $tcStatus = $("#tcStatus");
 
     /* local variables */
     var focusDate;
@@ -84,24 +86,26 @@ var TcUser = (function () {
 
     function updateDayBlocks(index) {
         var day = $("#tcDay" + index);
+
         var blockStartTime;
-        var blockLabel;
 
         day.children().each(function (index, element) {
             var slot = $(element);
 
-            slot.html("");
+            slot.text("");
+            slot.removeClass("rounded-top");
+            slot.removeClass("rounded-bottom");
 
-            var slotSelected = timestampSelected(slot.data("timestamp"));
+            var lastSlot = (index == day.children().length - 1);
             var prevSlotSelected = index > 0 && timestampSelected(day.children().eq(index - 1).data("timestamp"));
+            var slotSelected = timestampSelected(slot.data("timestamp"));
+            var nextSlotSelected = !lastSlot && timestampSelected(day.children().eq(index + 1).data("timestamp"));
 
-            var blockStart = slotSelected && (index == 0 || !prevSlotSelected);
-            var blockEnd = (!slotSelected && prevSlotSelected) || (slotSelected && index == day.children().length - 1);
+            var blockStart = slotSelected && !prevSlotSelected;
+            var blockEnd = slotSelected && !nextSlotSelected;
 
             if (blockStart) {
-                if (index > 0) {
-                    //day.children[i - 1].style.borderBottom = "1px solid #3b5ca0";
-                }
+                slot.addClass("rounded-top");
 
                 blockStartTime = moment.unix(slot.data("timestamp"));
 
@@ -113,19 +117,18 @@ var TcUser = (function () {
             }
 
             if (blockEnd) {
-                var blockEndTime = moment.unix(slot.data("timestamp"));
-                if (index == day.children().length - 1) {
-                    blockEndTime.add(tc.slotIncrement, "minute");
-                }
+                slot.addClass("rounded-bottom");
+
+                var blockEndTime = moment.unix(slot.data("timestamp")).add(tc.slotIncrement, "minute");
                 var blockDuration = moment.duration(blockEndTime.diff(blockStartTime));
 
                 // Show duration label for blocks of an hour or more
                 if (blockDuration.asHours() >= 1) {
                     // If start and end are same meridiem
                     if (blockStartTime.format("a") === blockEndTime.format("a")) {
-                        blockLabel.html(blockStartTime.format("h:mm") + "– " + blockEndTime.format("h:mma"));
+                        blockLabel.text(blockStartTime.format("h:mm") + "– " + blockEndTime.format("h:mma"));
                     } else {
-                        blockLabel.html(blockStartTime.format("h:mma") + "– " + blockEndTime.format("h:mma"));
+                        blockLabel.text(blockStartTime.format("h:mma") + "– " + blockEndTime.format("h:mma"));
                     }
                 }
             }
@@ -246,12 +249,10 @@ var TcUser = (function () {
         xhr.responseType = "json";
         xhr.onload = function () {
             $loadingSpinner.hide();
-            $loadingCheck.hide();
-            $loadingError.hide();
 
             if (xhr.status == 200) {
                 $loadingCheck.show();
-                lastModified = moment(xhr.response["lastmodified"]);
+                $tcStatus.text("Last modified " + moment(xhr.response["lastmodified"]).from(tc.initialDate));
 
                 selectedTimestamps = new Set();
                 for (var i = 0; i < xhr.response["selected"].length; i++) {
@@ -304,6 +305,7 @@ var TcUser = (function () {
         focusDate.add(tc.periodDuration, "day");
         periodStart.add(tc.periodDuration, "day");
         periodEnd.add(tc.periodDuration, "day");
+        
         onPeriodChanged();
     }
 

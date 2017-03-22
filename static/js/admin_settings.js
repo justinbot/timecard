@@ -1,64 +1,40 @@
 var TcAdmin = (function () {
     var tc = {};
 
-    /* DOM elements */
+    /* cached queries */
+    var $loadingSpinner = $("#loadingSpinner"),
+        $loadingCheck = $("#loadingCheck"),
+        $loadingError = $("#loadingError");
 
-    var inputAdmins,
-        inputPeriodDuration,
-        inputValidPeriodStart,
-        inputViewDays,
-        inputSlotIncrement,
-        inputSlotFirstStart,
-        inputSlotLastStart;
+    var $adminsList = $("#adminsList"),
+        $inputAdminsAdd = $("#inputAdminsAdd"),
+        $adminsAddButton = $("#adminsAddButton");
+
+    var $inputPeriodDuration = $("#inputPeriodDuration"),
+        $inputValidPeriodStart = $("#inputValidPeriodStart"),
+        $inputSlotIncrement = $("#inputSlotIncrement"),
+        $inputViewDays = $("#inputViewDays"),
+        $inputDayStart = $("#inputDayStart"),
+        $inputDayEnd = $("#inputDayEnd");
+
+    var $saveButton = $("#saveButton");
 
     /* local variables */
+    var config = {};
 
-    var config = {}
-
-    /* public variables */
+    var localConfig = {};
 
     tc.init = function () {
-        inputAdmins = document.getElementById("inputAdmins");
-        inputPeriodDuration = document.getElementById("inputPeriodDuration");
-        inputValidPeriodStart = document.getElementById("inputValidPeriodStart");
-        inputViewDays = document.getElementById("inputViewDays");
-        inputSlotIncrement = document.getElementById("inputSlotIncrement");
-        inputSlotFirstStart = document.getElementById("inputSlotFirstStart");
-        inputSlotLastStart = document.getElementById("inputSlotLastStart");
-
-        dbUpdateUserSettings();
+        dbUpdateSettings();
     }
 
-    function dbUpdateUserSettings() {
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/admin/settings/update", true);
-        xhr.setRequestHeader("Content-Type", "application/json");
-        // TODO: also set xhr.timeout and xhr.ontimeout?
-        xhr.responseType = "json";
-        xhr.onload = function () {
-            dbUpdateSettingsOnload(xhr.status, xhr.response);
-        }
-        xhr.send();
-    }
+    function dbSaveAdmins() {
+        $loadingSpinner.show();
+        $loadingCheck.hide();
+        $loadingError.hide();
 
-    function dbUpdateSettingsOnload(status, response) {
-        if (status == 200) {
-            config = response;
-            updateSettingsForms();
-        } else {
-            // TODO: Display error regarding status
-        }
-    }
-
-    function dbSaveUserSettings() {
         var saveDict = {
-            "admins": inputAdmins.value,
-            "period_duration": inputPeriodDuration.value,
-            "valid_period_start": inputValidPeriodStart.value,
-            "view_days": inputViewDays.value,
-            "slot_increment": inputSlotIncrement.value,
-            "slot_first_start": inputSlotFirstStart.value,
-            "slot_last_start": inputSlotLastStart.value
+            "admins": localConfig["admins"]
         };
 
         var xhr = new XMLHttpRequest();
@@ -67,24 +43,171 @@ var TcAdmin = (function () {
         // TODO: also set xhr.timeout and xhr.ontimeout?
         xhr.responseType = "json";
         xhr.onload = function () {
-            dbUpdateSettingsOnload(xhr.status, xhr.response);
+            $loadingSpinner.hide();
+
+            if (xhr.status == 200) {
+                $loadingCheck.show();
+                dbUpdateSettings();
+            } else {
+                $loadingError.show();
+            }
         }
         xhr.send(JSON.stringify(saveDict));
     }
 
+    function dbSaveSettings() {
+        $loadingSpinner.show();
+        $loadingCheck.hide();
+        $loadingError.hide();
+
+        var saveDict = localConfig;
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/admin/settings/save", true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        // TODO: also set xhr.timeout and xhr.ontimeout?
+        xhr.responseType = "json";
+        xhr.onload = function () {
+            $loadingSpinner.show();
+
+            if (xhr.status == 200) {
+                $loadingCheck.show();
+                dbUpdateSettings();
+            } else {
+                $loadingError.show();
+            }
+        }
+        xhr.send(JSON.stringify(saveDict));
+    }
+
+    function dbUpdateSettings() {
+        $loadingSpinner.show();
+        $loadingCheck.hide();
+        $loadingError.hide();
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/admin/settings/update", true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        // TODO: also set xhr.timeout and xhr.ontimeout?
+        xhr.responseType = "json";
+        xhr.onload = function () {
+            $loadingSpinner.hide();
+
+            if (xhr.status == 200) {
+                $loadingCheck.show();
+                config = xhr.response;
+                localConfig = {};
+                updateSettingsForms();
+            } else {
+                $loadingError.show();
+            }
+        }
+        xhr.send();
+    }
+
     function updateSettingsForms() {
-        inputAdmins.value = config["admins"];
-        inputPeriodDuration.value = config["period_duration"];
-        inputValidPeriodStart.value = config["valid_period_start"];
-        inputViewDays.value = config["view_days"];
-        inputSlotIncrement.value = config["slot_increment"];
-        inputSlotFirstStart.value = config["slot_first_start"];
-        inputSlotLastStart.value = config["slot_last_start"];
+        $inputPeriodDuration.val(config["period_duration"]);
+        $inputValidPeriodStart.val(config["valid_period_start"]);
+        $inputSlotIncrement.val(config["slot_increment"]);
+        $inputViewDays.val(config["view_days"]);
+        $inputDayStart.val(config["slot_first_start"]);
+        $inputDayEnd.val(moment(config["slot_last_start"], "HH:mm").add(config["slot_increment"], "minute").format("HH:mm"));
+
+        localConfig["admins"] = config["admins"];
+        updateAdminsList();
+        updateAdminsAddButton();
+
+        updateSaveButton();
     }
-    
-    tc.saveSettings = function () {
-        dbSaveUserSettings();
+
+    function updateAdminsList() {
+        $adminsList.empty();
+        $.each(localConfig["admins"], function (index, value) {
+            $adminItem = $("<li>", {
+                class: "list-group-item justify-content-between"
+            });
+            $adminsList.append($adminItem);
+            $adminItem.append($("<span>", {
+                text: value
+            }));
+            $adminItem.append($("<button>", {
+                "type": "button",
+                class: "btn btn-outline-danger btn-sm",
+                text: "Remove",
+                "data-id": value
+            }));
+        });
+
+        $adminsList.find(".btn").click(function () {
+            // remove the admin id
+            var index = $.inArray($(this).data("id"), localConfig["admins"]);
+            if (index > -1) {
+                localConfig["admins"].splice(index, 1);
+            }
+            dbSaveAdmins();
+        });
     }
+
+    function updateAdminsAddButton() {
+        var adminExists = $.inArray($inputAdminsAdd.val().toLowerCase(), config["admins"]) > -1;
+        $adminsAddButton.prop("disabled", !($inputAdminsAdd.val().length > 0) || adminExists);
+    }
+
+    function updateSaveButton() {
+        var isChanged = false;
+
+        $.each(Object.keys(localConfig), function (index, value) {
+            if (localConfig[value] != config[value]) {
+                isChanged = true;
+            }
+        });
+
+        $saveButton.prop("disabled", !isChanged);
+    }
+
+    $inputAdminsAdd.on("change paste keyup", function () {
+        updateAdminsAddButton();
+    });
+
+    $adminsAddButton.click(function () {
+        localConfig["admins"].push($inputAdminsAdd.val());
+        $inputAdminsAdd.val("");
+        dbSaveAdmins();
+    });
+
+    $inputPeriodDuration.change(function () {
+        localConfig["period_duration"] = $inputPeriodDuration.val();
+        updateSaveButton();
+    });
+
+    $inputValidPeriodStart.change(function () {
+        localConfig["valid_period_start"] = $inputValidPeriodStart.val();
+        updateSaveButton();
+    });
+
+    $inputViewDays.change(function () {
+        localConfig["view_days"] = $inputViewDays.val();
+        updateSaveButton();
+    });
+
+    $inputSlotIncrement.change(function () {
+        localConfig["slot_increment"] = $inputSlotIncrement.val();
+        updateSaveButton();
+    });
+
+    $inputDayStart.change(function () {
+        localConfig["slot_first_start"] = $inputDayStart.val();
+        updateSaveButton();
+    });
+
+    $inputDayEnd.change(function () {
+        localConfig["slot_last_start"] = moment($inputDayEnd.val(), "HH:mm").subtract(config["slot_increment"], "minute").format("HH:mm");
+        updateSaveButton();
+    });
+
+    $saveButton.click(function () {
+        dbSaveSettings();
+    });
 
     return tc;
 })();

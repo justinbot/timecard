@@ -91,7 +91,7 @@ div.slot.locked {
 
 div.slot-selected.locked {
     background: #4364a8;
-    border-bottom: 1px solid #4364a8;
+    border-bottom-color: #4364a8;
     cursor: default;
     pointer-events: none;
 }
