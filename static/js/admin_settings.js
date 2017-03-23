@@ -17,8 +17,6 @@ var TcAdmin = (function () {
         $inputDayStart = $("#inputDayStart"),
         $inputDayEnd = $("#inputDayEnd");
 
-    var $saveButton = $("#saveButton");
-
     /* local variables */
     var config = {};
 
@@ -162,7 +160,7 @@ var TcAdmin = (function () {
             }
         });
 
-        $saveButton.prop("disabled", !isChanged);
+        $("#saveButton").prop("disabled", !isChanged);
     }
 
     $inputAdminsAdd.on("change paste keyup", function () {
@@ -205,8 +203,22 @@ var TcAdmin = (function () {
         updateSaveButton();
     });
 
-    $saveButton.click(function () {
+    $("#saveButton").click(function () {
         dbSaveSettings();
+    });
+
+    $("#purgeButton").click(function () {
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/admin/settings/purgedb", true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        // TODO: also set xhr.timeout and xhr.ontimeout?
+        xhr.responseType = "json";
+        xhr.onload = function () {
+            if (xhr.status == 200) {
+            } else {
+            }
+        }
+        xhr.send();
     });
 
     return tc;

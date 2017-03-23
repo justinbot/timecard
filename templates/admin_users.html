@@ -44,14 +44,15 @@
             </div>
         </div>
     </nav>
-
     <div class="container">
+        <h4 class="text-muted mt-3"><i class="fa fa-user mr-2" aria-hidden="true"></i>Users</h4>
+        <hr>
         <div class="d-flex justify-content-between align-items-center py-3">
             <span class="text-muted" id="periodRange">Jan 1 – 7, 2000</span>
             <div class="btn-group" role="group">
-                <button type="button" class="btn btn-primary btn-period-nav" id="periodNavPrev"><i class="fa fa-chevron-left" aria-hidden="true"></i></button>
-                <button type="button" class="btn btn-primary btn-period-nav" id="periodNavToday">Today</button>
-                <button type="button" class="btn btn-primary btn-period-nav" id="periodNavNext"><i class="fa fa-chevron-right" aria-hidden="true"></i></button>
+                <button type="button" class="btn btn-primary btn-period-nav" id="buttonPeriodPrev"><i class="fa fa-chevron-left" aria-hidden="true"></i></button>
+                <button type="button" class="btn btn-primary btn-period-nav" id="buttonPeriodToday">Today</button>
+                <button type="button" class="btn btn-primary btn-period-nav" id="buttonPeriodNext"><i class="fa fa-chevron-right" aria-hidden="true"></i></button>
             </div>
         </div>
         <hr class="my-0">
@@ -60,22 +61,22 @@
             <div class="btn-group ml-4">
                 <button type="button" class="btn btn-link text-primary p-0 mx-2" id="userViewAsButton"><i class="fa fa-eye mr-1" aria-hidden="true"></i>View As</button>
                 <button type="button" class="btn btn-link text-warning p-0 mx-2" id="userEditButton"><i class="fa fa-pencil-square-o mr-1" aria-hidden="true"></i>Edit</button>
-                <button type="button" class="btn btn-link text-danger p-0 mx-2" id="userDeleteButton"><i class="fa fa-trash-o mr-1" aria-hidden="true"></i>Delete</button>
+                <button type="button" class="btn btn-link text-danger p-0 mx-2" id="userDeleteButton"><i class="fa fa-user-times mr-1" aria-hidden="true"></i>Delete</button>
             </div>
-            <button type="button" class="btn btn-success btn-sm ml-auto" id="userAddButton" data-toggle="collapse" data-target="#userAddForm"><i class="fa fa-plus mr-2" aria-hidden="true"></i>Add User</button>
+            <button type="button" class="btn btn-success btn-sm ml-auto" id="buttonAddUser" data-toggle="collapse" data-target="#formAddUser"><i class="fa fa-user-plus mr-2" aria-hidden="true"></i>Add User</button>
         </div>
-        <div class="collapse" id="userAddForm">
+        <div class="collapse" id="formAddUser">
             <div class="card card-outline-success card-block py-2 px-3">
                 <form class="form-inline justify-content-end px-0">
                     <label class="text-success"><strong>Add User</strong></label>
-                    <small class="text-muted ml-2" id="userAddStatus"></small>
-                    <label class="form-control-sm ml-auto" for="inlineFormCustomSelect">First Name</label>
-                    <input class="form-control form-control-sm" id="userAddFormFirstname" type="text" maxlength="64" value="">
-                    <label class="form-control-sm ml-2" for="inlineFormCustomSelect">Last Name</label>
-                    <input class="form-control form-control-sm" id="userAddFormLastname" type="text" maxlength="64" value="">
-                    <label class="form-control-sm ml-2" for="inlineFormCustomSelect">User ID</label>
-                    <input class="form-control form-control-sm" id="userAddFormId" type="text" maxlength="16" value="" style="width: 120px;">
-                    <button type="button" class="btn btn-success btn-sm ml-4" id="userAddFormSubmit">Submit</button>
+                    <small class="text-muted ml-2" id="addUserStatus"></small>
+                    <label class="form-control-sm ml-auto" for="inputAddUserFirst">First Name</label>
+                    <input class="form-control form-control-sm" id="inputAddUserFirst" type="text" maxlength="64" value="">
+                    <label class="form-control-sm ml-2" for="inputAddUserLast">Last Name</label>
+                    <input class="form-control form-control-sm" id="inputAddUserLast" type="text" maxlength="64" value="">
+                    <label class="form-control-sm ml-2" for="inputAddUserId">User ID</label>
+                    <input class="form-control form-control-sm" id="inputAddUserId" type="text" maxlength="16" value="" style="width: 120px;">
+                    <button type="button" class="btn btn-success btn-sm ml-4" id="buttonAddUserSubmit">Submit</button>
                 </form>
             </div>
         </div>

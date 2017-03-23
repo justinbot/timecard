@@ -45,9 +45,9 @@
         </div>
     </nav>
     <div class="container">
-        <div id="alertBanner"></div>
-        <h4 class="text-muted mt-3"><i class="fa fa-cog mr-2" aria-hidden="true"></i>Configuration</h4>
+        <h4 class="text-muted mt-3"><i class="fa fa-cog mr-2" aria-hidden="true"></i>Settings</h4>
         <hr>
+        <div id="alertBanner"></div>
         <form class="col-6 pl-0">
             <div class="form-group" id="adminsForm">
                 <label for="adminsList"><strong>Administrators</strong></label>
@@ -67,7 +67,7 @@
                 <input type="number" class="form-control" id="inputPeriodDuration" min="1" max="180">
             </div>
             <div class="form-group">
-                <label for="inputValidPeriodStart"><strong>Pay Period Start Date</strong><small class="text-muted ml-3">A past date representing the start of a pay period.</small></label>
+                <label for="inputValidPeriodStart"><strong>Pay Period Start Date</strong><small class="text-muted ml-3">A past date representing the first day of a rolling pay period.</small></label>
                 <input type="date" class="form-control" id="inputValidPeriodStart">
             </div>
             <hr class="my-4">
@@ -97,6 +97,7 @@
             </div>
             <hr class="my-4">
             <button type="button" class="btn btn-success" id="saveButton">Save Changes</button>
+            <!--<button type="button" class="btn btn-danger" id="purgeButton">Purge Database</button>-->
         </form>
     </div>
 

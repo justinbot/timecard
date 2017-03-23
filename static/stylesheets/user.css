@@ -17,6 +17,7 @@ table.tc-table thead th {
 }
 
 table.tc-table thead th:first-child {
+    padding: 0;
     border-width: 0;
 }
 

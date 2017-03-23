@@ -8,18 +8,7 @@ var TcAdmin = (function () {
         $loadingCheck = $("#loadingCheck"),
         $loadingError = $("#loadingError");
 
-    var $periodNavPrev = $("#periodNavPrev"),
-        $periodNavToday = $("#periodNavToday"),
-        $periodNavNext = $("#periodNavNext"),
-        $periodRange = $("#periodRange");
-
-    var $userAddButton = $("#userAddButton"),
-        $userAddForm = $("#userAddForm"),
-        $userAddStatus = $("#userAddStatus"),
-        $userAddFormFirstname = $("#userAddFormFirstname"),
-        $userAddFormLastname = $("#userAddFormLastname"),
-        $userAddFormId = $("#userAddFormId"),
-        $userAddFormSubmit = $("#userAddFormSubmit");
+    var $periodRange = $("#periodRange");
 
     var $userViewAsButton = $("#userViewAsButton"),
         $userEditButton = $("#userEditButton"),
@@ -121,7 +110,7 @@ var TcAdmin = (function () {
             }));
 
             $newRow.append($("<td>", {
-                html: moment(userData[elem]["lastmodified"]).from(tc.initialDate)
+                html: moment(userData[elem]["lastmodified"]).fromNow() //tc.initialDate
                     // TODO: Need to update this value periodically
             }));
 
@@ -199,7 +188,7 @@ var TcAdmin = (function () {
     }
 
     function updatePeriod() {
-        $periodNavToday.prop("disabled", focusDate.isSame(tc.initialDate, "day"));
+        $("#buttonPeriodToday").prop("disabled", focusDate.isSame(tc.initialDate, "day"));
 
         var startDate = moment(periodStart);
         var endDate = moment(periodEnd);
@@ -312,7 +301,7 @@ var TcAdmin = (function () {
         xhr.responseType = "json";
         xhr.onload = function () {
             if (xhr.status == 200) {
-                showAlert("success", "", "Successfully deleted user")
+                showAlert("info", "", "Successfully deleted user")
             } else {
                 showAlert("danger", "Error", "Failed to delete user (Error " + xhr.status + ")");
             }
@@ -358,27 +347,34 @@ var TcAdmin = (function () {
         console.log("TODO: Sort by Total");
     });
 
-    $userAddForm.on("show.bs.collapse", function () {
-        $userAddButton.html("<i class='fa fa-times'></i>");
+    $("#formAddUser").on("show.bs.collapse", function () {
+        $("#buttonAddUser").html($("<i>", {
+            class: "fa fa-times"
+        }));
     });
 
-    $userAddForm.on("hide.bs.collapse", function () {
-        $userAddButton.html("<i class='fa fa-plus'></i> Add User");
+    $("#formAddUser").on("hide.bs.collapse", function () {
+        $("#buttonAddUser").html($("<i>", {
+            class: "fa fa-user-plus mr-1"
+        }));
+        $("#buttonAddUser").append("Add User");
 
-        $userAddStatus.text("");
-        $userAddFormFirstname.val("");
-        $userAddFormLastname.val("");
-        $userAddFormId.val("");
+        $("#addUserStatus").text("");
+        $("#inputAddUserFirst").val("");
+        $("#inputAddUserLast").val("");
+        $("#inputAddUserId").val("");
     });
 
-    $userAddFormSubmit.on("click", function (e) {
-        if (userAddFormFirstname.value.length > 0 &&
-            userAddFormLastname.value.length > 0 &&
-            userAddFormId.value.length > 0) {
-            dbAddUser($userAddFormFirstname.val(), $userAddFormLastname.val(), $userAddFormId.val());
-            $userAddForm.collapse("hide");
+    $("#buttonAddUserSubmit").on("click", function (e) {
+        var userFirst = $("#inputAddUserFirst").val();
+        var userLast = $("#inputAddUserLast").val();
+        var userId = $("#inputAddUserId").val();
+
+        if (userFirst.length > 0 && userLast.length > 0 && userId.length > 0) {
+            dbAddUser(userFirst, userLast, userId);
+            $("#formAddUser").collapse("hide");
         } else {
-            $userAddStatus.text("Please fill required fields.");
+            $("#addUserStatus").text("Please fill required fields.");
         }
     });
 
@@ -429,34 +425,64 @@ var TcAdmin = (function () {
 
     function showAlert(type, title, content) {
         // success, info, warning, danger
+        var newAlert;
+
+        $alertBanner.empty();
         if (type == "success") {
-            $alertBanner.html(
-                "<div class='alert alert-success alert-dismissible fade show' role='alert'><button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button><strong>" + title + "</strong> " + content + "</div>"
-            );
+            newAlert = $("<div>", {
+                "class": "alert alert-success alert-dismissible fade show",
+                "role": "alert",
+                "html": $("<i>", {
+                    "class": "fa fa-check-circle mr-2"
+                })
+            });
         } else if (type == "warning") {
-            $alertBanner.html(
-                "<div class='alert alert-warning alert-dismissible fade show' role='alert'><button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button><strong>" + title + "</strong> " + content + "</div>"
-            );
+            newAlert = $("<div>", {
+                "class": "alert alert-warning alert-dismissible fade show",
+                "role": "alert",
+                "html": $("<i>", {
+                    "class": "fa fa-exclamation-triangle mr-2"
+                })
+            });
         } else if (type == "danger") {
-            $alertBanner.html(
-                "<div class='alert alert-danger alert-dismissible fade show' role='alert'><button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button><strong>" + title + "</strong> " + content + "</div>"
-            );
+            newAlert = $("<div>", {
+                "class": "alert alert-danger alert-dismissible fade show",
+                "role": "alert",
+                "html": $("<i>", {
+                    "class": "fa fa-exclamation-triangle mr-2"
+                })
+            });
         } else {
-            $alertBanner.html(
-                "<div class='alert alert-info alert-dismissible fade show' role='alert'><button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button><strong>" + title + "</strong> " + content + "</div>"
-            );
+            newAlert = $("<div>", {
+                "class": "alert alert-info alert-dismissible fade show",
+                "role": "alert",
+                "html": $("<i>", {
+                    "class": "fa fa-info-circle mr-2"
+                })
+            });
         }
+
+        newAlert.append("<strong>" + title + "</strong> " + content);
+
+        newAlert.append($("<button>", {
+            "type": "button",
+            "class": "close",
+            "data-dismiss": "alert",
+            "html": "&times;"
+        }));
+
+        $alertBanner.append(newAlert);
     }
 
-    $periodNavPrev.on("click", function () {
+    $("#buttonPeriodPrev").on("click", function () {
         prevPeriod();
     });
 
-    $periodNavToday.on("click", function () {
+    $("#buttonPeriodToday").on("click", function () {
         currentPeriod();
     });
 
-    $periodNavNext.on("click", function () {
+    $("#buttonPeriodNext").on("click", function () {
         nextPeriod();
     });
 
@@ -482,7 +508,7 @@ var TcAdmin = (function () {
         focusDate.add(tc.periodDuration, "day");
         periodStart.add(tc.periodDuration, "day");
         periodEnd.add(tc.periodDuration, "day");
-        
+
         onPeriodChanged();
     }
 

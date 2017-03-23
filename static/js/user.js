@@ -14,6 +14,13 @@ var TcUser = (function () {
 
     var $tcStatus = $("#tcStatus");
 
+    var $buttonNewTemplate = $("#buttonNewTemplate"),
+        $dropdownSelectTemplate = $("#dropdownSelectTemplate"),
+        $menuSelectTemplate = $("#menuSelectTemplate"),
+        $inputTemplateName = $("#inputTemplateName"),
+        $buttonCancelTemplate = $("#buttonCancelTemplate"),
+        $buttonSaveTemplate = $("#buttonSaveTemplate");
+
     /* local variables */
     var focusDate;
     var periodStart,
@@ -21,7 +28,10 @@ var TcUser = (function () {
 
     var localSelectedTimestamps = new Set();
     var localUnselectedTimestamps = new Set();
-    var selectedTimestamps = new Set();
+    var selectedTimestamps;
+
+    var templates;
+    // TODO: Store selected template, nullify when changed
 
     var slotDown;
     var slotToggleTo;
@@ -42,6 +52,8 @@ var TcUser = (function () {
         }
         $tcHeaders = $(tcHeaders);
 
+        hideNewTemplate();
+
         currentPeriod();
     }
 
@@ -54,9 +66,10 @@ var TcUser = (function () {
         }
     }
 
-    function onLocalTimestampsChanged() {}
-
     function onPeriodChanged() {
+        // TODO: ...
+        $("#buttonSelectTemplate").text("None");
+        
         dbUpdate();
         updateHeaderDates();
         updatePeriod();
@@ -87,8 +100,11 @@ var TcUser = (function () {
             }
 
             for (var ts of localSelectedTimestamps) {
-                if (ts >= dayStart && ts <= dayEnd) {
-                    hours += (tc.slotIncrement / 60);
+                // avoid double counting timestamps
+                if (!selectedTimestamps.has(ts)) {
+                    if (ts >= dayStart && ts <= dayEnd) {
+                        hours += (tc.slotIncrement / 60);
+                    }
                 }
             }
 
@@ -222,6 +238,7 @@ var TcUser = (function () {
                 var newTime = moment(dayTime).hour(slotTime.hour()).minute(slotTime.minute()).second(0);
 
                 var $newSlot = $("<div>", {
+                    id: i + "-" + newTime.format("HH:mm"),
                     "data-timestamp": newTime.unix()
                 });
 
@@ -245,7 +262,7 @@ var TcUser = (function () {
     }
 
     function updatePeriod() {
-        $("#periodNavToday").prop("disabled", focusDate.isSame(tc.initialDate, "day"));
+        $("#buttonPeriodToday").prop("disabled", focusDate.isSame(tc.initialDate, "day"));
 
         var startDate = moment(periodStart);
         var endDate = moment(periodEnd);
@@ -279,7 +296,10 @@ var TcUser = (function () {
 
             if (xhr.status == 200) {
                 $loadingCheck.show();
-                $tcStatus.text("Last modified " + moment(xhr.response["lastmodified"]).from(tc.initialDate));
+                $tcStatus.text("Last modified " + moment(xhr.response["lastmodified"]).fromNow()); // TODO: Use initialMoment, localInitialMoment and moment() to accurate use .from(getDbMoment())
+
+                //localSelectedTimestamps = new Set();
+                //localUnselectedTimestamps = new Set();
 
                 selectedTimestamps = new Set();
                 for (var i = 0; i < xhr.response["selected"].length; i++) {
@@ -292,9 +312,12 @@ var TcUser = (function () {
             }
         }
         xhr.send(JSON.stringify(updateDict));
+
+        dbLoadTemplates();
     }
 
     function dbSave() {
+        // TODO***: Blocks are broken after saving
         // Abort save if nothing is changed
         if (!(localSelectedTimestamps.size > 0 || localUnselectedTimestamps.size > 0)) {
             return;
@@ -316,6 +339,7 @@ var TcUser = (function () {
         // TODO: also set xhr.timeout and xhr.ontimeout?
         xhr.responseType = "json";
         xhr.onload = function () {
+            dbUpdate();
             if (xhr.status == 200) {
                 $tcStatus.text("All changes saved");
             } else {
@@ -323,8 +347,7 @@ var TcUser = (function () {
             }
         }
         xhr.send(JSON.stringify(saveDict));
-
-        $.each(localSelectedTimestamps, function (index, value) {
+        /*$.each(localSelectedTimestamps, function (index, value) {
             selectedTimestamps.add(value);
         });
 
@@ -333,8 +356,80 @@ var TcUser = (function () {
         });
 
         localSelectedTimestamps = new Set();
-        localUnselectedTimestamps = new Set();
+        localUnselectedTimestamps = new Set();*/
     }
+
+    function dbLoadTemplates() {
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/update/templates", true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.responseType = "json";
+        xhr.onload = function () {
+            if (xhr.status == 200) {
+                templates = xhr.response["templates"];
+                updateTemplatesSelect();
+            } else {
+
+            }
+        }
+        xhr.send();
+    }
+
+    function dbSaveTemplates() {
+        var saveDict = {
+            templates: templates
+        }
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/save/templates", true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.responseType = "json";
+        xhr.onload = function () {
+            if (xhr.status == 200) {
+                // TODO: Display 'successfully saved new template' banner
+            } else {
+                // TODO: Display 'failed to save new template' banner
+            }
+            dbLoadTemplates();
+        }
+        xhr.send(JSON.stringify(saveDict));
+    }
+
+    function updateTemplatesSelect() {
+        $menuSelectTemplate.empty();
+
+        // "None" option for no template
+        $menuSelectTemplate.append($("<button>", {
+            class: "dropdown-item",
+            text: "None",
+            "data-index": -1
+        }));
+
+        $menuSelectTemplate.append($("<div>", {
+            class: "dropdown-divider"
+        }));
+
+        for (var i = 0; i < templates.length; i++) {
+            var template = templates[i];
+
+            $menuSelectTemplate.append($("<button>", {
+                class: "dropdown-item",
+                text: template["name"],
+                "data-index": i
+            }));
+        }
+    }
+
+    $menuSelectTemplate.on("click", ".dropdown-item", function () {
+        var index = $(this).data("index");
+
+        if (index > -1) {
+            applyTemplate(templates[index]);
+            $("#buttonSelectTemplate").text(templates[index]["name"]);
+        } else {
+            $("#buttonSelectTemplate").text("None");
+        }
+    });
 
     $tcTable.on("mouseleave", ".day-cell", function () {
         slotDown = false;
@@ -364,7 +459,7 @@ var TcUser = (function () {
 
         if (slotToggleTo) {
             // changing slots to selected, only if not already selected
-            if (!timestampSelected(slotTimestamp)) { //(slot.className == "slot") {
+            if (!timestampSelected(slotTimestamp)) {
                 slot.attr("class", "slot-selected")
                 selectTimestamp(slotTimestamp);
                 updateHeaderHours();
@@ -372,7 +467,7 @@ var TcUser = (function () {
             }
         } else {
             // changing slots to unselected, only if already selected
-            if (timestampSelected(slotTimestamp)) { //(slot.className == "slot-selected") {
+            if (timestampSelected(slotTimestamp)) {
                 slot.attr("class", "slot")
                 unselectTimestamp(slotTimestamp);
                 updateHeaderHours();
@@ -381,7 +476,7 @@ var TcUser = (function () {
         }
     }
 
-    $("#saveButton").click(function () {
+    $("#buttonSave").click(function () {
         dbSave();
     });
 
@@ -392,8 +487,6 @@ var TcUser = (function () {
         if (localUnselectedTimestamps.has(ts)) {
             localUnselectedTimestamps.delete(ts);
         }
-
-        onLocalTimestampsChanged();
     }
 
     function unselectTimestamp(ts) {
@@ -403,8 +496,6 @@ var TcUser = (function () {
         if (localSelectedTimestamps.has(ts)) {
             localSelectedTimestamps.delete(ts);
         }
-
-        onLocalTimestampsChanged();
     }
 
     function timestampSelected(ts) {
@@ -412,15 +503,15 @@ var TcUser = (function () {
         return (selectedTimestamps.has(ts) && !localUnselectedTimestamps.has(ts)) || localSelectedTimestamps.has(ts);
     }
 
-    $("#periodNavPrev").on("click", function () {
+    $("#buttonPeriodPrev").on("click", function () {
         prevPeriod();
     });
 
-    $("#periodNavToday").on("click", function () {
+    $("#buttonPeriodToday").on("click", function () {
         currentPeriod();
     });
 
-    $("#periodNavNext").on("click", function () {
+    $("#buttonPeriodNext").on("click", function () {
         nextPeriod();
     });
 
@@ -446,8 +537,134 @@ var TcUser = (function () {
         focusDate.add(tc.periodDuration, "day");
         periodStart.add(tc.periodDuration, "day");
         periodEnd.add(tc.periodDuration, "day");
-        
+
         onPeriodChanged();
+    }
+
+    $buttonNewTemplate.click(function () {
+        showNewTemplate();
+    });
+
+    $buttonCancelTemplate.click(function () {
+        hideNewTemplate();
+    });
+
+    $buttonSaveTemplate.click(function () {
+        var newTemplate = createTemplate($inputTemplateName.val())
+        templates.push(newTemplate);
+        dbSaveTemplates();
+        hideNewTemplate();
+    });
+
+    $inputTemplateName.on("change paste keyup", function () {
+        $buttonSaveTemplate.prop("disabled", !($inputTemplateName.val().length > 2));
+    });
+
+    //$("#buttonEditTemplate").click(function () {});
+
+    //$("#buttonDeleteTemplate").click(function () {});
+
+    function showNewTemplate() {
+        $buttonNewTemplate.hide();
+        $dropdownSelectTemplate.hide();
+        $inputTemplateName.show();
+        $inputTemplateName.focus();
+        $buttonCancelTemplate.show();
+        $buttonSaveTemplate.prop("disabled", true);
+        $buttonSaveTemplate.show();
+    }
+
+    function hideNewTemplate() {
+        $buttonNewTemplate.show();
+        $dropdownSelectTemplate.show();
+        $inputTemplateName.hide();
+        $inputTemplateName.val("");
+        $buttonCancelTemplate.hide();
+        $buttonSaveTemplate.hide();
+    }
+
+    function createTemplate(name) {
+        // TODO: Should really operate on data, not elements
+        var newTemplate = {
+            name: name,
+            timeblocks: []
+        };
+
+        for (var dayIndex = 0; dayIndex < tc.periodDuration; dayIndex++) {
+            var day = $("#tcDay" + dayIndex);
+
+            var blockStartTime;
+
+            day.children().each(function (index, element) {
+                var slot = $(element);
+
+                var lastSlot = (index == day.children().length - 1);
+                var prevSlotSelected = index > 0 && timestampSelected(day.children().eq(index - 1).data("timestamp"));
+                var slotSelected = timestampSelected(slot.data("timestamp"));
+                var nextSlotSelected = !lastSlot && timestampSelected(day.children().eq(index + 1).data("timestamp"));
+
+                var blockStart = slotSelected && !prevSlotSelected;
+                var blockEnd = slotSelected && !nextSlotSelected;
+
+                if (blockStart) {
+                    blockStartTime = moment.unix(slot.data("timestamp"));
+                }
+
+                if (blockEnd) {
+                    var blockEndTime = moment.unix(slot.data("timestamp")).add(tc.slotIncrement, "minute");
+                    var blockDuration = moment.duration(blockEndTime.diff(blockStartTime));
+
+                    var blockString = dayIndex + "-" + blockStartTime.format("HH:mm") + "-" + blockDuration.asMinutes();
+                    newTemplate["timeblocks"].push(blockString);
+                }
+            });
+        }
+
+        return newTemplate;
+    }
+
+    function applyTemplate(template) {
+        // TODO: Make use of moment.duration to avoid DST issues
+        // TODO: Rework this behavior to be more robust regarding local selections, template nullifying, etc.
+        localUnselectedTimestamps = new Set();
+        localSelectedTimestamps = new Set();
+
+        // deselect all slots
+        /*$(".slot, .slot-selected").each(function (index, element) {
+            var slot = $(element);
+            if (timestampSelected(slot.data("timestamp"))) {
+                slot.attr("class", "slot")
+                unselectTimestamp(slot.data("timestamp"));
+            }
+        });*/
+        
+        for (var ts of selectedTimestamps) {
+            unselectTimestamp(ts);
+        }
+
+        $.each(template["timeblocks"], function (index, value) {
+            var block = value.split("-");
+            var dayIndex = block[0];
+            var startTime = moment(block[1], "HH:mm");
+            var duration = parseInt(block[2]);
+
+            while (duration > 0) {
+                // select the slot
+                // selector has to be escaped due to "-" and ":"
+                var id = $.escapeSelector(dayIndex + "-" + startTime.format("HH:mm"));
+                var slot = $("#" + id);
+                //slot.attr("class", "slot-selected")
+                //selectTimestamp(slot.data("timestamp"));
+                //localSelectedTimestamps.add();
+
+                selectTimestamp(slot.data("timestamp").toString())
+                
+                startTime.add(tc.slotIncrement, "minute");
+                duration -= tc.slotIncrement;
+            }
+        });
+
+        onTimestampsChanged();
     }
 
     return tc;

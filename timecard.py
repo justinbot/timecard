@@ -67,14 +67,18 @@ class User(db.Model):
     name_first = db.Column(db.String)
     name_last = db.Column(db.String)
 
-    created_on = db.Column(db.DateTime, default=datetime.datetime.now())
-    last_modified = db.Column(db.DateTime, default=datetime.datetime.now())
+    created_on = db.Column(db.DateTime, default=datetime.datetime.now)
+    last_modified = db.Column(db.DateTime, default=datetime.datetime.now)
     # TODO: make sure timeslots are deleted when user is deleted
     timeslots = db.relationship('Timeslot',
                                 #single_parent=True,
                                 cascade='all, delete',
                                 backref='user')
                                 #lazy='dynamic')
+
+    templates = db.relationship('Template',
+                                cascade='all, delete',
+                                backref='user')
 
 
 class Timeslot(db.Model):
@@ -84,20 +88,19 @@ class Timeslot(db.Model):
     user_id = db.Column(db.String, db.ForeignKey('user.id'))
 
 
-#class Template(db.Model):
-#    __tablename__ = 'template'
+class Template(db.Model):
+    # unique id
+    id = db.Column(db.Integer, primary_key=True)
+
+    user_id = db.Column(db.String, db.ForeignKey('user.id'))
 
     # name of the template
-#    name = db.column(db.String(32), primary_key=True)
-    # associated day slots (not a full timeslot, just time of day)
-#    slots = db.relationship('Timeslot', backref='user', cascade="all, delete-orphan", lazy='dynamic')
+    name = db.Column(db.String)
 
-
-#class Dayslot(db.Model):
-#    __tablename__ = 'timeslot'
-    # time of day
-    #time = db.Column(db.BigInteger, primary_key=True)
-    #parent_id = db.Column(db.String(16), db.ForeignKey('user.id'))
+    # array of timeblock strings
+    #timeblocks = db.Column(db.PickleType)
+    timeblocks = db.Column(db.String) # TODO: Don't do this
+    
 
 def admin_required(f):
     @wraps(f)
@@ -132,8 +135,6 @@ def user_update():
     # Takes request with range of two UNIX timestamps
     # Returns all timestamps in range, and user last modified date
 
-    # TODO: Combine pages so every action doesn't require its own route?
-
     request_json = request.get_json(silent=True)
 
     if not request_json or 'range' not in request_json:
@@ -165,11 +166,6 @@ def user_update():
 def user_save():
     # Takes request contents of selected and unselected timestamps
     # Applies to database, ignoring timestamps for locked dates
-
-    # TODO: request_json could also include template info?
-    # a template consists of name and slots
-    # if a template is present in 'templates', it will be overwritten/created
-    # potential usability feature: know which template each week is using, select it on load
 
     request_json = request.get_json(silent=True)
 
@@ -212,6 +208,97 @@ def user_save():
 
     return Response()
 
+
+@app.route('/update/templates', methods=['POST'])
+@login_required
+def user_update_templates():
+    user = User.query.filter_by(id=session['CAS_USERNAME']).first()
+    if not user:
+        app.logger.error('ERROR: Failed to lookup user', session['CAS_USERNAME'])
+        abort(400)
+
+    response_dict = {}
+    # each template is a series of timeblock strings eg. 0-08:30-120
+    response_dict['templates'] = [{'name': tmpl.name, 'timeblocks': tmpl.timeblocks.split(',') } for tmpl in user.templates]
+
+    return jsonify(response_dict)
+
+
+@app.route('/save/templates', methods=['POST'])
+@login_required
+def user_save_templates():
+    request_json = request.get_json(silent=True)
+
+    if not request_json or 'templates' not in request_json:
+        # abort with error code 400 bad request
+        abort(400)
+
+    user = User.query.filter_by(id=session['CAS_USERNAME']).first()
+    if not user:
+        app.logger.error('ERROR: Failed to lookup user', session['CAS_USERNAME'])
+        abort(400)
+
+    user.templates = []
+    for t in request_json['templates']:
+        name = t['name']
+
+        # convert array of timeblocks nto a comma separated string
+        timeblocks_string = ",".join(t['timeblocks'])
+
+        # add the template to the user
+        user.templates.append(Template(name=name, timeblocks=timeblocks_string))
+
+    db.session.commit()
+
+    return Response()
+
+
+@app.route('/user/<id>')
+@login_required
+@admin_required
+def show_viewas(id):
+    user = User.query.filter_by(id=id.upper()).first()
+    if not user:
+        abort(404)
+
+    return render_template('viewas.html',
+                           initial_date=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                           valid_period_start=config['valid_period_start'],
+                           view_days=config['view_days'],
+                           slot_increment=config['slot_increment'],
+                           slot_first_start=config['slot_first_start'],
+                           slot_last_start=config['slot_last_start'],
+                           lock_date=config['lock_date'],
+                           user_id=user.id,
+                           user_name=user.name_first + ' ' + user.name_last)
+
+
+@app.route('/user/update', methods=['POST'])
+@login_required
+@admin_required
+def viewas_update():
+    request_json = request.get_json(silent=True)
+
+    if not request_json or 'id' not in request_json or 'range' not in request_json:
+        abort(400)
+
+    user = User.query.filter_by(id=request_json['id']).first()
+    if not user:
+        abort(400)
+
+    # we only want timestamps inside these bounds
+    # TODO: Make sure malformed requests don't break
+    lower_bound = request_json['range'][0]
+    upper_bound = request_json['range'][1]
+
+    response_dict = {}
+    response_dict['lastmodified'] = user.last_modified.strftime('%Y-%m-%d %H:%M:%S')
+    response_dict['selected'] = [str(ts.timestamp) for ts in Timeslot.query.filter(
+        Timeslot.user_id == user.id,
+        Timeslot.timestamp >= lower_bound,
+        Timeslot.timestamp <= upper_bound)]
+
+    return jsonify(response_dict)
 
 @app.route('/admin')
 @app.route('/admin/users')
@@ -439,52 +526,13 @@ def admin_settings_save():
     return Response()
 
 
-@app.route('/user/<id>')
+@app.route('/admin/settings/purgedb', methods=['POST'])
 @login_required
 @admin_required
-def show_viewas(id):
-    user = User.query.filter_by(id=id.upper()).first()
-    if not user:
-        abort(404)
+def admin_purge_db():
+    init_db()
 
-    return render_template('viewas.html',
-                           initial_date=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                           valid_period_start=config['valid_period_start'],
-                           view_days=config['view_days'],
-                           slot_increment=config['slot_increment'],
-                           slot_first_start=config['slot_first_start'],
-                           slot_last_start=config['slot_last_start'],
-                           lock_date=config['lock_date'],
-                           user_id=user.id,
-                           user_name=user.name_first + ' ' + user.name_last)
-
-
-@app.route('/user/update', methods=['POST'])
-@login_required
-@admin_required
-def viewas_update():
-    request_json = request.get_json(silent=True)
-
-    if not request_json or 'id' not in request_json or 'range' not in request_json:
-        abort(400)
-
-    user = User.query.filter_by(id=request_json['id']).first()
-    if not user:
-        abort(400)
-
-    # we only want timestamps inside these bounds
-    # TODO: Make sure malformed requests don't break
-    lower_bound = request_json['range'][0]
-    upper_bound = request_json['range'][1]
-
-    response_dict = {}
-    response_dict['lastmodified'] = user.last_modified.strftime('%Y-%m-%d %H:%M:%S')
-    response_dict['selected'] = [str(ts.timestamp) for ts in Timeslot.query.filter(
-        Timeslot.user_id == user.id,
-        Timeslot.timestamp >= lower_bound,
-        Timeslot.timestamp <= upper_bound)]
-
-    return jsonify(response_dict)
+    return Response()
 
 
 @app.route('/login/redirect')

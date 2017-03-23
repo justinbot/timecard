@@ -46,31 +46,28 @@
         <div class="d-flex justify-content-between align-items-center py-3">
             <span class="text-muted" id="periodRange">Jan 1 – 7, 2000</span>
             <div class="btn-group" role="group">
-                <button type="button" class="btn btn-primary btn-period-nav" id="periodNavPrev"><i class="fa fa-chevron-left" aria-hidden="true"></i></button>
-                <button type="button" class="btn btn-primary btn-period-nav" id="periodNavToday">Today</button>
-                <button type="button" class="btn btn-primary btn-period-nav" id="periodNavNext"><i class="fa fa-chevron-right" aria-hidden="true"></i></button>
+                <button type="button" class="btn btn-primary btn-period-nav" id="buttonPeriodPrev"><i class="fa fa-chevron-left" aria-hidden="true"></i></button>
+                <button type="button" class="btn btn-primary btn-period-nav" id="buttonPeriodToday">Today</button>
+                <button type="button" class="btn btn-primary btn-period-nav" id="buttonPeriodNext"><i class="fa fa-chevron-right" aria-hidden="true"></i></button>
             </div>
         </div>
         <hr class="my-0">
         <div class="d-flex py-3">
             <div class="form-inline">
-                <button type="button" class="btn btn-outline-success btn-sm mr-2"><i class="fa fa-plus mr-2" aria-hidden="true"></i>New Template</button>
-                <!--<input class="form-control" type="text" value="Artisanal kale">-->
-
-                <div class="dropdown">
-                    <button id="" type="button" class="btn btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown">
-                        None
-                    </button>
-                    <div class="dropdown-menu">
-                        <a class="dropdown-item" href="">None</a>
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="">Template1</a>
-                        <a class="dropdown-item" href="">Template2</a>
+                <button type="button" class="btn btn-outline-success btn-sm mr-2" id="buttonNewTemplate">New Template</button>
+                <!--<button type="button" class="btn btn-outline-secondary btn-sm mr-2" id="buttonEditTemplate">Edit Template</button>-->
+                <!--<button type="button" class="btn btn-outline-danger btn-sm mr-2" id="buttonDeleteTemplate">Delete Template</button>-->
+                <input type="text" class="form-control form-control-sm mr-2" id="inputTemplateName" placeholder="Template Name">
+                <button type="button" class="btn btn-secondary btn-sm mr-2" id="buttonCancelTemplate">Cancel</button>
+                <button type="button" class="btn btn-success btn-sm mr-2" id="buttonSaveTemplate">Save</button>
+                <div class="dropdown" id="dropdownSelectTemplate">
+                    <button type="button" class="btn btn-secondary btn-sm dropdown-toggle" id="buttonSelectTemplate" data-toggle="dropdown">None</button>
+                    <div class="dropdown-menu" id="menuSelectTemplate">
                     </div>
                 </div>
             </div>
             <span class="text-muted ml-auto" id="tcStatus">...</span>
-            <button type="button" class="btn btn-sm btn-outline-success ml-3" id="saveButton">Save</button>
+            <button type="button" class="btn btn-sm btn-outline-success ml-3" id="buttonSave">Save</button>
         </div>
         <div class="unselectable">
             <table class="table table-sm table-bordered tc-table" id="tcTable">
