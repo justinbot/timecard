@@ -32,6 +32,8 @@ var TcAdmin = (function () {
     var userData = {};
     var selectedUsers = new Set();
 
+    var dataChart;
+
     /* public variables */
     tc.initialDate;
     tc.validPeriodStart;
@@ -45,16 +47,39 @@ var TcAdmin = (function () {
         }
         $tsDays = $(tsDays);
 
+        dataChart = new Chart($("#timeChart"), {
+            type: "bar",
+            options: {
+                scales: {
+                    yAxes: [{
+                        stacked: true,
+                        ticks: {
+                            beginAtZero: true
+                        },
+                        scaleLabel: {
+                            display: true,
+                            labelString: "Hours"
+                        }
+            }]
+                }
+            },
+            hover: {
+                mode: "none"
+            }
+        });
+
         currentPeriod();
     }
 
     function onUserDataChanged() {
         updateTable();
+        updateChart();
     }
 
     function onSelectedUsersChanged() {
         updateCheckboxes();
         updateEdit();
+        updateChart();
     }
 
     function onPeriodChanged() {
@@ -203,6 +228,54 @@ var TcAdmin = (function () {
         }
     }
 
+    // TODO: Only necessary because chart.js doesn't provide colors
+    function getRandomColor() {
+        // creates blue pastel colors
+        var r = Math.floor(((Math.random() * 255) + 255) / 4);
+        var g = Math.floor(((Math.random() * 255) + 255) / 2);
+        var b = Math.floor(((Math.random() * 255) + 255) / 2);
+        return "rgb(" + r + "," + g + "," + b + ")";
+    }
+
+    function updateChart() {
+        // Hours for each user per day
+        var dayData = [];
+
+        var selectedOnly = selectedUsers.size > 0;
+
+        for (var id in userData) {
+            if (selectedOnly && !selectedUsers.has(id)) {
+                continue;
+            }
+
+            var user = userData[id];
+
+            var userHours = [];
+            for (var i = 0; i < tc.periodDuration; i++) {
+                userHours.push(user["ts-day-" + i]);
+            }
+
+            var userColor = getRandomColor();
+
+            dayData.push({
+                "label": user["firstname"] + " " + user["lastname"],
+                "data": userHours,
+                backgroundColor: userColor,
+                borderColor: userColor
+            });
+        }
+
+        var dayLabels = [];
+        for (var i = 0; i < tc.periodDuration; i++) {
+            var dayDate = moment(periodStart).add(i, "day");
+            dayLabels.push(dayDate.format("MMM D"));
+        }
+
+        dataChart.data.labels = dayLabels;
+        dataChart.data.datasets = dayData;
+        dataChart.update();
+    }
+
     function dbUpdateUsers() {
         $loadingSpinner.show();
         $loadingCheck.hide();
@@ -330,6 +403,10 @@ var TcAdmin = (function () {
         }
 
         onSelectedUsersChanged();
+    });
+
+    $("#buttonToggleChart").click(function () {
+        $(this).children("i").toggleClass("fa-chevron-down").toggleClass("fa-chevron-up");
     });
 
     $tsHeaderName.click(function () {
