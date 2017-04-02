@@ -1,0 +1,17 @@
+#tsTable {
+    font-size: 14px;
+}
+
+#tsTable th {
+    /*white-space: nowrap;*/
+    font-weight: normal;
+}
+
+#tsTable th.sortable {
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#tsTable th.sorted {
+    font-weight: bold;
+}

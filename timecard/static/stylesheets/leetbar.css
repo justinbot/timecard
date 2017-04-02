@@ -1,0 +1,59 @@
+#leet-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    color: white;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: bold;
+    font-size: 16px;
+    width: 90%;
+    max-width: 800px;
+    min-height: 50px;
+    margin: 0 auto;
+    padding: 0;
+}
+
+.leet-item {
+    display: inline-flex;
+}
+
+.leet-link {
+    transition: color 70ms ease-out;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-decoration: none;
+    width: 100%;
+    min-width: 60px;
+    max-height: 50px;
+}
+
+@media (max-width: 374px) {
+    #leet-bar {
+        flex-direction: column;
+    }
+    .leet-link {
+        padding: 0;
+        height: 30px;
+    }
+}
+
+@media (min-width: 375px) {
+    #leet-bar {
+        flex-direction: row;
+    }
+    .leet-link {
+        padding: 15px 0;
+    }
+}
+
+.leet-link:hover {
+    transition: color 140ms ease-out;
+    color: #f01f27;
+}
+
+.leet-link:active {
+    color: white;
+}
