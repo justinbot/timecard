@@ -16,6 +16,8 @@ def show_user():
         abort(403)
 
     # TODO: Cleaner way to pass data? Maybe store persistent values in session
+    return render_template('setup.html')
+    """
     return render_template('user.html',
                            initial_date=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                            valid_period_start=config['valid_period_start'],
@@ -24,6 +26,7 @@ def show_user():
                            slot_first_start=config['slot_first_start'],
                            slot_last_start=config['slot_last_start'],
                            lock_date=config['lock_date'])
+    """
 
 
 @mod.route('/update', methods=['POST'])

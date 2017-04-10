@@ -1,0 +1,35 @@
+.carousel-fade .carousel-inner .carousel-item {
+    -webkit-transition-property: opacity;
+    -moz-transition-property: opacity;
+    -o-transition-property: opacity;
+    -ms-transition-property: opacity;
+    transition-property: opacity;
+}
+
+.carousel-inner .carousel-item,
+.carousel-inner .active.carousel-item-left,
+.carousel-inner .active.carousel-item-right
+{
+    opacity:0;
+}
+
+.carousel-inner .active,
+.carousel-inner .carousel-item-next.carousel-item-left,
+.carousel-inner .carousel-item-previous.carousel-item-right
+{
+    opacity: 1;
+}
+
+.carousel-item.active,
+.active.carousel-item-left,
+.active.carousel-item-prev,
+.carousel-item-next.carousel-item-left,
+.carousel-item-prev.carousel-item-right
+{
+    left: 0;
+    -webkit-transform: translate3d(0, 0, 0);
+    -moz-transform: translate3d(0, 0, 0);
+    -o-transform: translate3d(0, 0, 0);
+    -ms-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+}
