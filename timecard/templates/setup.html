@@ -21,34 +21,29 @@
 
 <body>
     <nav class="navbar navbar-toggleable-md navbar-inverse text-white px-0" id="tcNavbar" style="background-color: #273a61">
-        <div class="container">
-            <a class="navbar-brand" href="#">
+        <div class="container" style="width: 50%">
+            <a class="navbar-brand mx-auto" href="#">
                 <img src="/static/img/logo.svg" height="24" class="d-inline-block align-top" alt="">
             </a>
         </div>
     </nav>
-    <div class="container">
+    <div class="container" style="max-width: 500px">
         <div id="carouselExampleControls" class="carousel slide carousel-fade" data-ride="carousel" data-interval="false">
             <div class="carousel-inner" role="listbox">
                 <div class="carousel-item active">
                     <div id="config-welcome" style="width: 100%">
-                        <div>
-                            <button type="button" class="btn btn-primary float-right" href="#carouselExampleControls" data-slide="next">Next <i class="fa fa-arrow-right ml-2" aria-hidden="true"></i></button>
-                            <h4 class="text-muted mt-3">Welcome</h4>
-                        </div>
-                        <hr>
-                        <p>Write some meaningful stuff here.</p>
+                        <h4 class="text-muted my-3">Welcome</h4>
+                        <p>Before we let you use timecard, we need you to setup a few things.</p>
+                        <hr class="my-4">
+                        <button type="button" class="btn btn-default" href="#carouselExampleControls" data-slide="prev"><i class="fa fa-arrow-left mr-2" aria-hidden="true"></i> Back</button>
+                        <button type="button" class="btn btn-primary ml-2" href="#carouselExampleControls" data-slide="next">Next <i class="fa fa-arrow-right ml-2" aria-hidden="true"></i></button>
                     </div>
                 </div>
                 <div class="carousel-item">
                     <div id="config-timeslot" style="width: 100%">
-                        <div>
-                            <button type="button" class="btn btn-primary float-right" href="#carouselExampleControls" data-slide="next">Next <i class="fa fa-arrow-right ml-2" aria-hidden="true"></i></button>
-                            <h4 class="text-muted mt-3"><i class="fa fa-clock-o mr-2" aria-hidden="true"></i>Timeslot</h4>
-                        </div>
-                        <hr>
-                        <p>Write description here.</p>
-                        <form class="col-6 pl-0">
+                        <h4 class="text-muted my-3"><i class="fa fa-clock-o mr-2" aria-hidden="true"></i>Timeslot</h4>
+                        <p>These settings affect various time settings per day.</p>
+                        <form>
                             <div class="form-group">
                                 <label for="inputSlotIncrement"><strong>Slot Increment</strong><small class="text-muted ml-3">The duration of each slot.</small></label>
                                 <select class="form-control" id="inputSlotIncrement">
@@ -74,17 +69,16 @@
                                 <input type="time" class="form-control" id="inputDayEnd" step="300">
                             </div>
                         </form>
+                        <hr class="my-4">
+                        <button type="button" class="btn btn-default" href="#carouselExampleControls" data-slide="prev"><i class="fa fa-arrow-left mr-2" aria-hidden="true"></i> Back</button>
+                        <button type="button" class="btn btn-primary ml-2" href="#carouselExampleControls" data-slide="next">Next <i class="fa fa-arrow-right ml-2" aria-hidden="true"></i></button>
                     </div>
                 </div>
                 <div class="carousel-item">
                     <div id="config-payperiod" style="width: 100%">
-                        <div>
-                            <button type="button" class="btn btn-primary float-right" href="#carouselExampleControls" data-slide="next">Next <i class="fa fa-arrow-right ml-2" aria-hidden="true"></i></button>
-                            <h4 class="text-muted mt-3"><i class="fa fa-calendar mr-2" aria-hidden="true"></i>Pay Period</h4>
-                        </div>
-                        <hr>
-                        <p>Write description here.</p>
-                        <form class="col-6 pl-0">
+                        <h4 class="text-muted my-3"><i class="fa fa-calendar mr-2" aria-hidden="true"></i>Pay Period</h4>
+                        <p>These settings affect the pay period.</p>
+                        <form>
                             <div class="form-group">
                                 <label for="inputPeriodDuration"><strong>Pay Period Duration</strong><small class="text-muted ml-3">The number of days in each pay period.</small></label>
                                 <input type="number" class="form-control" id="inputPeriodDuration" min="1" max="180">
@@ -93,6 +87,31 @@
                                 <label for="inputValidPeriodStart"><strong>Pay Period Start Date</strong><small class="text-muted ml-3">A past date representing the first day of a rolling pay period.</small></label>
                                 <input type="date" class="form-control" id="inputValidPeriodStart">
                             </div>
+                            <hr class="my-4">
+                            <button type="button" class="btn btn-default" href="#carouselExampleControls" data-slide="prev"><i class="fa fa-arrow-left mr-2" aria-hidden="true"></i> Back</button>
+                            <button type="button" class="btn btn-primary ml-2" href="#carouselExampleControls" data-slide="next">Next <i class="fa fa-arrow-right ml-2" aria-hidden="true"></i></button>
+                        </form>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div id="config-admin" style="width: 100%">
+                        <h4 class="text-muted my-3"><i class="fa fa-users mr-2" aria-hidden="true"></i>Administrators</h4>
+                        <p>Assign administrator privileges to users.</p>
+                        <form>
+                            <div class="form-group" id="adminsForm">
+                                <ul class="list-group mb-3" id="adminsList">
+                                </ul>
+                                <div class="d-flex justify-content-between">
+                                    <div class="input-group col-6 px-0">
+                                        <div class="input-group-addon">ID</div>
+                                        <input type="text" class="form-control" id="inputAdminsAdd">
+                                    </div>
+                                    <button type="button" class="btn btn-success" id="adminsAddButton"><i class="fa fa-plus mr-2" aria-hidden="true"></i>Add Administrator</button>
+                                </div>
+                            </div>
+                            <hr class="my-4">
+                            <button type="button" class="btn btn-default" href="#carouselExampleControls" data-slide="prev"><i class="fa fa-arrow-left mr-2" aria-hidden="true"></i> Back</button>
+                            <button type="button" class="btn btn-primary ml-2" href="#carouselExampleControls" data-slide="next">Complete <i class="fa fa-check ml-2" aria-hidden="true"></i></button>
                         </form>
                     </div>
                 </div>
