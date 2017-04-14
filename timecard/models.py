@@ -1,10 +1,11 @@
-import datetime, json
-from flask import current_app, session, abort
-from flask_sqlalchemy import SQLAlchemy
+import datetime
+import json
 from functools import wraps
 
-db = SQLAlchemy()
+from flask import current_app, session, abort
+from flask_sqlalchemy import SQLAlchemy
 
+db = SQLAlchemy()
 
 config = {
     'admins': None,
@@ -66,7 +67,7 @@ def admin_required(f):
     return decorated_function
 
 
-#class Project(db.Model):
+# class Project(db.Model):
 #    project_id = db.Column(db.Integer, primary_key=True)
 
 #    name = db.Column(db.String)
@@ -82,46 +83,50 @@ class User(db.Model):
     last_modified = db.Column(db.DateTime, default=datetime.datetime.now)
 
     time_segments = db.relationship('TimeSegment')
-                                    #backref='user')
+    # backref='user')
 
     templates = db.relationship('Template')
-                                #backref='user')
+    # backref='user')
 
     schedule = db.relationship('Schedule')
-                               #backref='user')
+    # backref='user')
 
 
 class TimeSegment(db.Model):
-    """A date-dependent block of time consisting of a start and end UNIX timestamp.
+    """
+    A date-dependent block of time consisting of a start and end UNIX timestamp.
     """
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.String, db.ForeignKey('user.id'))
-    #project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
+    # project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
 
     start_timestamp = db.Column(db.BigInteger)
     end_timestamp = db.Column(db.BigInteger)
 
 
-#class Schedule(db.Model):
+# class Schedule(db.Model):
 #    """A series of date-independent blocks of time representing a schedule that repeats every period.
 #    """
 
 
-#class ScheduleSegment(db.Model):
+# class ScheduleSegment(db.Model):
 #    """A date-independent block of time consisting of a start and end time of day in 24-hour format.
 #    """
 #    id = db.Column(db.Integer, primary_key=True)
 
-    # day of the period, starting at 0
+# day of the period, starting at 0
 #    day = db.Column(db.Integer)
-    # 24-hour start and end times in the format 'hh:mm'
+# 24-hour start and end times in the format 'hh:mm'
+
+
 #    start = db.Column(db.String())
 #    end = db.Column(db.String())
 
 
 class Template(db.Model):
-    """A series of date-independent blocks of time.
+    """
+    A series of date-independent TemplateSegments.
     """
 
     id = db.Column(db.Integer, primary_key=True)
@@ -134,7 +139,8 @@ class Template(db.Model):
 
 
 class TemplateSegment(db.Model):
-    """A date-independent block of time consisting of a start and end time of day in 24-hour format.
+    """
+    A date-independent block of time consisting of a start and end time of day in 24-hour format.
     """
 
     id = db.Column(db.Integer, primary_key=True)

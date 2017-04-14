@@ -8,15 +8,15 @@
     <link href="http://www.rpi.edu/favicon.ico" type="image/ico" rel="icon">
     <title>Timecard - {{ session['CAS_USERNAME'].lower() }}</title>
 
-    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{url_for('static', filename='bootstrap/css/bootstrap.min.css')}}">
 
     <!-- Font Awesome -->
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
 
-    <link rel="stylesheet" href="/static/stylesheets/base.css">
-    <link rel="stylesheet" href="/static/stylesheets/user.css">
+    <link rel="stylesheet" href="{{url_for('static', filename='stylesheets/base.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='stylesheets/user.css')}}">
     <!--<link href="https://fonts.googleapis.com/css?family=Roboto:400,700|Titillium+Web:600" rel="stylesheet">-->
-    <script src="/static/js/moment.min.js"></script>
+    <script src="{{url_for('static', filename='js/moment.min.js')}}"></script>
 </head>
 
 <body>
@@ -26,7 +26,7 @@
                 <i class="fa fa-bars" aria-hidden="true"></i>
             </button>
             <a class="navbar-brand" href="#">
-                <img src="/static/img/logo.svg" height="24" class="d-inline-block align-top" alt="">
+                <img src="{{url_for('static', filename='img/logo.svg')}}" height="24" class="d-inline-block align-top" alt="">
             </a>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <div class="navbar-nav">
@@ -93,9 +93,9 @@
 
     <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
-    <script src="/static/bootstrap/js/bootstrap.min.js"></script>
+    <script src="{{url_for('static', filename='bootstrap/js/bootstrap.min.js')}}"></script>
 
-    <script src="/static/js/user.js"></script>
+    <script src="{{url_for('static', filename='js/user.js')}}"></script>
     <script>
         TcUser.initialDate = moment("{{ initial_date }}");
         TcUser.validPeriodStart = moment("{{ valid_period_start }}");

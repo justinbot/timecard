@@ -1,6 +1,35 @@
-from flask import Blueprint
+import datetime
+
+from flask import current_app, Blueprint, render_template, redirect, url_for, session
+from flask_cas import login_required
+
+from timecard.models import admin_required
+from timecard.models import config
 
 admin = Blueprint('admin', __name__, url_prefix='/admin', template_folder='templates')
+
+
+@admin.route('/')
+@admin.route('/users', methods=['GET'])
+@login_required
+@admin_required
+def admin_users_page():
+    return render_template(
+        'admin_users.html',
+        initial_date=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        valid_period_start=config['valid_period_start'],
+        period_duration=config['period_duration'],
+        lock_date=config['lock_date'],
+    )
+
+
+@admin.route('/settings')
+@login_required
+@admin_required
+def admin_settings_page():
+    return render_template(
+        'admin_settings.html'
+    )
 
 
 """def admin_required(f):

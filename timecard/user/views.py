@@ -5,7 +5,7 @@ from flask_cas import login_required
 
 from timecard.models import config
 
-user = Blueprint('user', __name__, template_folder='templates')
+user = Blueprint('user', __name__, template_folder='../templates')
 
 
 @user.route('/login/redirect')
@@ -23,7 +23,7 @@ def tc_login():
 
 @user.route('/')
 @login_required
-def show_user_page():
+def user_page():
     return render_template('user.html',
                            initial_date=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                            valid_period_start=config['valid_period_start'],

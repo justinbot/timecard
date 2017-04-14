@@ -1,6 +1,3 @@
-import json
-import datetime
-
 from flask import Flask
 from flask_cas import CAS
 
@@ -9,7 +6,7 @@ def create_app(config_path):
     app = Flask(__name__)
     app.config.from_pyfile(config_path)
 
-    #from timecard.models import cas
+    # from timecard.models import cas
     CAS(app)
 
     from timecard.models import db
