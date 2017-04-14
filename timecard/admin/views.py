@@ -1,14 +1,9 @@
-import datetime
-import json
-from timecard import config
-from timecard.models import db, User, Template, Timeslot
-from flask import Blueprint, session, render_template, jsonify, url_for, request, Response
-from flask_cas import login_required
-from functools import wraps
+from flask import Blueprint
 
-mod = Blueprint('admin', __name__, template_folder='templates')
+admin = Blueprint('admin', __name__, url_prefix='/admin', template_folder='templates')
 
-def admin_required(f):
+
+"""def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if session['CAS_USERNAME'] not in config['admins']:
@@ -18,10 +13,10 @@ def admin_required(f):
 
 
 @mod.route('/')
-@mod.route('/users')
+@mod.route('/admin/users', methods=['GET'])
 @login_required
 @admin_required
-def show_admin_users():
+def admin_users_show():
     return render_template(
         'admin_users.html',
         initial_date=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -31,10 +26,10 @@ def show_admin_users():
     )
 
 
-@mod.route('/users/update', methods=['POST'])
+@mod.route('/users', methods=['POST'])
 @login_required
 @admin_required
-def admin_users_update():
+def admin_users_load():
     request_json = request.get_json(silent=True)
 
     if not request_json or 'days' not in request_json:
@@ -71,10 +66,10 @@ def admin_users_update():
     return jsonify(response_dict)
 
 
-@mod.route('/users/add', methods=['POST'])
+@mod.route('/users', methods=['PUT'])
 @login_required
 @admin_required
-def admin_users_add_user():
+def admin_users_add():
     request_json = request.get_json(silent=True)
 
     if not request_json or 'firstname' not in request_json or 'lastname' not in request_json or 'id' not in request_json:
@@ -107,10 +102,12 @@ def admin_users_add_user():
     return Response()
 
 
-@mod.route('/users/edit', methods=['POST'])
+@mod.route('/users', methods=['PATCH'])
 @login_required
 @admin_required
-def admin_users_edit_user():
+def admin_users_edit():
+    # Body contains changes user id and changes
+
     request_json = request.get_json(silent=True)
 
     if not request_json or 'id' not in request_json:
@@ -161,10 +158,10 @@ def admin_users_edit_user():
     return Response()
 
 
-@mod.route('/users/delete', methods=['POST'])
+@mod.route('/users', methods=['DELETE'])
 @login_required
 @admin_required
-def admin_users_delete_user():
+def admin_users_delete():
     request_json = request.get_json(silent=True)
 
     if not request_json or 'id' not in request_json:
@@ -184,7 +181,7 @@ def admin_users_delete_user():
 @mod.route('/user/<id>')
 @login_required
 @admin_required
-def show_viewas(id):
+def view_as_show(id):
     user = User.query.filter_by(id=id.upper()).first()
     if not user:
         abort(404)
@@ -201,10 +198,10 @@ def show_viewas(id):
                            user_name=user.name_first + ' ' + user.name_last)
 
 
-@mod.route('/user/update', methods=['POST'])
+@mod.route('/user/<id>', methods=['GET'])
 @login_required
 @admin_required
-def viewas_update():
+def view_as_load():
     request_json = request.get_json(silent=True)
 
     if not request_json or 'id' not in request_json or 'range' not in request_json:
@@ -232,16 +229,16 @@ def viewas_update():
 @mod.route('/settings')
 @login_required
 @admin_required
-def show_admin_settings():
+def admin_settings_show():
     return render_template(
         'admin_settings.html'
     )
 
 
-@mod.route('/settings/update', methods=['POST'])
+@mod.route('/settings', methods=['GET'])
 @login_required
 @admin_required
-def admin_settings_update():
+def admin_settings_load():
     response_dict = {}
     response_dict['admins'] = [a.lower() for a in config['admins']]#(', '.join(config['admins'])).lower()
     response_dict['period_duration'] = config['period_duration']
@@ -254,7 +251,7 @@ def admin_settings_update():
     return jsonify(response_dict)
 
 
-@mod.route('/settings/save', methods=['POST'])
+@mod.route('/settings', methods=['PUT'])
 @login_required
 @admin_required
 def admin_settings_save():
@@ -298,3 +295,5 @@ def admin_purge_db():
     init_db()
 
     return Response()
+    """
+pass

@@ -1,13 +1,40 @@
 import datetime
-import json
-from timecard import config
-from timecard.models import db, User, Template, Timeslot
-from flask import Blueprint, session, render_template, jsonify, url_for, redirect, request, Response
-from flask_cas import CAS, login_required, logout
-from sqlalchemy import exc
 
-mod = Blueprint('user', __name__, template_folder='templates')
+from flask import current_app, Blueprint, render_template, redirect, url_for, session
+from flask_cas import login_required
 
+from timecard.models import config
+
+user = Blueprint('user', __name__, template_folder='templates')
+
+
+@user.route('/login/redirect')
+@login_required
+def tc_login():
+    # This endpoint is for redirecting the user after login
+
+    current_app.logger.info('Logged in', session['CAS_USERNAME'])
+    # username is automatically stored in session CAS_USERNAME
+
+    # TODO: redirect to admin panel if user is an admin
+
+    return redirect(url_for('show_user'))
+
+
+@user.route('/')
+@login_required
+def show_user_page():
+    return render_template('user.html',
+                           initial_date=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                           valid_period_start=config['valid_period_start'],
+                           view_days=config['view_days'],
+                           slot_increment=config['slot_increment'],
+                           slot_first_start=config['slot_first_start'],
+                           slot_last_start=config['slot_last_start'],
+                           lock_date=config['lock_date'])
+
+
+"""
 @mod.route('/')
 @login_required
 def show_user():
@@ -26,9 +53,9 @@ def show_user():
                            lock_date=config['lock_date'])
 
 
-@mod.route('/update', methods=['POST'])
+@mod.route('/', methods=['GET'])
 @login_required
-def user_update():
+def user_load():
     # Takes request with range of two UNIX timestamps
     # Returns all timestamps in range, and user last modified date
 
@@ -106,9 +133,9 @@ def user_save():
     return Response()
 
 
-@mod.route('/update/templates', methods=['POST'])
+@mod.route('/load/templates', methods=['POST'])
 @login_required
-def user_update_templates():
+def user_templates_load():
     user = User.query.filter_by(id=session['CAS_USERNAME']).first()
     if not user:
         app.logger.error('ERROR: Failed to lookup user', session['CAS_USERNAME'])
@@ -161,3 +188,4 @@ def tc_login():
     # TODO: redirect to admin panel if user is an admin
 
     return redirect(url_for('show_user'))
+    """
