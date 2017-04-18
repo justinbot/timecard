@@ -6,20 +6,23 @@ def create_app(config_path):
     app = Flask(__name__)
     app.config.from_pyfile(config_path)
 
-    # from timecard.models import cas
     CAS(app)
 
-    from timecard.models import db
+    from timecard.models import db, init_db
     db.init_app(app)
 
-    # init_db()
+    #with app.app_context():
+        #db.drop_all()
+        #db.create_all()
+        #db.session.commit()
+    #init_db(app)
 
-    from timecard.api.views import api
-    from timecard.user.views import user
-    from timecard.admin.views import admin
-    app.register_blueprint(api)
-    app.register_blueprint(user)
-    app.register_blueprint(admin)
+    from timecard.api.views import api_views
+    from timecard.user.views import user_views
+    from timecard.admin.views import admin_views
+    app.register_blueprint(api_views)
+    app.register_blueprint(user_views)
+    app.register_blueprint(admin_views)
 
     return app
 

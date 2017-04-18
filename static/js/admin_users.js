@@ -69,10 +69,13 @@ var TcAdmin = (function () {
             id: "tsBody"
         });
 
-        for (var elem in userData) {
-            var userId = elem;
-            var userFirst = userData[elem]["firstname"];
-            var userLast = userData[elem]["lastname"];
+        for (var i = 0; i < userData.length; i++) {
+            var userId = userData[i]["id"];
+            var userFirst = userData[i]["name_first"];
+            var userLast = userData[i]["name_last"];
+            var userCreated = moment.utc(userData[i]["created_date"]).local();
+            var userLastModified = moment.utc(userData[i]["last_modified"]).local();
+            var userTotalHours = userData[i]["total_hours"];
 
             var $newRow = $("<tr>", {
                 "id": "tsRow" + userId,
@@ -110,18 +113,18 @@ var TcAdmin = (function () {
             }));
 
             $newRow.append($("<td>", {
-                html: moment(userData[elem]["lastmodified"]).fromNow() //tc.initialDate
+                html: userLastModified.fromNow() //tc.initialDate
                     // TODO: Need to update this value periodically
             }));
 
-            for (var i = 0; i < tc.periodDuration; i++) {
+            for (var j = 0; j < tc.periodDuration; j++) {
                 $newRow.append($("<td>", {
-                    html: userData[elem]["ts-day-" + i].toFixed(1)
+                    html: userData[i]["hours"][j].toFixed(1)
                 }));
             }
 
             $newRow.append($("<td>", {
-                html: userData[elem]["total"].toFixed(1),
+                html: userTotalHours.toFixed(1),
                 style: "text-align: center"
             }));
         }
@@ -208,45 +211,61 @@ var TcAdmin = (function () {
         $loadingCheck.hide();
         $loadingError.hide();
 
-        var updateDict = {
-            "days": {}
+        var dayBoundsDict = {
+            "start": [],
+            "end": []
         };
 
         for (var i = 0; i < $tsDays.length; i++) {
             var lower = moment(periodStart).add(i, "day").startOf("day").unix();
             var upper = moment(periodStart).add(i, "day").endOf("day").unix();
 
-            updateDict["days"]["ts-day-" + i] = [lower, upper];
+            //updateDict["days"]["ts-day-" + i] = [lower, upper];
+            dayBoundsDict["start"].push(lower);
+            dayBoundsDict["end"].push(upper);
         }
 
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/admin/users/update", true);
-        xhr.setRequestHeader("Content-Type", "application/json");
-        // TODO: also set xhr.timeout and xhr.ontimeout?
-        xhr.responseType = "json";
-        xhr.onload = function () {
-            $loadingSpinner.hide();
-
-            if (xhr.status == 200) {
+        $.ajax({
+                "method": "GET",
+                "url": "/api/users",
+                "data": $.param(dayBoundsDict, true),
+                "dataType": "json"
+            })
+            .done(function (data) {
+                $loadingSpinner.hide();
                 $loadingCheck.show();
-                userData = xhr.response;
+
+                userData = data["users"];
+
                 onUserDataChanged();
-            } else {
+            })
+            .fail(function () {
+                $loadingSpinner.hide();
                 $loadingError.show();
-            }
-        }
-        xhr.send(JSON.stringify(updateDict));
+            });
     }
 
     // TODO: Convert to dbAddUsers to take dict of ids to firstnames and lastnames
     function dbAddUser(firstname, lastname, id) {
-        var addDict = {
-            "firstname": firstname,
-            "lastname": lastname,
-            "id": id
-        };
+        $.ajax({
+                "method": "POST",
+                "url": "/api/users",
+                "data": JSON.stringify({
+                    "id": id,
+                    "name_first": firstname,
+                    "name_last": lastname
+                }),
+                "contentType": "application/json; charset=utf-8",
+                "dataType": "json"
+            })
+            .done(function (json) {
+                showAlert("success", "", "Successfully added user")
+            })
+            .fail(function (xhr, status, errorThrown) {
+                showAlert("danger", "Error", "Failed to add user (" + errorThrown + ")");
+            });
 
-        var xhr = new XMLHttpRequest();
+        /*var xhr = new XMLHttpRequest();
         xhr.open("POST", "/admin/users/add", true);
         xhr.setRequestHeader("Content-Type", "application/json");
         // TODO: also set xhr.timeout and xhr.ontimeout?
@@ -259,7 +278,7 @@ var TcAdmin = (function () {
             }
             dbUpdateUsers();
         }
-        xhr.send(JSON.stringify(addDict));
+        xhr.send(JSON.stringify(addDict));*/
     }
 
     function dbEditUser(id, newId, newFirst, newLast) {
@@ -496,9 +515,7 @@ var TcAdmin = (function () {
 
     function currentPeriod() {
         focusDate = moment(tc.initialDate);
-        periodStart = moment(tc.validPeriodStart);
-        // Calculate start of the period the initialDate is in
-        periodStart.add(Math.floor((focusDate.unix() - periodStart.unix()) / 60 / 60 / 24 / tc.periodDuration) * tc.periodDuration, "day");
+        periodStart = moment(tc.initialPeriodStart);
         periodEnd = moment(periodStart).add(tc.periodDuration - 1, "day").endOf("day");
 
         onPeriodChanged();

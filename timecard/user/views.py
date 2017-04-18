@@ -1,14 +1,15 @@
-import datetime
+from datetime import datetime
 
 from flask import current_app, Blueprint, render_template, redirect, url_for, session
 from flask_cas import login_required
 
-from timecard.models import config
+from timecard.api import current_period_start
+from timecard.models import config, User
 
-user = Blueprint('user', __name__, template_folder='../templates')
+user_views = Blueprint('user', __name__, template_folder='../templates')
 
 
-@user.route('/login/redirect')
+@user_views.route('/login/redirect')
 @login_required
 def tc_login():
     # This endpoint is for redirecting the user after login
@@ -18,14 +19,20 @@ def tc_login():
 
     # TODO: redirect to admin panel if user is an admin
 
-    return redirect(url_for('show_user'))
+    return redirect(url_for('user_page'))
 
 
-@user.route('/')
+@user_views.route('/')
 @login_required
 def user_page():
+    # Make sure this logged in user is in the system
+    # TODO: Redirect to a useful page instead
+    user = User.query.get_or_404(session['CAS_USERNAME'])
+
     return render_template('user.html',
-                           initial_date=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                           user_id=user.id.lower(),
+                           initial_date=datetime.now().isoformat(),  # now, in server's time zone
+                           current_period_start=current_period_start().isoformat(),
                            valid_period_start=config['valid_period_start'],
                            view_days=config['view_days'],
                            slot_increment=config['slot_increment'],

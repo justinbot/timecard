@@ -1,9 +1,10 @@
-import datetime
 import json
+from datetime import datetime
 from functools import wraps
 
 from flask import current_app, session, abort
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import validates
 
 db = SQLAlchemy()
 
@@ -34,8 +35,8 @@ with open('config.json') as config_file:
             'Configuration: period_duration (%s) not within expected range' % custom_config['period_duration'])
 
     try:
-        if custom_config['valid_period_start'] != datetime.datetime.strptime(custom_config['valid_period_start'],
-                                                                             '%Y-%m-%d').strftime('%Y-%m-%d'):
+        if custom_config['valid_period_start'] != datetime.strptime(custom_config['valid_period_start'],
+                                                                    '%Y-%m-%d').strftime('%Y-%m-%d'):
             raise ValueError
     except ValueError:
         current_app.logger.error(
@@ -71,7 +72,7 @@ def admin_required(f):
 #    project_id = db.Column(db.Integer, primary_key=True)
 
 #    name = db.Column(db.String)
-#    created_date = db.Column(db.DateTime, default=datetime.datetime.now)
+#    created_date = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class User(db.Model):
@@ -79,30 +80,54 @@ class User(db.Model):
 
     name_first = db.Column(db.String)
     name_last = db.Column(db.String)
-    created_date = db.Column(db.DateTime, default=datetime.datetime.now)
-    last_modified = db.Column(db.DateTime, default=datetime.datetime.now)
+    created_date = db.Column(db.DateTime, default=datetime.utcnow)
 
-    time_segments = db.relationship('TimeSegment')
-    # backref='user')
+    # last_modified will automatically update when a value is changed
+    last_modified = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    time_segments = db.relationship('TimeSegment', backref='user', lazy='dynamic')
 
     templates = db.relationship('Template')
+
     # backref='user')
 
-    schedule = db.relationship('Schedule')
+    @validates('id')  # Make sure id is all uppercase
+    def validate_id(self, key, id):
+        return id.upper()
+
+    # schedule = db.relationship('Schedule')
     # backref='user')
+
+    def to_dict(self):
+        return {
+            'id': self.id.lower(),
+            'name_first': self.name_first,
+            'name_last': self.name_last,
+            'created_date': self.created_date.isoformat(),
+            'last_modified': self.last_modified.isoformat()
+        }
 
 
 class TimeSegment(db.Model):
     """
-    A date-dependent block of time consisting of a start and end UNIX timestamp.
+    A date-dependent block of time consisting of a start and end Unix timestamp.
     """
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String, db.ForeignKey('user.id'))
+    user_id = db.Column(db.String,
+                        db.ForeignKey('user.id'))  # TODO: onupdate="cascade"??) to propagate onupdate to user
     # project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
 
     start_timestamp = db.Column(db.BigInteger)
     end_timestamp = db.Column(db.BigInteger)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'start_timestamp': self.start_timestamp,
+            'end_timestamp': self.end_timestamp
+        }
 
 
 # class Schedule(db.Model):

@@ -19,8 +19,9 @@ var TcUser = (function () {
     var localTimestamps; // set of timestamps as changed locally
 
     /* public variables */
+    tc.userId;
     tc.initialDate;
-    tc.validPeriodStart;
+    tc.initialPeriodStart;
     tc.periodDuration;
     tc.lockDate;
     tc.slotIncrement;
@@ -58,11 +59,14 @@ var TcUser = (function () {
 
     function currentPeriod() {
         focusDate = moment(tc.initialDate);
-        periodStart = moment(tc.validPeriodStart);
+        periodStart = tc.initialPeriodStart;
+        periodEnd = moment(periodStart).add(tc.periodDuration - 1, "day").endOf("day");
+        
+        //periodStart = moment(tc.validPeriodStart);
 
         // Calculate start of the period the initialDate is in
-        periodStart.add(Math.floor((focusDate.unix() - periodStart.unix()) / 60 / 60 / 24 / tc.periodDuration) * tc.periodDuration, "day");
-        periodEnd = moment(periodStart).add(tc.periodDuration - 1, "day").endOf("day");
+        //periodStart.add(Math.floor((focusDate.unix() - periodStart.unix()) / 60 / 60 / 24 / tc.periodDuration) * tc.periodDuration, "day");
+        //periodEnd = moment(periodStart).add(tc.periodDuration - 1, "day").endOf("day");
 
         onPeriodChanged();
     }
@@ -92,22 +96,25 @@ var TcUser = (function () {
         $loadingCheck.hide();
         $loadingError.hide();
 
-        $.post({
-                "url": "/load",
+        $.ajax({
+                "method": "GET",
+                "url": "/api/users/" + tc.userId + "/hours",
                 "data": {
-                    "range": [moment(periodStart).startOf("day").unix(), moment(periodEnd).endOf("day").unix()]
+                    "start": moment(periodStart).startOf("day").unix().toString(),
+                    "end": moment(periodEnd).endOf("day").unix().toString()
                 },
                 "dataType": "json"
             })
-            .done(function (data) {
+            .done(function (json) {
                 $loadingSpinner.hide();
                 $loadingCheck.show();
+                
+                // User 'last_modified' is in UTC, convert to local for display
+                $("#tcStatus").text("Last modified " + moment.utc(data["last_modified"])).local().fromNow());
 
-                $("#tcStatus").text("Last modified " + moment(data["lastmodified"]).fromNow());
-
-                // data["timeblocks"] will be in the format "[start, end]"
+                /*// data["timeblocks"] will be in the format "[start, end]"
                 timestamps = new Set();
-                for (var i = 0; i < data["timeblocks"].length; i++) {
+                for (var i = 0; i < json["timeblocks"].length; i++) {
                     var startTimestamp = parseInt(data["timeblocks"][0]);
                     var endTimestamp = parseInt(data["timeblocks"][1]);
 
@@ -117,9 +124,9 @@ var TcUser = (function () {
                         startTimestamp += tc.slotIncrement * 60;
                     }
                 }
-                localTimestamps = timestamps;
+                localTimestamps = timestamps;*/
             })
-            .fail(function () {
+            .fail(function (xhr, status, errorThrown) {
                 $loadingSpinner.hide();
                 $loadingError.show();
             });
