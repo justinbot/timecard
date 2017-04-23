@@ -1,12 +1,16 @@
 import datetime
 import json
-from timecard import config
+from timecard import config, ENABLE_SETUP
 from timecard.models import db, User, Template, Timeslot
 from flask import Blueprint, session, render_template, jsonify, url_for, redirect, request, Response
 from flask_cas import CAS, login_required, logout
 from sqlalchemy import exc
 
 mod = Blueprint('user', __name__, template_folder='templates')
+
+def disable_setup():
+    global ENABLE_SETUP
+    ENABLE_SETUP = False
 
 @mod.route('/')
 @login_required
@@ -15,9 +19,11 @@ def show_user():
     if not user:
         abort(403)
 
+    print ENABLE_SETUP
+
+    if ENABLE_SETUP is True:
+        return redirect(url_for('setup.setup_welcome'))
     # TODO: Cleaner way to pass data? Maybe store persistent values in session
-    return render_template('setup.html')
-    """
     return render_template('user.html',
                            initial_date=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                            valid_period_start=config['valid_period_start'],
@@ -26,7 +32,6 @@ def show_user():
                            slot_first_start=config['slot_first_start'],
                            slot_last_start=config['slot_last_start'],
                            lock_date=config['lock_date'])
-    """
 
 
 @mod.route('/update', methods=['POST'])

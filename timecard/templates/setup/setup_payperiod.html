@@ -1,0 +1,17 @@
+<div id="config-payperiod" style="width: 100%">
+    <h4 class="text-muted my-3"><i class="fa fa-calendar mr-2" aria-hidden="true"></i>Pay Period</h4>
+    <p>These settings affect the pay period.</p>
+    <form>
+        <div class="form-group">
+            <label for="inputPeriodDuration"><strong>Pay Period Duration</strong><small class="text-muted ml-3">The number of days in each pay period.</small></label>
+            <input type="number" class="form-control" id="inputPeriodDuration" min="1" max="180">
+        </div>
+        <div class="form-group">
+            <label for="inputValidPeriodStart"><strong>Pay Period Start Date</strong><small class="text-muted ml-3">A past date representing the first day of a rolling pay period.</small></label>
+            <input type="date" class="form-control" id="inputValidPeriodStart">
+        </div>
+        <hr class="my-4">
+        <a class="btn btn-default" href="{{ url_for('setup.setup_timeslot') }}" role="button"><i class="fa fa-arrow-left mr-2" aria-hidden="true"></i> Back</a>
+        <a class="btn btn-primary ml-2" href="{{ url_for('setup.setup_admin') }}" role="button">Next <i class="fa fa-arrow-right ml-2" aria-hidden="true"></i></a>
+    </form>
+</div>

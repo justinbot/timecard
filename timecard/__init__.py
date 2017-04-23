@@ -9,7 +9,7 @@ app.config.from_pyfile('server.cfg')
 cas = CAS(app)
 db.init_app(app)
 
-#init_db(app)
+# init_db(app)
 
 config = {
     'admins': None,
@@ -20,6 +20,7 @@ config = {
     'slot_first_start': None,
     'slot_last_start': None
 }
+ENABLE_SETUP = False
 
 # load default configuration
 with open('config_default.json') as config_default_file:
@@ -59,11 +60,13 @@ try:
 
         config = custom_config
 except IOError:
-    # We need to handle this
+    ENABLE_SETUP = True
     print 'config.json not found'
 
 from timecard.user.views import mod
 from timecard.admin.views import mod
+from timecard.setup.views import mod
 
 app.register_blueprint(user.views.mod)
 app.register_blueprint(admin.views.mod, url_prefix='/admin')
+app.register_blueprint(setup.views.mod, url_prefix='/setup')

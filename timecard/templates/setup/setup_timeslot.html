@@ -1,0 +1,33 @@
+<div id="config-timeslot" style="width: 100%">
+    <h4 class="text-muted my-3"><i class="fa fa-clock-o mr-2" aria-hidden="true"></i>Timeslot</h4>
+    <p>These settings affect various time settings per day.</p>
+    <form>
+        <div class="form-group">
+            <label for="inputSlotIncrement"><strong>Slot Increment</strong><small class="text-muted ml-3">The duration of each slot.</small></label>
+            <select class="form-control" id="inputSlotIncrement">
+                <option value="5">5 minutes</option>
+                <option value="10">10 minutes</option>
+                <option value="15">15 minutes</option>
+                <option value="20">20 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="60">60 minutes</option>
+                <option value="120">120 minutes</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="inputViewDays"><strong>Days to Display</strong><small class="text-muted ml-3">The number of days to display at a time in the user view.</small></label>
+            <input type="number" class="form-control" id="inputViewDays" min="1" max="30">
+        </div>
+        <div class="form-group">
+            <label for="inputDayStart"><strong>Start of Day</strong><small class="text-muted ml-3">The time of day at which the first slot starts.</small></label>
+            <input type="time" class="form-control" id="inputDayStart" step="300">
+        </div>
+        <div class="form-group">
+            <label for="inputDayEnd"><strong>End of Day</strong><small class="text-muted ml-3">The time of day at which the last slot ends.</small></label>
+            <input type="time" class="form-control" id="inputDayEnd" step="300">
+        </div>
+    </form>
+    <hr class="my-4">
+    <a class="btn btn-default" href="{{ url_for('setup.setup_welcome') }}" role="button"><i class="fa fa-arrow-left mr-2" aria-hidden="true"></i> Back</a>
+    <a class="btn btn-primary ml-2" href="{{ url_for('setup.setup_payperiod') }}" role="button">Next <i class="fa fa-arrow-right ml-2" aria-hidden="true"></i></a>
+</div>
