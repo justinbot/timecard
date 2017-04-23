@@ -9,13 +9,10 @@
     <title>Timecard Admin - {{ session['CAS_USERNAME'].lower() }}</title>
 
     <link rel="stylesheet" href="{{url_for('static', filename='bootstrap/css/bootstrap.min.css')}}">
-
-    <!-- Font Awesome -->
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
-
     <link rel="stylesheet" href="{{url_for('static', filename='stylesheets/base.css')}}">
     <link rel="stylesheet" href="{{url_for('static', filename='stylesheets/admin_users.css')}}">
-    <!--<link href="https://fonts.googleapis.com/css?family=Roboto:400,700|Titillium+Web:600" rel="stylesheet">-->
+    
     <script src="{{url_for('static', filename='js/moment.min.js')}}"></script>
 </head>
 
@@ -81,18 +78,18 @@
             </div>
         </div>
         <div id="alertBanner"></div>
-        <table class="table table-hover" id="tsTable">
+        <table class="table table-sm table-hover" id="tsTable">
             <thead id="tsHead">
                 <tr class="">
-                    <th class="">
+                    <th class="" style="width: 30px">
                         <label class="custom-control custom-checkbox">
                             <input type="checkbox" class="custom-control-input" id="tsHeadCheckbox">
                             <span class="custom-control-indicator"></span>
                         </label>
                     </th>
-                    <th class="sortable sorted" id="tsHeaderName">Name<i class="fa fa-sort-desc ml-2" aria-hidden="true"></i></th>
-                    <th class="sortable" id="tsHeaderId">User ID</th>
-                    <th class="sortable" id="tsHeaderModified">Last Modified</th>
+                    <th class="sortable sorted" id="tsHeaderName" style="width: 120px">Name<i class="fa fa-sort-desc ml-2" aria-hidden="true"></i></th>
+                    <th class="sortable" id="tsHeaderId" style="width: 60px">User ID</th>
+                    <th class="sortable" id="tsHeaderModified" style="width: 120px">Last Modified</th>
                     {% for i in range(period_duration) %}
                     <th class="" id="tsDay{{i}}" data-date="">Jan 1</th>
                     {% endfor %}

@@ -74,7 +74,6 @@ var TcAdmin = (function () {
             var userFirst = userData[i]["name_first"];
             var userLast = userData[i]["name_last"];
             var userCreated = moment.utc(userData[i]["created_date"]).local();
-            var userLastModified = moment.utc(userData[i]["last_modified"]).local();
             var userTotalHours = userData[i]["total_hours"];
 
             var $newRow = $("<tr>", {
@@ -113,8 +112,8 @@ var TcAdmin = (function () {
             }));
 
             $newRow.append($("<td>", {
-                html: userLastModified.fromNow() //tc.initialDate
-                    // TODO: Need to update this value periodically
+                html: moment.utc(userData[i]["modified"]).local().fromNow() //tc.initialDate
+                // TODO: Need to update this value periodically
             }));
 
             for (var j = 0; j < tc.periodDuration; j++) {
@@ -143,11 +142,9 @@ var TcAdmin = (function () {
     }
 
     function updateCheckboxes() {
-        var userCount = Object.keys(userData).length;
-
-        if (selectedUsers.size == userCount) {
+        if (selectedUsers.size == userData.length) {
             $tsHeadCheckbox.prop("indeterminate", false);
-            if (userCount == 0) {
+            if (userData.length == 0) {
                 $tsHeadCheckbox.prop("checked", false);
             } else {
                 $tsHeadCheckbox.prop("checked", true);
@@ -169,18 +166,22 @@ var TcAdmin = (function () {
     }
 
     function updateEdit() {
+        console.log(userData);
         if (selectedUsers.size == 0) {
-            $tableStatus.text("Users: " + Object.keys(userData).length);
+            $tableStatus.text("Users: " + userData.length);
             $userViewAsButton.hide();
             $userEditButton.hide();
             $userDeleteButton.hide();
         } else if (selectedUsers.size == 1) {
-            var user = selectedUsers.values().next().value;
-            $tableStatus.text(userData[user]["firstname"] + " " + userData[user]["lastname"]);
+            var userId = selectedUsers.values().next().value;
+            var user = userData.find(function (element) {
+                return element["id"] === userId;
+            });
+            $tableStatus.text(user["name_first"] + " " + user["name_last"]);
             $userViewAsButton.href = "/user/" + user;
             $userViewAsButton.show();
             $userEditButton.show();
-            $userEditButton.data("userid", user);
+            $userEditButton.data("userid", userId);
             $userDeleteButton.show();
         } else {
             $tableStatus.text(selectedUsers.size + " users");
@@ -216,11 +217,11 @@ var TcAdmin = (function () {
             "end": []
         };
 
+        // Construct parallel start and end selection arrays
         for (var i = 0; i < $tsDays.length; i++) {
             var lower = moment(periodStart).add(i, "day").startOf("day").unix();
             var upper = moment(periodStart).add(i, "day").endOf("day").unix();
 
-            //updateDict["days"]["ts-day-" + i] = [lower, upper];
             dayBoundsDict["start"].push(lower);
             dayBoundsDict["end"].push(upper);
         }
@@ -231,7 +232,7 @@ var TcAdmin = (function () {
                 "data": $.param(dayBoundsDict, true),
                 "dataType": "json"
             })
-            .done(function (data) {
+            .done(function (data, status, xhr) {
                 $loadingSpinner.hide();
                 $loadingCheck.show();
 
@@ -239,13 +240,12 @@ var TcAdmin = (function () {
 
                 onUserDataChanged();
             })
-            .fail(function () {
+            .fail(function (xhr, status, error) {
                 $loadingSpinner.hide();
                 $loadingError.show();
             });
     }
 
-    // TODO: Convert to dbAddUsers to take dict of ids to firstnames and lastnames
     function dbAddUser(firstname, lastname, id) {
         $.ajax({
                 "method": "POST",
@@ -258,31 +258,18 @@ var TcAdmin = (function () {
                 "contentType": "application/json; charset=utf-8",
                 "dataType": "json"
             })
-            .done(function (json) {
-                showAlert("success", "", "Successfully added user")
+            .done(function (data, status, xhr) {
+                showAlert("success", "", "Successfully added user");
             })
-            .fail(function (xhr, status, errorThrown) {
-                showAlert("danger", "Error", "Failed to add user (" + errorThrown + ")");
+            .fail(function (xhr, status, error) {
+                showAlert("danger", "Error", "Failed to add user (" + error + ")");
+            }).always(function () {
+                dbUpdateUsers();
             });
-
-        /*var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/admin/users/add", true);
-        xhr.setRequestHeader("Content-Type", "application/json");
-        // TODO: also set xhr.timeout and xhr.ontimeout?
-        xhr.responseType = "json";
-        xhr.onload = function () {
-            if (xhr.status == 200) {
-                showAlert("success", "", "Successfully added user")
-            } else {
-                showAlert("danger", "Error", "Failed to add user (Error " + xhr.status + ")");
-            }
-            dbUpdateUsers();
-        }
-        xhr.send(JSON.stringify(addDict));*/
     }
 
     function dbEditUser(id, newId, newFirst, newLast) {
-        var editDict = {
+        /*var editDict = {
             "id": id,
             "new_id": newId,
             "new_first": newFirst,
@@ -302,38 +289,31 @@ var TcAdmin = (function () {
             }
             dbUpdateUsers();
         }
-        xhr.send(JSON.stringify(editDict));
+        xhr.send(JSON.stringify(editDict));*/
     }
 
-    // TODO: Convert to DeleteUsers and take array of ids
     function dbDeleteUser(id) {
         selectedUsers.delete(id);
 
-        var deleteDict = {
-            "id": id
-        };
-
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/admin/users/delete", true);
-        xhr.setRequestHeader("Content-Type", "application/json");
-        // TODO: also set xhr.timeout and xhr.ontimeout?
-        xhr.responseType = "json";
-        xhr.onload = function () {
-            if (xhr.status == 200) {
-                showAlert("info", "", "Successfully deleted user")
-            } else {
-                showAlert("danger", "Error", "Failed to delete user (Error " + xhr.status + ")");
-            }
-            dbUpdateUsers();
-        }
-        xhr.send(JSON.stringify(deleteDict));
+        $.ajax({
+                "method": "DELETE",
+                "url": "/api/users/" + id
+            })
+            .done(function (data, status, xhr) {
+                showAlert("success", "", "Successfully deleted user");
+            })
+            .fail(function (xhr, status, error) {
+                showAlert("danger", "Error", "Failed to delet euser (" + error + ")");
+            }).always(function () {
+                dbUpdateUsers();
+            });
     }
 
     $("#tsTable").on("change", "[type='checkbox']", function () {
         if ($(this).is($tsHeadCheckbox)) {
             if (this.checked) {
-                for (var elem in userData) {
-                    selectedUsers.add(elem);
+                for (var i = 0; i < userData.length; i++) {
+                    selectedUsers.add(userData[i]["id"]);
                 }
             } else {
                 selectedUsers.clear();
@@ -493,18 +473,6 @@ var TcAdmin = (function () {
         $alertBanner.append(newAlert);
     }
 
-    $("#buttonPeriodPrev").on("click", function () {
-        prevPeriod();
-    });
-
-    $("#buttonPeriodToday").on("click", function () {
-        currentPeriod();
-    });
-
-    $("#buttonPeriodNext").on("click", function () {
-        nextPeriod();
-    });
-
     function prevPeriod() {
         focusDate.subtract(tc.periodDuration, "day");
         periodStart.subtract(tc.periodDuration, "day");
@@ -528,6 +496,18 @@ var TcAdmin = (function () {
 
         onPeriodChanged();
     }
+
+    $("#buttonPeriodPrev").on("click", function () {
+        prevPeriod();
+    });
+
+    $("#buttonPeriodToday").on("click", function () {
+        currentPeriod();
+    });
+
+    $("#buttonPeriodNext").on("click", function () {
+        nextPeriod();
+    });
 
     return tc;
 })();

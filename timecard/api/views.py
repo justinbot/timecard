@@ -54,8 +54,6 @@ from flask_cas import login_required
 
 api_views = Blueprint('api', __name__,  url_prefix='/api')
 
-MAX_SEGMENT_DURATION = 86400  # Maximum TimeSegment duration in seconds
-
 
 @api_views.route('/users', methods=['POST', 'GET'])
 @login_required
@@ -196,32 +194,96 @@ def specified_user_hours(user_id):
 
     if request.method == 'POST':
         # Create new segment, return url with id
-        # TODO: Take 'create' and 'delete' arrays of (start, end)
 
         request_dict = request.get_json(silent=True)
 
         # Check that the request parameters are valid
-        if not request_dict:
+        if not request_dict or 'start' not in request_dict or 'end' not in request_dict:
             abort(400)
 
-        start_timestamp = request_dict['start']
-        end_timestamp = request_dict['end']
+        delete = request_dict['delete']
+        # Order shouldn't matter as long as one is before the other
+        segment_start = min(int(request_dict['start']), int(request_dict['end']))
+        segment_end = max(int(request_dict['start']), int(request_dict['end']))
 
-        if not start_timestamp or not end_timestamp or not (start_timestamp - end_timestamp) <= MAX_SEGMENT_DURATION:
+        if not segment_start < segment_end:
             abort(400)
 
         # TODO: Find any segments that intersect this one, use to create one segment
+        # Segments are added sequentially. They may be adjacent, but may not overlap.
+        # If 'Add' a new segment intersects with an existing segment, the new takes precedence and the old is trimmed.
+        # 'Delete' is a segment (not id) of time during which there should be no segment (trim).
 
-        new_segment = TimeSegment(start_timestamp=request_dict['start'], end_timestamp=request_dict['end'])
+        if delete:
+            segments = user.time_segments.filter(TimeSegment.start_timestamp <= segment_end,
+                                                 TimeSegment.end_timestamp >= segment_start)
 
-        user.time_segments.add(new_segment)
-        db.session.commit()
+            for s in segments.all():
+                print s.to_dict()
 
-        # Respond with location header for new segment
-        return jsonify(), 201, {'location': '/users/' + user_id + '/hours/' + new_segment.id}
+            # Trim each segment so it no longer intersects the specified period
+            # TODO: May if this is fully inside a segment, split it
+            for s in segments:
+                if s.start_timestamp >= segment_start and s.end_timestamp <= segment_end:
+                    # Segment is fully inside, delete it
+                    user.time_segments.remove(s)
+
+                elif segment_start > s.start_timestamp and segment_end < s.end_timestamp:
+                    new_segment_1 = TimeSegment(start_timestamp=s.start_timestamp, end_timestamp=segment_start - 1)
+                    new_segment_2 = TimeSegment(start_timestamp=segment_end + 1, end_timestamp=s.end_timestamp)
+                    user.time_segments.remove(s)
+                    user.time_segments.append(new_segment_1)
+                    user.time_segments.append(new_segment_2)
+
+                elif s.start_timestamp < segment_start:
+                    # end of segment intersects, trim it
+                    s.end_timestamp = segment_start - 1
+
+                elif s.end_timestamp > segment_end:
+                    # start of segment intersects, trim it
+                    s.start_timestamp = segment_end + 1
+
+            user.modified = datetime.utcnow()
+            db.session.commit()
+
+            return "success"
+
+        else:
+            # Offset by 1 to get adjacent segments as well
+            segments = user.time_segments.filter(TimeSegment.start_timestamp - 1 <= segment_end,
+                                                 TimeSegment.end_timestamp + 1 >= segment_start)
+
+            for s in segments.all():
+                print s.to_dict()
+
+            # Merge with segments contained by or adjacent to this one
+            # Delete any segment contained, shift upper and lower bound to those of adjacent
+
+            for s in segments:
+                if s.start_timestamp >= segment_start and s.end_timestamp <= segment_end:
+                    # Segment is fully inside, delete it
+                    user.time_segments.remove(s)
+
+                elif s.start_timestamp < segment_start:
+                    # end of segment intersects, shift this lower bound
+                    segment_start = s.start_timestamp
+                    user.time_segments.remove(s)
+
+                elif s.end_timestamp > segment_end:
+                    # start of segment intersects, shift this upper bound
+                    segment_end = s.end_timestamp
+                    user.time_segments.remove(s)
+
+            new_segment = TimeSegment(start_timestamp=segment_start, end_timestamp=segment_end)
+            user.time_segments.append(new_segment)
+
+            user.modified = datetime.utcnow()
+            db.session.commit()
+            # Respond with location header for new segment
+            return jsonify(), 201, {'location': '/users/' + user_id + '/hours/' + str(new_segment.id)}
 
     elif request.method == 'GET':
-        # Return all time segments in range specified by args
+        # Return this user's time segments in range specified by args
 
         selection_start_timestamp = request.args.get('start')
         selection_end_timestamp = request.args.get('end')
@@ -231,7 +293,8 @@ def specified_user_hours(user_id):
                                                   TimeSegment.end_timestamp >= selection_start_timestamp)
 
         segments_dict = {
-            'segments': [t.to_dict() for t in time_segments]
+            'modified': user.modified.isoformat(),
+            'time_segments': [t.to_dict() for t in time_segments]
         }
 
         return jsonify(segments_dict)
@@ -261,13 +324,8 @@ def specified_user_hours_segment(user_id, segment_id):
 
     if request.method == 'GET':
         # Get segment <segment_id>
-        segment_dict = {
-            'id': segment.id,
-            'start': segment.start,
-            'end': segment.end
-        }
 
-        return jsonify(segment_dict)
+        return jsonify(segment.to_dict())
 
     elif request.method == 'DELETE':
         # Delete segment <segment_id>

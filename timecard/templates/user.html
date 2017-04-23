@@ -9,13 +9,10 @@
     <title>Timecard - {{ session['CAS_USERNAME'].lower() }}</title>
 
     <link rel="stylesheet" href="{{url_for('static', filename='bootstrap/css/bootstrap.min.css')}}">
-
-    <!-- Font Awesome -->
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
-
     <link rel="stylesheet" href="{{url_for('static', filename='stylesheets/base.css')}}">
     <link rel="stylesheet" href="{{url_for('static', filename='stylesheets/user.css')}}">
-    <!--<link href="https://fonts.googleapis.com/css?family=Roboto:400,700|Titillium+Web:600" rel="stylesheet">-->
+    
     <script src="{{url_for('static', filename='js/moment.min.js')}}"></script>
 </head>
 
@@ -71,17 +68,7 @@
         </div>
         <div class="unselectable">
             <table class="table table-sm table-bordered tc-table" id="tcTable">
-                <thead id="tcHead">
-                    <!--<tr>
-                        <th></th>
-                        {% for i in range(view_days) %}
-                        <th class="text-center tc-header" id="tcHeader{{i}}">
-                            <div>Monday</div>
-                            <div>Jan 1</div>
-                            <div class="font-weight-normal">0.0 hours</div>
-                        </th>
-                        {% endfor %}
-                    </tr>-->
+                <thead id="tcHeader">
                 </thead>
                 <tbody id="tcBody">
                 </tbody>
@@ -108,7 +95,6 @@
         TcUser.lockDate = "{{ lock_date }}";
 
         TcUser.init();
-
     </script>
 </body>
 

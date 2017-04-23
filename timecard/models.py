@@ -8,6 +8,8 @@ from sqlalchemy.orm import validates
 
 db = SQLAlchemy()
 
+MAX_SEGMENT_DURATION = 86400  # Maximum TimeSegment duration in seconds
+
 config = {
     'admins': None,
     'period_duration': None,
@@ -82,21 +84,16 @@ class User(db.Model):
     name_last = db.Column(db.String)
     created_date = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # last_modified will automatically update when a value is changed
-    last_modified = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    # modified will automatically update when a value is changed
+    modified = db.Column(db.DateTime, default=datetime.utcnow) #, onupdate=datetime.utcnow)
 
     time_segments = db.relationship('TimeSegment', backref='user', lazy='dynamic')
 
     templates = db.relationship('Template')
 
-    # backref='user')
-
     @validates('id')  # Make sure id is all uppercase
     def validate_id(self, key, id):
         return id.upper()
-
-    # schedule = db.relationship('Schedule')
-    # backref='user')
 
     def to_dict(self):
         return {
@@ -104,7 +101,7 @@ class User(db.Model):
             'name_first': self.name_first,
             'name_last': self.name_last,
             'created_date': self.created_date.isoformat(),
-            'last_modified': self.last_modified.isoformat()
+            'modified': self.modified.isoformat()
         }
 
 
@@ -115,11 +112,17 @@ class TimeSegment(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.String,
-                        db.ForeignKey('user.id'))  # TODO: onupdate="cascade"??) to propagate onupdate to user
+                        db.ForeignKey('user.id'))
     # project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
 
     start_timestamp = db.Column(db.BigInteger)
     end_timestamp = db.Column(db.BigInteger)
+
+    #@validates('start_timestamp', 'end_timestamp')
+    #def validate_timestamps(self, key, value):
+    #    if key == 'end_timestamp':
+    #        assert value - self.start_timestamp < MAX_SEGMENT_DURATION
+    #    return value
 
     def to_dict(self):
         return {
