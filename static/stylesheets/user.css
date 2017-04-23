@@ -1,8 +1,10 @@
 table.tc-table {
+    table-layout: fixed;
     border-width: 0;
 }
 
-table.tc-table tbody td, table.tc-table thead th {
+table.tc-table tbody td,
+table.tc-table thead th {
     border-color: #ccc;
 }
 
@@ -17,11 +19,13 @@ table.tc-table thead th {
 }
 
 table.tc-table thead th:first-child {
+    width: 40px;
     padding: 0;
     border-width: 0;
 }
 
 table.tc-table tbody td:first-child {
+    width: 40px;
     text-align: right;
     border-width: 0;
 }
@@ -32,6 +36,10 @@ div.slot-stack {
     height: 100%;
 }
 
+div.slot:nth-child(even) {
+    border-bottom: 1px solid #ccc;
+}
+
 div.hour-mark {
     flex-grow: 2;
     font-size: 0.85rem;
@@ -40,7 +48,64 @@ div.hour-mark {
     padding-right: 5px;
 }
 
-div.slot,
+div.slot {
+    position: relative;
+    flex-grow: 1;
+    background: #fff;
+    border-bottom: 1px solid #eceeef;
+    cursor: cell;
+}
+
+div.slot:hover {
+    background: #eaeaea;
+}
+
+div.slot.selected {
+    background: #3b5ca0;
+    border-bottom-color: #3b5ca0;
+}
+
+div.slot.selected:hover {
+    background: #5c7ec6;
+    border-bottom-color: #5c7ec6;
+}
+
+div.slot:last-child {
+    border-bottom: none;
+}
+
+div.slot.selecting {
+    background-color: #88a1d0;
+    border-bottom-color: #88a1d0;
+}
+
+div.slot.unselecting {
+    background-color: #f2f2f2;
+}
+
+div.slot.selected.selecting {
+    background: #34518e;
+    border-bottom-color: #34518e;
+}
+
+div.slot.selected.unselecting {
+    background: #2a406f;
+    border-bottom-color: #2a406f;
+}
+
+div.segment-label {
+    z-index: 4;
+    position: absolute;
+    text-align: center;
+    font-size: 0.85rem;
+    color: white;
+    width: 100%;
+    padding: 0.1rem 0;
+    pointer-events: none;
+}
+
+
+/*div.slot,
 div.slot-selected {
     position: relative;
     flex-grow: 1;
@@ -52,20 +117,10 @@ div.slot:nth-child(even) {
     border-bottom: 1px solid #ccc;
 }
 
-
-/*div.slot:nth-child(odd) {
-    background: rgba(128, 128, 128, 0.04);
-}*/
-
 div.slot:hover {
     background: #eaeaea;
     //outline: 1px solid blue;
 }
-
-
-/*.tc-table tbody tr:nth-child(odd) {
-    border: 1px solid black; //#c2c6c7;
-}*/
 
 div.slot-selected {
     background: #3b5ca0;
@@ -106,4 +161,4 @@ div.blocklabel {
     width: 100%;
     padding: 0.1rem 0;
     pointer-events: none;
-}
+}*/

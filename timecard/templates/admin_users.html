@@ -8,15 +8,12 @@
     <link href="http://www.rpi.edu/favicon.ico" type="image/ico" rel="icon">
     <title>Timecard Admin - {{ session['CAS_USERNAME'].lower() }}</title>
 
-    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css">
-
-    <!-- Font Awesome -->
+    <link rel="stylesheet" href="{{url_for('static', filename='bootstrap/css/bootstrap.min.css')}}">
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
-
-    <link rel="stylesheet" href="/static/stylesheets/base.css">
-    <link rel="stylesheet" href="/static/stylesheets/admin_users.css">
-    <!--<link href="https://fonts.googleapis.com/css?family=Roboto:400,700|Titillium+Web:600" rel="stylesheet">-->
-    <script src="/static/js/moment.min.js"></script>
+    <link rel="stylesheet" href="{{url_for('static', filename='stylesheets/base.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='stylesheets/admin_users.css')}}">
+    
+    <script src="{{url_for('static', filename='js/moment.min.js')}}"></script>
 </head>
 
 <body>
@@ -26,12 +23,12 @@
                 <i class="fa fa-bars" aria-hidden="true"></i>
             </button>
             <a class="navbar-brand" href="#">
-                <img src="/static/img/logo_admin.svg" height="24" class="d-inline-block align-top" alt="">
+                <img src="{{url_for('static', filename='img/logo_admin.svg')}}" height="24" class="d-inline-block align-top" alt="">
             </a>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <div class="navbar-nav">
-                    <a class="nav-link active" href="{{ url_for('admin.show_admin_users') }}">Users</a>
-                    <a class="nav-link" href="{{ url_for('admin.show_admin_settings') }}">Settings</a>
+                    <a class="nav-link active" href="{{ url_for('admin.admin_users_page') }}">Users</a>
+                    <a class="nav-link" href="{{ url_for('admin.admin_settings_page') }}">Settings</a>
                 </div>
                 <span class="navbar-text text-white ml-auto">
                     <i class="fa fa-refresh fa-spin" id="loadingSpinner" aria-hidden="true"></i>
@@ -81,18 +78,18 @@
             </div>
         </div>
         <div id="alertBanner"></div>
-        <table class="table table-hover" id="tsTable">
+        <table class="table table-sm table-hover" id="tsTable">
             <thead id="tsHead">
                 <tr class="">
-                    <th class="">
+                    <th class="" style="width: 30px">
                         <label class="custom-control custom-checkbox">
                             <input type="checkbox" class="custom-control-input" id="tsHeadCheckbox">
                             <span class="custom-control-indicator"></span>
                         </label>
                     </th>
-                    <th class="sortable sorted" id="tsHeaderName">Name<i class="fa fa-sort-desc ml-2" aria-hidden="true"></i></th>
-                    <th class="sortable" id="tsHeaderId">User ID</th>
-                    <th class="sortable" id="tsHeaderModified">Last Modified</th>
+                    <th class="sortable sorted" id="tsHeaderName" style="width: 120px">Name<i class="fa fa-sort-desc ml-2" aria-hidden="true"></i></th>
+                    <th class="sortable" id="tsHeaderId" style="width: 60px">User ID</th>
+                    <th class="sortable" id="tsHeaderModified" style="width: 120px">Last Modified</th>
                     {% for i in range(period_duration) %}
                     <th class="" id="tsDay{{i}}" data-date="">Jan 1</th>
                     {% endfor %}
@@ -106,14 +103,15 @@
 
     {% include 'footer.html' %}
 
-    <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
+    <!--<script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>-->
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
-    <script src="/static/bootstrap/js/bootstrap.min.js"></script>
+    <script src="{{url_for('static', filename='bootstrap/js/bootstrap.min.js')}}"></script>
 
-    <script src="/static/js/admin_users.js"></script>
+    <script src="{{url_for('static', filename='js/admin_users.js')}}"></script>
     <script>
         TcAdmin.initialDate = moment("{{ initial_date }}");
-        TcAdmin.validPeriodStart = moment("{{ valid_period_start }}");
+        TcAdmin.initialPeriodStart = moment("{{ initial_period_start }}");
         TcAdmin.periodDuration = "{{ period_duration }}";
         TcAdmin.lockDate = "{{ lock_date }}";
 
