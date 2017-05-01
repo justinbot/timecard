@@ -60,6 +60,14 @@ with open('config.json') as config_file:
     config = custom_config
 
 
+def set_config(new_config):
+    # TODO: Create better/ more robust set of methods for handling settings
+    global config
+    config = new_config
+    with open('config.json', 'w') as cfg_file:
+        json.dump(config, cfg_file)
+
+
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):

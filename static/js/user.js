@@ -11,19 +11,12 @@ var TcUser = (function () {
     var periodStart,
         periodEnd;
 
-    // 0: no selection, 1: add, 2: delete
-    var selectionMode = 0;
+    var selectionMode = 0; // 0: no selection, 1: add, 2: delete
     var selectionModes = ["", "selecting", "unselecting"];
     var selectionStart;
     var selectionEnd;
 
     var selectedSegments = [];
-
-    // Changes should only take place within currently viewed period
-    // On changing period, changes should be auto-saved
-    // Hour blocks, 2-value arrays of [start timestamp, end timestamp]
-    //var timestamps; // set of timestamps as pulled from the server
-    //var localTimestamps; // set of timestamps as changed locally
 
     /* public variables */
     tc.userId;
@@ -111,6 +104,8 @@ var TcUser = (function () {
                 $loadingSpinner.hide();
                 $loadingCheck.show();
 
+                console.log(data);
+
                 // User "modified" is in UTC, convert to local for display
                 $("#tcStatus").text("Last modified " + moment.utc(data["modified"]).local().fromNow());
 
@@ -181,25 +176,17 @@ var TcUser = (function () {
             "id": "tcHeader"
         });
 
-        var headerRow = $("<tr>");
-        $newTcHeader.append(headerRow);
-        headerRow.append($("<th>"));
-        for (var i = 0; i < tc.periodDuration; i++) {
+        var $headerRow = $("<tr>").appendTo($newTcHeader);
+        $("<th>").appendTo($headerRow);
+
+        /*for (var i = 0; i < tc.periodDuration; i++) {
             var headerDate = moment(periodStart).add(i, "day");
-            headerCell = $("<th>", {
-                "class": "text-center"
-            });
-            headerRow.append(headerCell);
-            headerCell.append($("<div>", {
-                "html": headerDate.format("ddd")
-            }));
-            headerCell.append($("<div>", {
-                "html": headerDate.format("MMM D")
-            }));
-            headerCell.append($("<div>", {
-                "html": "0.0"
-            }));
-        }
+            
+            var $headerCell = $("<th>").addClass("text-center").appendTo($headerRow);
+            $("<div>").text(headerDate.format("ddd")).appendTo($headerCell);
+            $("<div>").text(headerDate.format("MMM D")).appendTo($headerCell);
+            $("<div>").css("font-weight", "normal").text("0.0 hours").appendTo($headerCell);
+        }*/
 
         $oldTcHeader.replaceWith($newTcHeader);
 
@@ -247,6 +234,9 @@ var TcUser = (function () {
                 }
 
             } else {
+
+                //var headerDate = moment(periodStart).add(i, "day");
+
                 var slotStart = moment(periodStart).add(i, "day").hour(tc.slotFirstStart.hour()).minute(0).second(0);
                 var dayEnd = moment(periodStart).add(i, "day").hour(tc.slotLastStart.hour()).minute(tc.slotLastStart.minute()).second(0);
 
@@ -256,6 +246,8 @@ var TcUser = (function () {
                 }
 
                 var $segmentStart;
+                var dayHours = 0.0;
+
                 while (slotStart.isBefore(dayEnd)) {
                     var $newSlot = $("<div>")
                         .addClass("slot")
@@ -282,21 +274,57 @@ var TcUser = (function () {
                     for (var j = 0; j < selectedSegments.length; j++) {
                         var segment = selectedSegments[j];
 
-                        if ($newSlot.data("start_ts") >= segment["start_timestamp"] && $newSlot.data("start_ts") <= segment["end_timestamp"]) {
-                            $newSlot.addClass("selected");
-                            if ($newSlot.data("start_ts") == segment["start_timestamp"]) {
-                                $segmentStart = $newSlot;
-                            } else if ($newSlot.data("end_ts") == segment["end_timestamp"]) {
-                                // end slot
-                                var startTime = moment.unix(segment["start_timestamp"]);
-                                var endTime = moment.unix(segment["end_timestamp"]).add(1, "minute");
+                        // if this slot intersects the segment
+                        if (segment["start_timestamp"] <= $newSlot.data("end_ts") && segment["end_timestamp"] >= $newSlot.data("start_ts")) {
+                            dayHours += tc.slotIncrement / 60
 
-                                if (startTime.format("a") === endTime.format("a")) {
-                                    $("<div>").addClass("segment-label").text(startTime.format("h:mm") + "–" + endTime.format("h:mma")).appendTo($segmentStart);
-                                } else {
-                                    $("<div>").addClass("segment-label").text(startTime.format("h:mma") + "–" + endTime.format("h:mma")).appendTo($segmentStart);
+                            $newSlot.addClass("selected");
+
+                            // Slot is considered start if it contains the segment start
+                            var segmentStart = segment["start_timestamp"] >= $newSlot.data("start_ts") && segment["start_timestamp"] <= $newSlot.data("end_ts");
+                            // Slot is considered end if it contains the segment end
+                            var segmentEnd = segment["end_timestamp"] >= $newSlot.data("start_ts") && segment["end_timestamp"] <= $newSlot.data("end_ts");
+
+                            if (segmentStart) {
+                                /*if (segment["start_timestamp"] != $newSlot.data("start_ts")) {
+                                    // Slot is split by this segment
+                                    $("<i>").addClass("fa fa-exclamation-circle").css("position", "absolute").appendTo($newSlot);
+                                }*/
+                                $segmentStart = $newSlot;
+                                $segmentStart.css("border-top-left-radius", "4px");
+                                $segmentStart.css("border-top-right-radius", "4px");
+                            }
+
+                            if (segmentEnd) {
+                                $newSlot.css("border-bottom-left-radius", "4px");
+                                $newSlot.css("border-bottom-right-radius", "4px");
+
+                                if (!segmentStart) {
+                                    var startTime = moment.unix(segment["start_timestamp"]);
+                                    var endTime = moment.unix(segment["end_timestamp"]).add(1, "minute");
+
+                                    var startPrefix = "";
+                                    var endPrefix = "";
+
+                                    // The start slot is split, prefix warning symbol
+                                    if (segment["start_timestamp"] != $segmentStart.data("start_ts")) {
+                                        startPrefix = "&#9888;";
+                                    }
+
+                                    // The end slot is split, prefix warning symbol
+                                    if (segment["end_timestamp"] != $newSlot.data("end_ts")) {
+                                        endPrefix = "&#9888;";
+                                    }
+
+                                    if (startTime.format("a") === endTime.format("a")) {
+                                        $("<div>").addClass("segment-label").html(startPrefix + startTime.format("h:mm") + "–" + endPrefix + endTime.format("h:mma")).appendTo($segmentStart);
+                                    } else {
+                                        $("<div>").addClass("segment-label").html(startPrefix + startTime.format("h:mma") + "–" + endPrefix + endTime.format("h:mma")).appendTo($segmentStart);
+                                    }
                                 }
                             }
+
+                            // Don't need to continue searching segments
                             break;
                         }
                     }
@@ -304,70 +332,13 @@ var TcUser = (function () {
                     $dayStack.append($newSlot);
                     slotStart.add(tc.slotIncrement, "minute");
                 }
+
+                var $headerCell = $("<th>").addClass("text-center").appendTo($headerRow);
+                $("<div>").text(slotStart.format("ddd")).appendTo($headerCell);
+                $("<div>").text(slotStart.format("MMM D")).appendTo($headerCell);
+                $("<div>").css("font-weight", "normal").text(dayHours.toFixed(1) + " hours").appendTo($headerCell);
             }
         }
-
-        /*var startTime = moment(tc.slotFirstStart).startOf("hour");
-        var endTime = moment(tc.slotLastStart).endOf("hour");
-        while (startTime.isBefore(endTime)) {
-            startTime.add(tc.slotIncrement, "minute");
-        }*/
-
-        // Add hour marks in first column
-        /*for (var i = 0; i < slotTimes.length; i++) {
-            if (slotTimes[i].minute() == 0) {
-                $hoursStack.append($("<div>", {
-                    "class": "text-muted hour-mark",
-                    "html": slotTimes[i].format("ha")
-                }));
-            }
-        }
-
-        for (var i = 0; i < tc.periodDuration; i++) {
-            var dayTime = moment(periodStart).add(i, "day");
-
-            var $dayCell = $("<td>", {
-                "class": "day-cell"
-            });
-            bodyRow.append($dayCell);
-
-            // Highlight current day
-            if (dayTime.isSame(tc.initialDate, "day")) {
-                $dayCell.css("background-color", "#f4f4f4");
-            }
-
-            var $dayStack = $("<div>", {
-                "class": "slot-stack",
-                "id": "tcDay" + i,
-                "data-day": i
-            });
-            $dayCell.append($dayStack);
-
-            for (j = 0; j < slotTimes.length; j++) {
-                var slotTime = slotTimes[j];
-                var newTime = moment(dayTime).hour(slotTime.hour()).minute(slotTime.minute()).second(0);
-
-                var $newSlot = $("<div>", {
-                    "id": i + "-" + newTime.format("HH:mm"),
-                    "data-timestamp": newTime.unix()
-                });
-
-                // Slot is selected if: selected locally, or selected on server and not unselected locally
-                if (timestampSelected($newSlot.data("timestamp").toString())) {
-                    $newSlot.attr("class", "slot-selected");
-                } else {
-                    // if slot time is before first start times, lock it
-                    if (slotTime.hour() < tc.slotFirstStart.hour() || (slotTime.hour() == tc.slotFirstStart.hour() && slotTime.minute() < tc.slotFirstStart.minute())) {
-                        $newSlot.attr("class", "slot locked");
-                    } else {
-                        $newSlot.attr("class", "slot");
-                    }
-                }
-                $newSlot.attr("class", "slot");
-
-                $dayStack.append($newSlot);
-            }
-        }*/
 
         $oldTcBody.replaceWith($newTcBody);
     }

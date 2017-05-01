@@ -22,7 +22,4 @@ Clone the repository, and install dependencies (we recommend you do this in a vi
 pip install -r requirements.txt
 ```
 
-Edit timecard.cfg to your liking, then run timecard with 
-```bash
-./timecard.py
-```
+On first boot of the server, follow the onboarding page to configure important timecard settings.

@@ -14,6 +14,7 @@ admin_views = Blueprint('admin', __name__, url_prefix='/admin', template_folder=
 @login_required
 @admin_required
 def admin_users_page():
+
     return render_template(
         'admin_users.html',
         initial_date=datetime.now().isoformat(),  # now, in server's time zone

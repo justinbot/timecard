@@ -1,53 +1,7 @@
-"""
-.../users/
-    *All require login as admin*
-    
-    POST - Create new user, with endpoint /users/<id>. Return 201 with location, 409 if already exists
-    GET - Fetch all-user data summary for specified period. Use query with timestamps?
-
-../users/<id>
-    *All require login as this user or admin, return 404 if user not found.*
-    
-    GET - Fetch full user data, including all time-segments.
-    ?PATCH - Modify user data.
-    DELETE - Delete user.
-
-.../users/<id>/hours
-    *All require login as this user, return 404 if user not found.*
-    
-    POST - Update hours data. Time-segment duration must be at most 24 hours.
-    GET - Fetch hours in specified range. Use query with timestamps? Query period must be at least 24 hours.
-
-.../users/<id>/templates
-    *All require login as this user, return 404 if user or template not found.*
-
-    POST - Create new template
-    GET - Fetch all templates
-    ?PUT - Update existing template
-    DELETE - Delete existing template
-
-.../settings
-
-    GET - Fetch full settings profile
-    PATCH - Update settings profile with change
-
-.../login/redirect
-    *redirect to .../ if user, or .../admin (which should redirect to .../admin/users) if admin*
-
-.../
-    GET - Fetch user view web page. Loads data and makes changes at /users/<id>.
-
-.../admin/users
-    GET - Fetch admin users view web page. Loads period summary data from /users.
-
-.../admin/settings
-    GET - Fetch admin settings view web page.
-
-"""
-
+import json
 from datetime import datetime
 
-from timecard.models import admin_required, db, User, TimeSegment, Template, TemplateSegment
+from timecard.models import admin_required, db, config, set_config, User, TimeSegment, Template, TemplateSegment
 
 from flask import Blueprint, session, request, abort, jsonify
 from flask_cas import login_required
@@ -62,7 +16,7 @@ def all_users():
     """
     POST:   Create new user, with endpoint /users/<id>.
             Return 201 with location if successful, 409 if user already exists.
-    GET:    Fetch all-user data summary for specified period. Use query with timestamps?
+    GET:    Fetch all-user data summary for specified period.
     Only admins are allowed to create users or view summary.
     """
 
@@ -115,8 +69,8 @@ def all_users():
 
             # This will iterate each pair of (start, end) timestamps
             for i in range(len(start_timestamps)):
-                selection_start = start_timestamps[i]
-                selection_end = end_timestamps[i]
+                selection_start = int(start_timestamps[i])
+                selection_end = int(end_timestamps[i])
 
                 if not selection_start < selection_end:
                     abort(400)
@@ -177,8 +131,8 @@ def specified_user(user_id):
 @login_required
 def specified_user_hours(user_id):
     """
-    POST:   Create new time segment.
-    GET:    Fetch all time-segments in range specified by query.
+    POST:   Fill or delete a time segment for this user.
+    GET:    Fetch all time-segments in range specified by URL query.
     Only this user can modify their hours.
     """
 
@@ -222,7 +176,6 @@ def specified_user_hours(user_id):
                 print s.to_dict()
 
             # Trim each segment so it no longer intersects the specified period
-            # TODO: May if this is fully inside a segment, split it
             for s in segments:
                 if s.start_timestamp >= segment_start and s.end_timestamp <= segment_end:
                     # Segment is fully inside, delete it
@@ -347,3 +300,54 @@ def specified_user_templates(user_id):
         abort(403)
 
     pass
+
+
+@api_views.route('/settings', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_settings_load():
+    if request.method == 'GET':
+        response_dict = {}
+        response_dict['admins'] = [a.lower() for a in config['admins']]#(', '.join(config['admins'])).lower()
+        response_dict['period_duration'] = config['period_duration']
+        response_dict['valid_period_start'] = config['valid_period_start']
+        response_dict['view_days'] = config['view_days']
+        response_dict['slot_increment'] = config['slot_increment']
+        response_dict['slot_first_start'] = config['slot_first_start']
+        response_dict['slot_last_start'] = config['slot_last_start']
+
+        return jsonify(response_dict)
+
+    elif request.method == 'POST':
+        request_dict = request.get_json(silent=True)
+
+        if not request_dict:
+            abort(400)
+
+        new_config = config
+
+        # TODO: Validate values
+        if 'admins' in request_dict:
+            new_config['admins'] = [a.upper() for a in request_dict['admins']]
+
+        if 'period_duration' in request_dict:
+            new_config['period_duration'] = int(request_dict['period_duration'])
+
+        if 'valid_period_start' in request_dict:
+            new_config['valid_period_start'] = request_dict['valid_period_start']
+
+        if 'view_days' in request_dict:
+            new_config['view_days'] = int(request_dict['view_days'])
+
+        if 'slot_increment' in request_dict:
+            new_config['slot_increment'] = int(request_dict['slot_increment'])
+
+        if 'slot_first_start' in request_dict:
+            new_config['slot_first_start'] = request_dict['slot_first_start']
+
+        if 'slot_last_start' in request_dict:
+            new_config['slot_last_start'] = request_dict['slot_last_start']
+
+        set_config(new_config)
+
+        return 'success'
