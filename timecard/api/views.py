@@ -6,7 +6,7 @@ from timecard.models import admin_required, db, config, set_config, User, TimeSe
 from flask import Blueprint, session, request, abort, jsonify
 from flask_cas import login_required
 
-api_views = Blueprint('api', __name__,  url_prefix='/api')
+api_views = Blueprint('api', __name__, url_prefix='/api')
 
 
 @api_views.route('/users', methods=['POST', 'GET'])
@@ -39,8 +39,8 @@ def all_users():
         db.session.add(new_user)
         db.session.commit()
 
-        # Respond with location header for new user
-        return jsonify(), 201, {'location': '/users/' + new_user.id}
+        # TODO: test Respond with location header for new user
+        return jsonify(), 201, {'location': '/users/{0}'.format(new_user.id)}
 
     elif request.method == 'GET':
         # Return all-user data summary for specified period
@@ -74,8 +74,6 @@ def all_users():
 
                 if not selection_start < selection_end:
                     abort(400)
-
-                selection_total = 7.0
 
                 # select from time_segments those that intersect this selection
                 selection_segments = time_segments.filter(TimeSegment.start_timestamp <= selection_end,
@@ -124,7 +122,7 @@ def specified_user(user_id):
         db.session.delete(user)
         db.session.commit()
 
-        return 'Success', 200, {'Content-Type': 'text/plain'}
+        return 'success', 200, {'Content-Type': 'text/plain'}
 
 
 @api_views.route('/users/<user_id>/hours', methods=['POST', 'GET'])
@@ -172,9 +170,6 @@ def specified_user_hours(user_id):
             segments = user.time_segments.filter(TimeSegment.start_timestamp <= segment_end,
                                                  TimeSegment.end_timestamp >= segment_start)
 
-            for s in segments.all():
-                print s.to_dict()
-
             # Trim each segment so it no longer intersects the specified period
             for s in segments:
                 if s.start_timestamp >= segment_start and s.end_timestamp <= segment_end:
@@ -199,15 +194,12 @@ def specified_user_hours(user_id):
             user.modified = datetime.utcnow()
             db.session.commit()
 
-            return "success"
+            return 'success', 200, {'Content-Type': 'text/plain'}
 
         else:
             # Offset by 1 to get adjacent segments as well
             segments = user.time_segments.filter(TimeSegment.start_timestamp - 1 <= segment_end,
                                                  TimeSegment.end_timestamp + 1 >= segment_start)
-
-            for s in segments.all():
-                print s.to_dict()
 
             # Merge with segments contained by or adjacent to this one
             # Delete any segment contained, shift upper and lower bound to those of adjacent
@@ -233,7 +225,7 @@ def specified_user_hours(user_id):
             user.modified = datetime.utcnow()
             db.session.commit()
             # Respond with location header for new segment
-            return jsonify(), 201, {'location': '/users/' + user_id + '/hours/' + str(new_segment.id)}
+            return jsonify(), 201, {'location': '/users/{0}/hours/{1}'.format(user_id, new_segment.id)}
 
     elif request.method == 'GET':
         # Return this user's time segments in range specified by args
@@ -282,15 +274,22 @@ def specified_user_hours_segment(user_id, segment_id):
 
     elif request.method == 'DELETE':
         # Delete segment <segment_id>
-        db.session.delete(segment)
+        user.time_segments.remove(segment)
+        # db.session.delete(segment)
         db.session.commit()
 
-        return 'Success', 200, {'Content-Type': 'text/plain'}
+        return 'success', 200, {'Content-Type': 'text/plain'}
 
 
-@api_views.route('/users/<user_id>/templates', methods=['GET', 'DELETE'])
+@api_views.route('/users/<user_id>/templates', methods=['POST', 'GET', 'DELETE'])
 @login_required
 def specified_user_templates(user_id):
+    """
+    POST:   Create a new template with specified segments.
+    GET:    Fetch all templates for this user.
+    DELETE: Delete template with specified id.
+    """
+
     user_id = user_id.upper()
 
     # Make sure this user exists.
@@ -299,7 +298,54 @@ def specified_user_templates(user_id):
     if not user.id.upper() == session['CAS_USERNAME'].upper():
         abort(403)
 
-    pass
+    if request.method == 'POST':
+        request_dict = request.get_json(silent=True)
+
+        if not request_dict or 'name' not in request_dict or 'segments' not in request_dict or not len(
+                request_dict['segments']) > 0:
+            abort(400)
+
+        new_template = Template(name=request_dict['name'])
+
+        for seg in request_dict['segments']:
+            new_template.template_segments.append(TemplateSegment(start_time=int(seg[0]), end_time=int(seg[1])))
+
+        user.templates.append(new_template)
+        db.session.commit()
+
+        return jsonify(), 201, {'location': '/users/{0}/templates/{1}'.format(user_id, new_template.id)}
+
+    elif request.method == 'GET':
+        return jsonify({'templates': {t.id: t.to_dict() for t in user.templates}})
+
+
+@api_views.route('/users/<user_id>/templates/<template_id>', methods=['GET', 'DELETE'])
+@login_required
+def specified_user_specified_template(user_id, template_id):
+    """
+    GET:    Fetch the template with this id.
+    DELETE: Delete the template with this id.
+    """
+
+    user_id = user_id.upper()
+
+    # Make sure this user exists.
+    user = User.query.get_or_404(user_id)
+
+    if not user.id.upper() == session['CAS_USERNAME'].upper():
+        abort(403)
+
+    template = Template.query.get_or_404(template_id)
+
+    if request.method == 'GET':
+        return jsonify(template.to_dict())
+
+    elif request.method == 'DELETE':
+        user.templates.remove(template)
+        # db.session.delete(template)
+        db.session.commit()
+
+        return 'success', 200, {'Content-Type': 'text/plain'}
 
 
 @api_views.route('/settings', methods=['GET', 'POST'])
@@ -308,7 +354,7 @@ def specified_user_templates(user_id):
 def admin_settings_load():
     if request.method == 'GET':
         response_dict = {}
-        response_dict['admins'] = [a.lower() for a in config['admins']]#(', '.join(config['admins'])).lower()
+        response_dict['admins'] = [a.lower() for a in config['admins']]  # (', '.join(config['admins'])).lower()
         response_dict['period_duration'] = config['period_duration']
         response_dict['valid_period_start'] = config['valid_period_start']
         response_dict['view_days'] = config['view_days']
@@ -350,4 +396,4 @@ def admin_settings_load():
 
         set_config(new_config)
 
-        return 'success'
+        return 'success', 200, {'Content-Type': 'text/plain'}

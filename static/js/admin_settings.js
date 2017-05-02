@@ -184,19 +184,15 @@ var TcAdmin = (function () {
     function updateAdminsList() {
         $("#adminsList").empty();
         $.each(localConfig["admins"], function (index, value) {
-            $adminItem = $("<li>", {
-                class: "list-group-item justify-content-between"
-            });
-            $("#adminsList").append($adminItem);
-            $adminItem.append($("<span>", {
-                text: value
-            }));
-            $adminItem.append($("<button>", {
-                "type": "button",
-                class: "btn btn-outline-danger btn-sm",
-                text: "Remove",
-                "data-id": value
-            }));
+            $("<li>").addClass("list-group-item justify-content-between py-2")
+                .append($("<span>").text(value))
+                .append($("<button>", {
+                    "type": "button",
+                    "class": "btn btn-outline-danger btn-sm",
+                    "text": "Remove",
+                    "data-id": value
+                }))
+                .appendTo($("#adminsList"));
         });
 
         $("#adminsList").find(".btn").click(function () {
@@ -271,7 +267,7 @@ var TcAdmin = (function () {
     });
 
     $("#purgeButton").click(function () {
-        var xhr = new XMLHttpRequest();
+        /*var xhr = new XMLHttpRequest();
         xhr.open("POST", "/admin/settings/purgedb", true);
         xhr.setRequestHeader("Content-Type", "application/json");
         // TODO: also set xhr.timeout and xhr.ontimeout?
@@ -279,7 +275,7 @@ var TcAdmin = (function () {
         xhr.onload = function () {
             if (xhr.status == 200) {} else {}
         }
-        xhr.send();
+        xhr.send();*/
     });
 
     return tc;

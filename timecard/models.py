@@ -93,7 +93,7 @@ class User(db.Model):
     created_date = db.Column(db.DateTime, default=datetime.utcnow)
 
     # modified will automatically update when a value is changed
-    modified = db.Column(db.DateTime, default=datetime.utcnow) #, onupdate=datetime.utcnow)
+    modified = db.Column(db.DateTime, default=datetime.utcnow)  # , onupdate=datetime.utcnow)
 
     time_segments = db.relationship('TimeSegment', backref='user', lazy='dynamic')
 
@@ -126,8 +126,8 @@ class TimeSegment(db.Model):
     start_timestamp = db.Column(db.BigInteger)
     end_timestamp = db.Column(db.BigInteger)
 
-    #@validates('start_timestamp', 'end_timestamp')
-    #def validate_timestamps(self, key, value):
+    # @validates('start_timestamp', 'end_timestamp')
+    # def validate_timestamps(self, key, value):
     #    if key == 'end_timestamp':
     #        assert value - self.start_timestamp < MAX_SEGMENT_DURATION
     #    return value
@@ -173,6 +173,14 @@ class Template(db.Model):
 
     template_segments = db.relationship('TemplateSegment')
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'name': self.name,
+            'segments': [seg.to_dict() for seg in self.template_segments]
+        }
+
 
 class TemplateSegment(db.Model):
     """
@@ -180,14 +188,19 @@ class TemplateSegment(db.Model):
     """
 
     id = db.Column(db.Integer, primary_key=True)
-    template_id = db.Column(db.String, db.ForeignKey('template.id'))
+    template_id = db.Column(db.Integer, db.ForeignKey('template.id'))
 
-    # day of the period, starting at 0
-    day = db.Column(db.Integer)
+    # Start and end times just like Unix timestamp except in seconds since period start
+    start_time = db.Column(db.Integer)
+    end_time = db.Column(db.Integer)
 
-    # 24-hour start and end times in the format 'hh:mm'
-    start_time = db.Column(db.String(5))
-    end_time = db.Column(db.String(5))
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'template_id': self.template_id,
+            'start_time': self.start_time,
+            'end_time': self.end_time
+        }
 
 
 # @app.cli.command()

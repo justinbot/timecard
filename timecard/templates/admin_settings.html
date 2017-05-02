@@ -27,8 +27,8 @@
             </a>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <div class="navbar-nav">
-                    <a class="nav-link active" href="{{ url_for('admin.admin_users_page') }}">Users</a>
-                    <a class="nav-link" href="{{ url_for('admin.admin_settings_page') }}">Settings</a>
+                    <a class="nav-link" href="{{ url_for('admin.admin_users_page') }}">Users</a>
+                    <a class="nav-link active" href="{{ url_for('admin.admin_settings_page') }}">Settings</a>
                 </div>
                 <span class="navbar-text text-white ml-auto">
                     <i class="fa fa-refresh fa-spin" id="loadingSpinner" aria-hidden="true"></i>
@@ -69,7 +69,7 @@
             </div>
             <hr class="my-4">
             <div class="form-group">
-                <label for="inputSlotIncrement"><strong>Slot Increment</strong><small class="text-muted ml-3">The duration of each slot.</small></label>
+                <label for="inputSlotIncrement"><strong>Time Slot Increment</strong><small class="text-muted ml-3">The duration of each time slot.</small></label>
                 <select class="form-control" id="inputSlotIncrement">
                     <option value="5">5 minutes</option>
                     <option value="10">10 minutes</option>
@@ -85,11 +85,11 @@
                 <input type="number" class="form-control" id="inputViewDays" min="1" max="30">
             </div>
             <div class="form-group">
-                <label for="inputDayStart"><strong>Start of Day</strong><small class="text-muted ml-3">The time of day at which the first slot starts.</small></label>
+                <label for="inputDayStart"><strong>Start of Day</strong><small class="text-muted ml-3">The time of day at which the first time slot starts.</small></label>
                 <input type="time" class="form-control" id="inputDayStart" step="300">
             </div>
             <div class="form-group">
-                <label for="inputDayEnd"><strong>End of Day</strong><small class="text-muted ml-3">The time of day at which the last slot ends.</small></label>
+                <label for="inputDayEnd"><strong>End of Day</strong><small class="text-muted ml-3">The time of day at which the last time slot ends.</small></label>
                 <input type="time" class="form-control" id="inputDayEnd" step="300">
             </div>
             <hr class="my-4">

@@ -17,6 +17,7 @@ var TcUser = (function () {
     var selectionEnd;
 
     var selectedSegments = [];
+    var templates = {};
 
     /* public variables */
     tc.userId;
@@ -34,6 +35,7 @@ var TcUser = (function () {
 
     function onPeriodChanged() {
         loadTimeSegments();
+        loadTemplates();
 
         $("#buttonPeriodToday").prop("disabled", focusDate.isSame(tc.initialDate, "day"));
 
@@ -97,14 +99,13 @@ var TcUser = (function () {
                 "data": {
                     "start": moment(periodStart).startOf("day").unix().toString(),
                     "end": moment(periodEnd).endOf("day").unix().toString()
-                },
-                "dataType": "json"
+                }
             })
             .done(function (data, status, xhr) {
                 $loadingSpinner.hide();
                 $loadingCheck.show();
 
-                console.log(data);
+                //console.log(data);
 
                 // User "modified" is in UTC, convert to local for display
                 $("#tcStatus").text("Last modified " + moment.utc(data["modified"]).local().fromNow());
@@ -123,7 +124,7 @@ var TcUser = (function () {
     }
 
     function addTimeSegment(start, end) {
-        console.log("Adding time segment: " + start + " - " + end);
+        //console.log("Adding time segment: " + start + " - " + end);
 
         $.ajax({
                 "method": "POST",
@@ -133,21 +134,21 @@ var TcUser = (function () {
                     "start": start,
                     "end": end
                 }),
-                "contentType": "application/json; charset=utf-8",
-                "dataType": "json"
+                "contentType": "application/json; charset=utf-8"
             })
             .done(function (data, status, xhr) {
                 // TODO: 
             })
             .fail(function (xhr, status, error) {
                 // TODO: Display alert with error
-            }).always(function () {
+            })
+            .always(function () {
                 loadTimeSegments();
             });
     }
 
     function deleteTimeSegment(start, end) {
-        console.log("Deleting time segment: " + start + " - " + end);
+        //console.log("Deleting time segment: " + start + " - " + end);
 
         $.ajax({
                 "method": "POST",
@@ -157,15 +158,15 @@ var TcUser = (function () {
                     "start": start,
                     "end": end
                 }),
-                "contentType": "application/json; charset=utf-8",
-                "dataType": "json"
+                "contentType": "application/json; charset=utf-8"
             })
             .done(function (data, status, xhr) {
                 // TODO: 
             })
             .fail(function (xhr, status, error) {
                 // TODO: Display alert with error
-            }).always(function () {
+            })
+            .always(function () {
                 loadTimeSegments();
             });
     }
@@ -213,17 +214,20 @@ var TcUser = (function () {
                 $dayStack.css("background-color", "#fafafa");
             }
 
+            var dayStart = moment(periodStart).add(i, "day").hour(tc.slotFirstStart.hour()).minute(tc.slotFirstStart.minute()).second(0);
+            var dayEnd = moment(periodStart).add(i, "day").hour(tc.slotLastStart.hour()).minute(tc.slotLastStart.minute()).second(0);
+
             if (i == -1) {
                 // First column is hour marks
-                var slotStart = moment(tc.slotFirstStart).minute(0);
-                var dayEnd = moment(tc.slotLastStart);
+                var slotStart = moment(dayStart);
+                var slotEnd = moment(dayEnd).endOf("hour");
 
-                if (!slotStart.isBefore(dayEnd)) {
+                if (!slotStart.isBefore(slotEnd)) {
                     console.error("Invalid day start and end");
                     return;
                 }
 
-                while (slotStart.isBefore(dayEnd)) {
+                while (slotStart.isBefore(slotEnd)) {
                     if (slotStart.minute() == 0) {
                         $dayStack.append($("<div>", {
                             "class": "text-muted hour-mark",
@@ -234,11 +238,8 @@ var TcUser = (function () {
                 }
 
             } else {
-
-                //var headerDate = moment(periodStart).add(i, "day");
-
-                var slotStart = moment(periodStart).add(i, "day").hour(tc.slotFirstStart.hour()).minute(0).second(0);
-                var dayEnd = moment(periodStart).add(i, "day").hour(tc.slotLastStart.hour()).minute(tc.slotLastStart.minute()).second(0);
+                var slotStart = moment(periodStart).add(i, "day").hour(tc.slotFirstStart.hour()).startOf("hour");
+                var slotEnd = moment(periodStart).add(i, "day").hour(tc.slotLastStart.hour()).endOf("hour");
 
                 if (!slotStart.isBefore(dayEnd)) {
                     console.error("Invalid day start and end");
@@ -248,8 +249,10 @@ var TcUser = (function () {
                 var $segmentStart;
                 var dayHours = 0.0;
 
-                while (slotStart.isBefore(dayEnd)) {
+                while (slotStart.isBefore(slotEnd)) {
+
                     var $newSlot = $("<div>")
+                        .attr("id", i + "-" + slotStart.format("HH-mm"))
                         .addClass("slot")
                         .data("start_ts", slotStart.unix().toString())
                         .data("end_ts", moment(slotStart).add(tc.slotIncrement - 1, "minute").endOf("minute").unix().toString())
@@ -271,62 +274,69 @@ var TcUser = (function () {
                             }
                         });
 
-                    for (var j = 0; j < selectedSegments.length; j++) {
-                        var segment = selectedSegments[j];
+                    if (slotStart.isBefore(dayStart)) {
+                        // Lock if before start of day
+                        $newSlot.addClass("locked");
+                    } else if (slotStart.isAfter(dayEnd)) {
+                        // Lock if after end of day
+                        $newSlot.addClass("locked");
+                    } else {
+                        //for (var j = 0; j < selectedSegments.length; j++) {
+                        $.each(selectedSegments, function (index, segment) {
+                            // if this slot intersects the segment
+                            if (segment["start_timestamp"] <= $newSlot.data("end_ts") && segment["end_timestamp"] >= $newSlot.data("start_ts")) {
+                                dayHours += tc.slotIncrement / 60
 
-                        // if this slot intersects the segment
-                        if (segment["start_timestamp"] <= $newSlot.data("end_ts") && segment["end_timestamp"] >= $newSlot.data("start_ts")) {
-                            dayHours += tc.slotIncrement / 60
+                                $newSlot.addClass("selected");
 
-                            $newSlot.addClass("selected");
+                                // Slot is considered start if it contains the segment start
+                                var segmentStart = segment["start_timestamp"] >= $newSlot.data("start_ts") && segment["start_timestamp"] <= $newSlot.data("end_ts");
+                                // Slot is considered end if it contains the segment end
+                                var segmentEnd = segment["end_timestamp"] >= $newSlot.data("start_ts") && segment["end_timestamp"] <= $newSlot.data("end_ts");
 
-                            // Slot is considered start if it contains the segment start
-                            var segmentStart = segment["start_timestamp"] >= $newSlot.data("start_ts") && segment["start_timestamp"] <= $newSlot.data("end_ts");
-                            // Slot is considered end if it contains the segment end
-                            var segmentEnd = segment["end_timestamp"] >= $newSlot.data("start_ts") && segment["end_timestamp"] <= $newSlot.data("end_ts");
+                                if (segmentStart) {
+                                    /*if (segment["start_timestamp"] != $newSlot.data("start_ts")) {
+                                        // Slot is split by this segment
+                                        $("<i>").addClass("fa fa-exclamation-circle").css("position", "absolute").appendTo($newSlot);
+                                    }*/
+                                    $segmentStart = $newSlot;
+                                    $segmentStart.css("border-top-left-radius", "4px");
+                                    $segmentStart.css("border-top-right-radius", "4px");
+                                }
 
-                            if (segmentStart) {
-                                /*if (segment["start_timestamp"] != $newSlot.data("start_ts")) {
-                                    // Slot is split by this segment
-                                    $("<i>").addClass("fa fa-exclamation-circle").css("position", "absolute").appendTo($newSlot);
-                                }*/
-                                $segmentStart = $newSlot;
-                                $segmentStart.css("border-top-left-radius", "4px");
-                                $segmentStart.css("border-top-right-radius", "4px");
-                            }
+                                if (segmentEnd) {
+                                    $newSlot.css("border-bottom-left-radius", "4px");
+                                    $newSlot.css("border-bottom-right-radius", "4px");
 
-                            if (segmentEnd) {
-                                $newSlot.css("border-bottom-left-radius", "4px");
-                                $newSlot.css("border-bottom-right-radius", "4px");
+                                    if (!segmentStart) {
+                                        var startTime = moment.unix(segment["start_timestamp"]);
+                                        var endTime = moment.unix(segment["end_timestamp"]).add(1, "minute");
 
-                                if (!segmentStart) {
-                                    var startTime = moment.unix(segment["start_timestamp"]);
-                                    var endTime = moment.unix(segment["end_timestamp"]).add(1, "minute");
+                                        var startPrefix = "";
+                                        var endPrefix = "";
 
-                                    var startPrefix = "";
-                                    var endPrefix = "";
+                                        // The start slot is split, prefix warning symbol
+                                        if (segment["start_timestamp"] != $segmentStart.data("start_ts")) {
+                                            startPrefix = "&#9888;";
+                                        }
 
-                                    // The start slot is split, prefix warning symbol
-                                    if (segment["start_timestamp"] != $segmentStart.data("start_ts")) {
-                                        startPrefix = "&#9888;";
-                                    }
+                                        // The end slot is split, prefix warning symbol
+                                        if (segment["end_timestamp"] != $newSlot.data("end_ts")) {
+                                            endPrefix = "&#9888;";
+                                        }
 
-                                    // The end slot is split, prefix warning symbol
-                                    if (segment["end_timestamp"] != $newSlot.data("end_ts")) {
-                                        endPrefix = "&#9888;";
-                                    }
-
-                                    if (startTime.format("a") === endTime.format("a")) {
-                                        $("<div>").addClass("segment-label").html(startPrefix + startTime.format("h:mm") + "–" + endPrefix + endTime.format("h:mma")).appendTo($segmentStart);
-                                    } else {
-                                        $("<div>").addClass("segment-label").html(startPrefix + startTime.format("h:mma") + "–" + endPrefix + endTime.format("h:mma")).appendTo($segmentStart);
+                                        if (startTime.format("a") === endTime.format("a")) {
+                                            $("<div>").addClass("segment-label").html(startPrefix + startTime.format("h:mm") + "–" + endPrefix + endTime.format("h:mma")).appendTo($segmentStart);
+                                        } else {
+                                            $("<div>").addClass("segment-label").html(startPrefix + startTime.format("h:mma") + "–" + endPrefix + endTime.format("h:mma")).appendTo($segmentStart);
+                                        }
                                     }
                                 }
-                            }
 
-                            // Don't need to continue searching segments
-                            break;
-                        }
+                                // Don't need to continue searching segments, break loop
+                                return false;
+                            }
+                        });
                     }
 
                     $dayStack.append($newSlot);
@@ -397,6 +407,188 @@ var TcUser = (function () {
             selectionStart = null;
             selectionEnd = null;
         }
+    }
+
+    function loadTemplates() {
+        $.ajax({
+                "method": "GET",
+                "url": "/api/users/" + tc.userId + "/templates"
+            })
+            .done(function (data, status, xhr) {
+                //console.log(data);
+
+                templates = data["templates"];
+            })
+            .fail(function (xhr, status, error) {
+                // TODO: Display error on failure to load timestamps
+            })
+            .always(function () {
+                hideNewTemplate();
+                var $menuSelectTemplate = $("#menuSelectTemplate");
+                $menuSelectTemplate.empty();
+
+                $("<button>").attr("type", "button").addClass("dropdown-item").text("None").data("id", -1).appendTo($menuSelectTemplate);
+                $("<div>").addClass("dropdown-divider").appendTo($menuSelectTemplate);
+
+                $.each(templates, function (id, value) {
+                    $("<button>").attr("type", "button").addClass("dropdown-item d-flex justify-content-between").text(value["name"]).data("id", id)
+                        .append($("<button>").attr("type", "button").addClass("close text-danger").data("id", id).html("<span>&times;</span>")).appendTo($menuSelectTemplate);
+                });
+            });
+    }
+
+    function addTemplate(name, segments) {
+        $.ajax({
+                "method": "POST",
+                "url": "/api/users/" + tc.userId + "/templates",
+                "data": JSON.stringify({
+                    "name": name,
+                    "segments": segments
+                }),
+                "contentType": "application/json; charset=utf-8"
+            })
+            .done(function (data, status, xhr) {
+                // TODO: 
+            })
+            .fail(function (xhr, status, error) {
+                // TODO: Display alert with error
+            })
+            .always(function () {
+                loadTemplates();
+            });
+    }
+
+    function deleteTemplate(id) {
+        $.ajax({
+                "method": "DELETE",
+                "url": "/api/users/" + tc.userId + "/templates/" + id
+            })
+            .done(function (data, status, xhr) {})
+            .fail(function (xhr, status, error) {
+                // TODO: Display error on failure to load timestamps
+            })
+            .always(function () {
+                loadTemplates();
+            });
+    }
+
+    $("#buttonNewTemplate").click(function () {
+        showNewTemplate();
+    });
+
+    $("#buttonCancelTemplate").click(function () {
+        hideNewTemplate();
+    });
+
+    $("#buttonSaveTemplate").click(function () {
+        var segments = [];
+        $.each(selectedSegments, function (index, segment) {
+            var day = segment["start_timestamp"] - periodStart.unix();
+            segments.push([segment["start_timestamp"] - periodStart.unix(), segment["end_timestamp"] - periodStart.unix()]);
+        });
+
+        addTemplate($("#inputTemplateName").val(), segments);
+    });
+
+    $("#inputTemplateName").on("change paste keyup", function () {
+        $("#buttonSaveTemplate").prop("disabled", $("#inputTemplateName").val().length < 3 || selectedSegments.length == 0);
+    });
+
+    $("#menuSelectTemplate").on("click", ".dropdown-item", function () {
+        var id = $(this).data("id");
+
+        if (id != -1) {
+            applyTemplate(id);
+        } else {
+            $("#buttonSelectTemplate").text("None");
+        }
+    });
+
+    $("#menuSelectTemplate").on("click", ".close", function (event) {
+        // Stop click from also selecting this template
+        event.stopPropagation();
+        
+        var id = $(this).data("id");
+
+        deleteTemplate(id);
+    });
+
+    $("#menuSelectTemplate").on("click", ".dropdown-item", function () {
+        var id = $(this).data("id");
+
+        if (id != -1) {
+            applyTemplate(id);
+        } else {
+            $("#buttonSelectTemplate").text("None");
+        }
+    });
+
+    function showNewTemplate() {
+        $("#buttonNewTemplate").hide();
+        $("#dropdownSelectTemplate").hide();
+        $("#inputTemplateName").show();
+        $("#inputTemplateName").focus();
+        $("#buttonCancelTemplate").show();
+        $("#buttonSaveTemplate").prop("disabled", true);
+        $("#buttonSaveTemplate").show();
+    }
+
+    function hideNewTemplate() {
+        $("#buttonNewTemplate").show();
+        $("#dropdownSelectTemplate").show();
+        $("#inputTemplateName").hide();
+        $("#inputTemplateName").val("");
+        $("#buttonCancelTemplate").hide();
+        $("#buttonSaveTemplate").hide();
+    }
+
+    function applyTemplate(id) {
+        var template = templates[id];
+
+        // Delete all segments in period, add segments in template, load again
+        $.ajax({
+                "method": "POST",
+                "url": "/api/users/" + tc.userId + "/hours",
+                "data": JSON.stringify({
+                    "delete": true,
+                    "start": periodStart.unix(),
+                    "end": periodEnd.unix()
+                }),
+                "contentType": "application/json; charset=utf-8"
+            })
+            .done(function (data, status, xhr) {
+                $.each(template["segments"], function (index, segment) {
+                    $.ajax({
+                            "method": "POST",
+                            "url": "/api/users/" + tc.userId + "/hours",
+                            "data": JSON.stringify({
+                                "delete": false,
+                                "start": periodStart.unix() + segment["start_time"],
+                                "end": periodStart.unix() + segment["end_time"]
+                            }),
+                            "contentType": "application/json; charset=utf-8"
+                        })
+                        .done(function (data, status, xhr) {
+                            // TODO: 
+                        })
+                        .fail(function (xhr, status, error) {
+                            // TODO: Display alert with error
+                        })
+                        .always(function () {
+                            // Load after last segment is added
+                            if (index == template["segments"].length - 1) {
+                                $("#buttonSelectTemplate").text(templates[id]["name"]);
+                                loadTimeSegments();
+                            }
+                        });
+                });
+            })
+            .fail(function (xhr, status, error) {
+                // TODO: Display alert with error
+            })
+            .always(function () {
+                //loadTimeSegments();
+            });
     }
 
     return tc;

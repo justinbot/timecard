@@ -93,6 +93,11 @@ div.slot.selected.unselecting {
     border-bottom-color: #3157aa;
 }
 
+div.slot.locked {
+    background: #eaeaea;
+    pointer-events: none;
+}
+
 div.segment-label {
     z-index: 4;
     position: absolute;
