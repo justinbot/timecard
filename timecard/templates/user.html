@@ -31,7 +31,7 @@
                 <span class="navbar-text text-white ml-auto">
                     <i class="fa fa-refresh fa-spin" id="loadingSpinner" aria-hidden="true"></i>
                     <i class="fa fa-check" id="loadingCheck" aria-hidden="true"></i>
-                    <i class="fa fa-exclamation" id="loadingError" aria-hidden="true"></i>
+                    <i class="fa fa-exclamation-triangle" id="loadingError" aria-hidden="true"></i>
                 </span>
                 <form class="form-inline ml-3">
                     <a class="nav-link text-white px-0" href="{{ url_for('cas.logout') }}">Logout {{ session['CAS_USERNAME'].lower() }}<i class="fa fa-sign-out ml-2" aria-hidden="true"></i></a>
@@ -67,6 +67,7 @@
             </div>
             <span class="text-muted ml-auto" id="tcStatus">...</span>
         </div>
+        <div id="alertBanner"></div>
         <div class="unselectable">
             <table class="table table-sm table-bordered tc-table" id="tcTable">
                 <thead id="tcHeader">
@@ -90,12 +91,13 @@
         TcUser.initialDate = moment("{{ initial_date }}");
         TcUser.initialPeriodStart = moment("{{ current_period_start }}");
         TcUser.periodDuration = "{{ view_days }}";
-        TcUser.slotIncrement = {{ slot_increment }};
+        TcUser.slotIncrement = {{slot_increment}};
         TcUser.slotFirstStart = moment("{{ slot_first_start }}", "HH:mm");
         TcUser.slotLastStart = moment("{{ slot_last_start }}", "HH:mm");
         TcUser.lockDate = "{{ lock_date }}";
 
         TcUser.init();
+
     </script>
 </body>
 

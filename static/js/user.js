@@ -18,6 +18,7 @@ var TcUser = (function () {
 
     var selectedSegments = [];
     var templates = {};
+    //var activeTemplate = "";
 
     /* public variables */
     tc.userId;
@@ -35,7 +36,6 @@ var TcUser = (function () {
 
     function onPeriodChanged() {
         loadTimeSegments();
-        loadTemplates();
 
         $("#buttonPeriodToday").prop("disabled", focusDate.isSame(tc.initialDate, "day"));
 
@@ -53,6 +53,8 @@ var TcUser = (function () {
     }
 
     function prevPeriod() {
+        activeTemplate = "None";
+
         focusDate.subtract(tc.periodDuration, "day");
         periodStart.subtract(tc.periodDuration, "day");
         periodEnd.subtract(tc.periodDuration, "day");
@@ -61,6 +63,8 @@ var TcUser = (function () {
     }
 
     function currentPeriod() {
+        activeTemplate = "None";
+
         focusDate = moment(tc.initialDate);
         periodStart = moment(tc.initialPeriodStart);
         periodEnd = moment(periodStart).add(tc.periodDuration - 1, "day").endOf("day");
@@ -69,6 +73,8 @@ var TcUser = (function () {
     }
 
     function nextPeriod() {
+        activeTemplate = "None";
+
         focusDate.add(tc.periodDuration, "day");
         periodStart.add(tc.periodDuration, "day");
         periodEnd.add(tc.periodDuration, "day");
@@ -105,7 +111,7 @@ var TcUser = (function () {
                 $loadingSpinner.hide();
                 $loadingCheck.show();
 
-                //console.log(data);
+                console.log(data);
 
                 // User "modified" is in UTC, convert to local for display
                 $("#tcStatus").text("Last modified " + moment.utc(data["modified"]).local().fromNow());
@@ -115,12 +121,13 @@ var TcUser = (function () {
             .fail(function (xhr, status, error) {
                 $loadingSpinner.hide();
                 $loadingError.show();
-
-                // TODO: Display error on failure to load timestamps
+                showAlert("danger", "Error", "Failed to load hours (" + error + ")");
             })
             .always(function () {
                 createTable();
             });
+
+        loadTemplates();
     }
 
     function addTimeSegment(start, end) {
@@ -140,7 +147,7 @@ var TcUser = (function () {
                 // TODO: 
             })
             .fail(function (xhr, status, error) {
-                // TODO: Display alert with error
+                showAlert("danger", "Error", "Failed to save changes (" + error + ")");
             })
             .always(function () {
                 loadTimeSegments();
@@ -164,7 +171,7 @@ var TcUser = (function () {
                 // TODO: 
             })
             .fail(function (xhr, status, error) {
-                // TODO: Display alert with error
+                showAlert("danger", "Error", "Failed to save changes (" + error + ")");
             })
             .always(function () {
                 loadTimeSegments();
@@ -415,12 +422,12 @@ var TcUser = (function () {
                 "url": "/api/users/" + tc.userId + "/templates"
             })
             .done(function (data, status, xhr) {
-                //console.log(data);
+                console.log(data);
 
                 templates = data["templates"];
             })
             .fail(function (xhr, status, error) {
-                // TODO: Display error on failure to load timestamps
+                showAlert("danger", "Error", "Failed to load templates (" + error + ")");
             })
             .always(function () {
                 hideNewTemplate();
@@ -434,6 +441,11 @@ var TcUser = (function () {
                     $("<button>").attr("type", "button").addClass("dropdown-item d-flex justify-content-between").text(value["name"]).data("id", id)
                         .append($("<button>").attr("type", "button").addClass("close text-danger").data("id", id).html("<span>&times;</span>")).appendTo($menuSelectTemplate);
                 });
+
+                //updateActiveTemplate();
+
+                //activeTemplate = "None";
+                $("#buttonSelectTemplate").text(activeTemplate);
             });
     }
 
@@ -448,10 +460,10 @@ var TcUser = (function () {
                 "contentType": "application/json; charset=utf-8"
             })
             .done(function (data, status, xhr) {
-                // TODO: 
+                showAlert("success", "", "Successfully saved template " + name);
             })
             .fail(function (xhr, status, error) {
-                // TODO: Display alert with error
+                showAlert("danger", "Error", "Failed to save template (" + error + ")");
             })
             .always(function () {
                 loadTemplates();
@@ -463,9 +475,11 @@ var TcUser = (function () {
                 "method": "DELETE",
                 "url": "/api/users/" + tc.userId + "/templates/" + id
             })
-            .done(function (data, status, xhr) {})
+            .done(function (data, status, xhr) {
+                showAlert("success", "", "Successfully deleted template " + templates[id]["name"]);
+            })
             .fail(function (xhr, status, error) {
-                // TODO: Display error on failure to load timestamps
+                showAlert("danger", "Error", "Failed to delete template (" + error + ")");
             })
             .always(function () {
                 loadTemplates();
@@ -500,27 +514,19 @@ var TcUser = (function () {
         if (id != -1) {
             applyTemplate(id);
         } else {
-            $("#buttonSelectTemplate").text("None");
+            //updateActiveTemplate();
+            activeTemplate = "None";
+            $("#buttonSelectTemplate").text(activeTemplate);
         }
     });
 
     $("#menuSelectTemplate").on("click", ".close", function (event) {
         // Stop click from also selecting this template
         event.stopPropagation();
-        
+
         var id = $(this).data("id");
 
         deleteTemplate(id);
-    });
-
-    $("#menuSelectTemplate").on("click", ".dropdown-item", function () {
-        var id = $(this).data("id");
-
-        if (id != -1) {
-            applyTemplate(id);
-        } else {
-            $("#buttonSelectTemplate").text("None");
-        }
     });
 
     function showNewTemplate() {
@@ -543,7 +549,14 @@ var TcUser = (function () {
     }
 
     function applyTemplate(id) {
+        if (id == -1) {
+            return;
+        }
+
+        console.log("applying template");
+
         var template = templates[id];
+        activeTemplate = template["name"];
 
         // Delete all segments in period, add segments in template, load again
         $.ajax({
@@ -558,6 +571,7 @@ var TcUser = (function () {
             })
             .done(function (data, status, xhr) {
                 $.each(template["segments"], function (index, segment) {
+                    console.log("applying segment");
                     $.ajax({
                             "method": "POST",
                             "url": "/api/users/" + tc.userId + "/hours",
@@ -572,23 +586,77 @@ var TcUser = (function () {
                             // TODO: 
                         })
                         .fail(function (xhr, status, error) {
-                            // TODO: Display alert with error
+                            //showAlert("danger", "Error", "Failed to apply template (" + error + ")");
+                            //freturn false;
                         })
                         .always(function () {
                             // Load after last segment is added
                             if (index == template["segments"].length - 1) {
-                                $("#buttonSelectTemplate").text(templates[id]["name"]);
+                                showAlert("success", "", "Successfully applied template " + template["name"]);
                                 loadTimeSegments();
                             }
                         });
                 });
             })
             .fail(function (xhr, status, error) {
-                // TODO: Display alert with error
+                showAlert("danger", "Error", "Failed to apply template (" + error + ")");
             })
             .always(function () {
                 //loadTimeSegments();
             });
+    }
+
+    /*function updateActiveTemplate() {
+        var segments = [];
+        var activeTemplate = "None";
+
+        $.each(selectedSegments, function (index, segment) {
+            var day = segment["start_timestamp"] - periodStart.unix();
+            segments.push([segment["start_timestamp"] - periodStart.unix(), segment["end_timestamp"] - periodStart.unix()]);
+        });
+        
+        console.log(segments);
+
+        $.each(templates, function (id, value) {
+            var isTemplate = true;
+            var templateSegments = templates[id]["segments"];
+            console.log(templateSegments);
+            $.each(segments, function (index, segment) {
+                if ($.inArray(templateSegments, segment) === -1) {
+                    isTemplate = false;
+                    console.log("not template");
+                    return false;
+                }
+            });
+            if (isTemplate) {
+                console.log("found template");
+                activeTemplate = templates[id]["name"];
+                return false;
+            }
+        });
+
+        $("#buttonSelectTemplate").text(activeTemplate);
+    }*/
+
+    function showAlert(type, title, content) {
+        // success, info, warning, danger
+        var $newAlert = $("<div>").addClass("alert alert-dismissible fade show").attr("role", "alert")
+
+        $("#alertBanner").empty();
+        if (type == "success") {
+            $newAlert.addClass("alert-success").append($("<i>").addClass("fa fa-check-circle mr-2"));
+
+        } else if (type == "warning") {
+            $newAlert.addClass("alert-warning").append($("<i>").addClass("fa fa-exclamation-triangle mr-2"));
+
+        } else if (type == "danger") {
+            $newAlert.addClass("alert-danger").append($("<i>").addClass("fa fa-exclamation-triangle mr-2"));
+
+        } else {
+            $newAlert.addClass("alert-info").append($("<i>").addClass("fa fa-info-circle mr-2"));
+        }
+
+        $newAlert.append("<strong>" + title + "</strong> " + content).append($("<button>").attr("type", "button").addClass("close").attr("data-dismiss", "alert").html("&times;")).appendTo($("#alertBanner"));
     }
 
     return tc;

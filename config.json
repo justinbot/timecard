@@ -1,1 +1,1 @@
-{"slot_increment": 30, "valid_period_start": "2016-12-01", "period_duration": 14, "slot_first_start": "08:30", "admins": ["CARLSJ4", "SHINA2", "TEST"], "lock_date": 1485925200, "view_days": 14, "slot_last_start": "21:00"}
+{"slot_increment": 30, "valid_period_start": "2016-12-01", "view_days": 14, "slot_last_start": "21:00", "admins": ["CARLSJ4", "SHINA2", "TEST"], "lock_date": 1485925200, "slot_first_start": "08:30", "period_duration": 14}

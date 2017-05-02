@@ -22,4 +22,4 @@ Clone the repository, and install dependencies (we recommend you do this in a vi
 pip install -r requirements.txt
 ```
 
-On first boot of the server, follow the onboarding page to configure important timecard settings.
+The first time you start up the server with ```./run.py```, follow the onboarding page to configure some important settings.

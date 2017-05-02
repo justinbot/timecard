@@ -78,6 +78,9 @@ def admin_required(f):
     return decorated_function
 
 
+def is_admin():
+    return session['CAS_USERNAME'] in config['admins']
+
 # class Project(db.Model):
 #    project_id = db.Column(db.Integer, primary_key=True)
 

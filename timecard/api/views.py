@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 
-from timecard.models import admin_required, db, config, set_config, User, TimeSegment, Template, TemplateSegment
+from timecard.models import admin_required, is_admin, db, config, set_config, User, TimeSegment, Template, TemplateSegment
 
 from flask import Blueprint, session, request, abort, jsonify
 from flask_cas import login_required
@@ -34,7 +34,7 @@ def all_users():
         if not user_id or not user_name_first or not user_name_last:
             abort(400)
 
-        new_user = User(id=user_id, name_first=user_name_first, name_last=user_name_last)
+        new_user = User(id=user_id.upper(), name_first=user_name_first, name_last=user_name_last)
 
         db.session.add(new_user)
         db.session.commit()
@@ -106,8 +106,7 @@ def specified_user(user_id):
     Only admins are allowed to modify user accounts.
     """
 
-    # Make sure this user exists.
-    user = User.query.get_or_404(user_id)
+    user = User.query.get_or_404(user_id.upper())
 
     if request.method == 'GET':
         # Return full user information along with every associated TimeSegment
@@ -134,17 +133,13 @@ def specified_user_hours(user_id):
     Only this user can modify their hours.
     """
 
-    user_id = user_id.upper()
-
-    # Make sure this user exists.
-    user = User.query.get_or_404(user_id)
-
-    # Users can only modify their own hours.
-    # Username should already be upper but just in case.
-    if not user.id.upper() == session['CAS_USERNAME'].upper():
-        abort(403)
+    user = User.query.get_or_404(user_id.upper())
 
     if request.method == 'POST':
+        # Users can only modify their own hours.
+        if not user.id.upper() == session['CAS_USERNAME'].upper():
+            abort(403)
+
         # Create new segment, return url with id
 
         request_dict = request.get_json(silent=True)
@@ -225,9 +220,13 @@ def specified_user_hours(user_id):
             user.modified = datetime.utcnow()
             db.session.commit()
             # Respond with location header for new segment
-            return jsonify(), 201, {'location': '/users/{0}/hours/{1}'.format(user_id, new_segment.id)}
+            return jsonify(), 201, {'location': '/users/{0}/hours/{1}'.format(user.id, new_segment.id)}
 
     elif request.method == 'GET':
+        # This user or any admin can get hours
+        if not user.id.upper() == session['CAS_USERNAME'].upper() and not is_admin():
+            abort(403)
+
         # Return this user's time segments in range specified by args
 
         selection_start_timestamp = request.args.get('start')
@@ -253,12 +252,7 @@ def specified_user_hours_segment(user_id, segment_id):
     Only this user can modify their hours.
     """
 
-    user_id = user_id.upper()
-
-    print 'specified_user_hours_segment'
-
-    # Make sure this user exists.
-    user = User.query.get_or_404(user_id)
+    user = User.query.get_or_404(user_id.upper())
 
     # Make sure this time segment exists.
     # TODO: Make sure time segments are stored per user?
@@ -290,10 +284,7 @@ def specified_user_templates(user_id):
     DELETE: Delete template with specified id.
     """
 
-    user_id = user_id.upper()
-
-    # Make sure this user exists.
-    user = User.query.get_or_404(user_id)
+    user = User.query.get_or_404(user_id.upper())
 
     if not user.id.upper() == session['CAS_USERNAME'].upper():
         abort(403)
@@ -313,7 +304,7 @@ def specified_user_templates(user_id):
         user.templates.append(new_template)
         db.session.commit()
 
-        return jsonify(), 201, {'location': '/users/{0}/templates/{1}'.format(user_id, new_template.id)}
+        return jsonify(), 201, {'location': '/users/{0}/templates/{1}'.format(user.id, new_template.id)}
 
     elif request.method == 'GET':
         return jsonify({'templates': {t.id: t.to_dict() for t in user.templates}})
@@ -327,10 +318,7 @@ def specified_user_specified_template(user_id, template_id):
     DELETE: Delete the template with this id.
     """
 
-    user_id = user_id.upper()
-
-    # Make sure this user exists.
-    user = User.query.get_or_404(user_id)
+    user = User.query.get_or_404(user_id.upper())
 
     if not user.id.upper() == session['CAS_USERNAME'].upper():
         abort(403)

@@ -98,6 +98,12 @@ div.slot.locked {
     pointer-events: none;
 }
 
+div.slot.selected.locked {
+    background: #749ff2;
+    border-bottom-color: #749ff2;
+    pointer-events: none;
+}
+
 div.segment-label {
     z-index: 4;
     position: absolute;
@@ -108,62 +114,3 @@ div.segment-label {
     padding: 0.1rem 0;
     pointer-events: none;
 }
-
-
-/*div.slot,
-div.slot-selected {
-    position: relative;
-    flex-grow: 1;
-    border-bottom: 1px solid #eceeef;
-    cursor: cell;
-}
-
-div.slot:nth-child(even) {
-    border-bottom: 1px solid #ccc;
-}
-
-div.slot:hover {
-    background: #eaeaea;
-    //outline: 1px solid blue;
-}
-
-div.slot-selected {
-    background: #3b5ca0;
-    border-bottom: 1px solid #3b5ca0;
-    color: white;
-    cursor: cell;
-}
-
-div.slot-selected:hover {
-    background: #678fd4;
-    border-bottom: 1px solid #678fd4;
-}
-
-div.slot:last-child,
-div.slot-selected:last-child {
-    border-bottom: none;
-}
-
-div.slot.locked {
-    background: rgba(128, 128, 128, 0.1);
-    cursor: default;
-    pointer-events: none;
-}
-
-div.slot-selected.locked {
-    background: #4364a8;
-    border-bottom-color: #4364a8;
-    cursor: default;
-    pointer-events: none;
-}
-
-div.blocklabel {
-    z-index: 4;
-    position: absolute;
-    text-align: center;
-    font-size: 0.85rem;
-    color: white;
-    width: 100%;
-    padding: 0.1rem 0;
-    pointer-events: none;
-}*/
