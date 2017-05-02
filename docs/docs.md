@@ -4,7 +4,7 @@
 ### What is it?
 Timecard is "A usable web-based payroll timecard system" designed to be:
 - **Usable.** Intuitive and generally simple to use. Bonus: This helps reduce mistakes in hour entry.
-- **Flexible.** Easily configurable for any organization’s needs.
+- **Flexible.** Easily configurable for any organizationâ€™s needs.
 - **Simple.** Simple to use, simple to set up, simple to maintain.
 - **Powerful.** Makes use of the interesting data.
 
@@ -39,7 +39,7 @@ The Timecard backend is structured as follows:
 
 **Specified User Hours**: /users/<user_id>/hours
 - `POST` Fill or delete a time segment for this user.
-    - `{ start : int (timestamp), end : int (timestamp), delete : bool}`
+    - `{ start : int (timestamp), end : int (timestamp), delete : bool }`
 - `GET` Fetch all time-segments in range specified by URL query `start` and `end`.
 
 **Specified User Hours Segment**: /users/<user_id>/hours/<segment_id>
@@ -47,5 +47,10 @@ The Timecard backend is structured as follows:
 - `DELETE` Delete time segment specified by segment_id.
 
 **Specified User Templates**: /users/<user_id>/templates
-- TODO
+- `POST` Create a new template with specified name and segments.
+    - `{ name : string, segments: [[start, end], ...] }`
+- `GET` Fetch all templates for this user.
 
+**Specified User Specified Template**: /users/<user_id>/templates/<template_id>
+- `GET` Fetch the template with this id.
+- `DELETE` Delete the template with this id.
