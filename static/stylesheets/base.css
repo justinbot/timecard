@@ -7,24 +7,30 @@
     user-select: none;
 }
 
+a:hover {
+    text-decoration: underline!important;
+}
+
 .spin {
     -webkit-animation: fa-spin 2s infinite linear;
     animation: fa-spin 2s infinite linear;
 }
 
 .btn-period-nav {
-    background-color: #3b5ca0;
-    border-color: #3b5ca0;
+    color: #636c72;
+    background-color: #ffffff;
+    border-color: #aab0b5;
 }
 
 .btn-period-nav:active {
-    background-color: #183e8d;
-    border-color: #183e8d;
+    background-color: #f4f5f5;
+    border-color: #818a93;
 }
 
 .btn-period-nav:hover {
-    background-color: #4c71be;
-    border-color: #4c71be;
+    color: #292b2c;
+    background-color: #f4f5f5;
+    border-color: #818a93;
 }
 
 .btn-period-nav:focus {
@@ -32,7 +38,11 @@
 }
 
 .btn-period-nav:disabled {
-    background-color: #183e8d;
-    border-color: #183e8d;
+    background-color: #e0e1e2;
+    border-color: #a0a6ac;
     cursor: default;
+}
+
+#tcNavbar {
+    background: #072664;
 }

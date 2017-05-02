@@ -14,16 +14,6 @@ var TcAdmin = (function () {
         $userEditButton = $("#userEditButton"),
         $userDeleteButton = $("#userDeleteButton");
 
-    var $alertBanner = $("#alertBanner");
-
-    var $tableStatus = $("#tableStatus");
-    var $tsHeadCheckbox = $("#tsHeadCheckbox");
-
-    var $tsHeaderName = $("#tsHeaderName"),
-        $tsHeaderId = $("#tsHeaderId"),
-        $tsHeaderModified = $("#tsHeaderModified"),
-        $tsHeaderTotal = $("#tsHeaderTotal");
-
     /* local variables */
     var focusDate;
     var periodStart,
@@ -76,56 +66,24 @@ var TcAdmin = (function () {
             var userCreated = moment.utc(userData[i]["created_date"]).local();
             var userTotalHours = userData[i]["total_hours"];
 
-            var $newRow = $("<tr>", {
-                "id": "tsRow" + userId,
-                "data-userid": userId
-            });
-            $newTsBody.append($newRow);
+            var $newRow = $("<tr>").attr("id", "tsRow" + userId).data("userid", userId).appendTo($newTsBody);
 
-            var $checkboxCell = $("<td>");
-            $newRow.append($checkboxCell);
+            // Checkbox cell
+            $("<td>").append($("<label>").addClass("custom-control custom-checkbox")
+                .append($("<input>").attr("type", "checkbox").addClass("custom-control-input").data("userid", userId))
+                .append($("<span>").addClass("custom-control-indicator"))
+            ).appendTo($newRow);
 
-            var $checkbox = $("<label>", {
-                class: "custom-control custom-checkbox"
-            });
-            $checkboxCell.append($checkbox);
-
-            $checkbox.append($("<input>", {
-                "type": "checkbox",
-                "class": "custom-control-input",
-                "data-userid": userId
-            }));
-
-            $checkbox.append($("<span>", {
-                "class": "custom-control-indicator"
-            }));
-
-            $newRow.append($("<td>", {
-                html: $("<a>", {
-                    html: userLast + ", " + userFirst,
-                    "href": "/user/" + userId
-                })
-            }));
-
-            $newRow.append($("<td>", {
-                html: userId
-            }));
-
-            $newRow.append($("<td>", {
-                html: moment.utc(userData[i]["modified"]).local().fromNow() //tc.initialDate
-                // TODO: Need to update this value periodically
-            }));
+            // Name with link to viewas
+            $("<td>").append($("<a>").text(userLast + ", " + userFirst).attr("href", "/users/" + userId + "/viewas").attr("target", "_blank")).appendTo($newRow);
+            $("<td>").text(userId).appendTo($newRow);
+            $("<td>").text(moment.utc(userData[i]["modified"]).local().fromNow()).appendTo($newRow); // TODO: Update this value periodically
 
             for (var j = 0; j < tc.periodDuration; j++) {
-                $newRow.append($("<td>", {
-                    html: userData[i]["hours"][j].toFixed(1)
-                }));
+                $("<td>").text(userData[i]["hours"][j].toFixed(1)).appendTo($newRow);
             }
 
-            $newRow.append($("<td>", {
-                html: userTotalHours.toFixed(1),
-                style: "text-align: center"
-            }));
+            $("<td>").addClass("text-center").text(userTotalHours.toFixed(1)).appendTo($newRow);
         }
 
         $oldTsBody.replaceWith($newTsBody);
@@ -142,6 +100,7 @@ var TcAdmin = (function () {
     }
 
     function updateCheckboxes() {
+        var $tsHeadCheckbox = $("#tsHeadCheckbox");
         if (selectedUsers.size == userData.length) {
             $tsHeadCheckbox.prop("indeterminate", false);
             if (userData.length == 0) {
@@ -167,6 +126,7 @@ var TcAdmin = (function () {
 
     function updateEdit() {
         console.log(userData);
+        var $tableStatus = $("#tableStatus");
         if (selectedUsers.size == 0) {
             $tableStatus.text("Users: " + userData.length);
             $userViewAsButton.hide();
@@ -178,7 +138,7 @@ var TcAdmin = (function () {
                 return element["id"] === userId;
             });
             $tableStatus.text(user["name_first"] + " " + user["name_last"]);
-            $userViewAsButton.href = "/user/" + user;
+            //$userViewAsButton.href = "/users/" + userId + "/viewas"
             $userViewAsButton.show();
             $userEditButton.show();
             $userEditButton.data("userid", userId);
@@ -303,14 +263,14 @@ var TcAdmin = (function () {
                 showAlert("success", "", "Successfully deleted user");
             })
             .fail(function (xhr, status, error) {
-                showAlert("danger", "Error", "Failed to delet euser (" + error + ")");
+                showAlert("danger", "Error", "Failed to delete user (" + error + ")");
             }).always(function () {
                 dbUpdateUsers();
             });
     }
 
     $("#tsTable").on("change", "[type='checkbox']", function () {
-        if ($(this).is($tsHeadCheckbox)) {
+        if ($(this).is($("#tsHeadCheckbox"))) {
             if (this.checked) {
                 for (var i = 0; i < userData.length; i++) {
                     selectedUsers.add(userData[i]["id"]);
@@ -331,18 +291,19 @@ var TcAdmin = (function () {
         onSelectedUsersChanged();
     });
 
-    $tsHeaderName.click(function () {
+    $("#tsHeaderName").click(function () {
         console.log("TODO: Sort by name");
     });
-    $tsHeaderId.click(function () {
+
+    $("#tsHeaderId").click(function () {
         console.log("TODO: Sort by Id");
     });
 
-    $tsHeaderModified.click(function () {
+    $("#tsHeaderModified").click(function () {
         console.log("TODO: Sort by Modified");
     });
 
-    $tsHeaderTotal.click(function () {
+    $("#tsHeaderTotal").click(function () {
         console.log("TODO: Sort by Total");
     });
 
@@ -378,7 +339,7 @@ var TcAdmin = (function () {
     });
 
     $userViewAsButton.on("click", function (e) {
-        window.location.href = "/user/" + selectedUsers.values().next().value;
+        window.location.href = "/users/" + selectedUsers.values().next().value + "/viewas";
     });
 
     $userEditButton.on("click", function (e) {
@@ -424,53 +385,23 @@ var TcAdmin = (function () {
 
     function showAlert(type, title, content) {
         // success, info, warning, danger
-        var newAlert;
+        var $newAlert = $("<div>").addClass("alert alert-dismissible fade show").attr("role", "alert")
 
-        $alertBanner.empty();
+        $("#alertBanner").empty();
         if (type == "success") {
-            newAlert = $("<div>", {
-                "class": "alert alert-success alert-dismissible fade show",
-                "role": "alert",
-                "html": $("<i>", {
-                    "class": "fa fa-check-circle mr-2"
-                })
-            });
+            $newAlert.addClass("alert-success").append($("<i>").addClass("fa fa-check-circle mr-2"));
+
         } else if (type == "warning") {
-            newAlert = $("<div>", {
-                "class": "alert alert-warning alert-dismissible fade show",
-                "role": "alert",
-                "html": $("<i>", {
-                    "class": "fa fa-exclamation-triangle mr-2"
-                })
-            });
+            $newAlert.addClass("alert-warning").append($("<i>").addClass("fa fa-exclamation-triangle mr-2"));
+
         } else if (type == "danger") {
-            newAlert = $("<div>", {
-                "class": "alert alert-danger alert-dismissible fade show",
-                "role": "alert",
-                "html": $("<i>", {
-                    "class": "fa fa-exclamation-triangle mr-2"
-                })
-            });
+            $newAlert.addClass("alert-danger").append($("<i>").addClass("fa fa-exclamation-triangle mr-2"));
+
         } else {
-            newAlert = $("<div>", {
-                "class": "alert alert-info alert-dismissible fade show",
-                "role": "alert",
-                "html": $("<i>", {
-                    "class": "fa fa-info-circle mr-2"
-                })
-            });
+            $newAlert.addClass("alert-info").append($("<i>").addClass("fa fa-info-circle mr-2"));
         }
 
-        newAlert.append("<strong>" + title + "</strong> " + content);
-
-        newAlert.append($("<button>", {
-            "type": "button",
-            "class": "close",
-            "data-dismiss": "alert",
-            "html": "&times;"
-        }));
-
-        $alertBanner.append(newAlert);
+        $newAlert.append("<strong>" + title + "</strong> " + content).append($("<button>").attr("type", "button").addClass("close").attr("data-dismiss", "alert").html("&times;")).appendTo($("#alertBanner"));
     }
 
     function prevPeriod() {
